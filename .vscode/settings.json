@@ -1,0 +1,10 @@
+{
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "editor.tabSize": 2,
+  "editor.formatOnSave": false,
+  "livePreview.serverRoot": "/site",
+  "files.exclude": { "build": true, "**/__pycache__": true },
+  "search.exclude": { "site/css": true, "site/js": true, "build": true },
+  "[python]": { "editor.tabSize": 4 }
+}

@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Собрать сайт",
+      "type": "shell",
+      "command": "python build.py",
+      "windows": { "command": "py build.py" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    }
+  ]
+}
