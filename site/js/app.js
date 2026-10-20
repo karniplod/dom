@@ -31,6 +31,13 @@
     dlg.addEventListener("click", function (e) { if (e.target === dlg || e.target.closest("[data-close]")) closeModal(dlg); });
   });
 
+  // Текущий пункт меню — по адресу страницы (в MODX шапка одна на все страницы).
+  var here = location.pathname.replace(/\/$/, "");
+  $$(".nav a, .nav__house, .drawer__nav a").forEach(function (a) {
+    if (a.hasAttribute("aria-current") || a.hash) return;
+    if (a.pathname.replace(/\/$/, "") === here && here !== "") { a.setAttribute("aria-current", "page"); var d = a.closest(".nav__drop"); if (d) d.querySelector(".nav__btn").classList.add("is-current"); }
+  });
+
   // Меню: выпадающий список домов на десктопе, выезжающая панель на телефоне.
   $$(".nav__drop").forEach(function (drop) {
     var btn = drop.querySelector(".nav__btn");
@@ -202,8 +209,16 @@
       phone.value = out;
     });
 
+    function done(num, h) {
+      var inModal = !!form.closest("dialog");
+      form.innerHTML = '<div class="form__ok" role="status"><svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg><h3>Заявка' + (num ? ' №' + num : '') + ' принята</h3>' +
+        '<p>' + h.name + ': администратор перезвонит, подтвердит даты и назовёт сумму предоплаты' + (DISCOUNT ? ' с учётом скидки ' + DISCOUNT + '%' : '') + '.</p>' +
+        '<p><a class="link" href="' + h.prepay + '">Внести предоплату</a> можно после звонка администратора.</p>' +
+        (inModal ? '<div><button class="btn btn--sm" type="button" data-close>Закрыть</button></div>' : '') + '</div>';
+    }
+
     form.addEventListener("submit", function (e) {
-      e.preventDefault(); // в MODX здесь отправка через AjaxForm / fetch на коннектор
+      e.preventDefault();
       var problems = [];
       if (!q('[name="name"]').value.trim()) problems.push("укажите имя");
       if (phone.value.replace(/\D/g, "").length < 11) problems.push("проверьте телефон: нужно 10 цифр после +7");
@@ -213,14 +228,24 @@
       if (problems.length) { errBox.textContent = "Чтобы отправить заявку, " + problems.join(", ") + "."; errBox.hidden = false; return; }
       errBox.hidden = true;
       var h = HOUSES[fHouse.value];
-      var num = String(Date.now()).slice(-4);
-      var inModal = !!form.closest("dialog");
-      form.innerHTML = '<div class="form__ok" role="status"><svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg><h3>Заявка №' + num + ' принята</h3>' +
-        '<p>' + h.name + ': администратор перезвонит, подтвердит даты и назовёт сумму предоплаты' + (DISCOUNT ? ' с учётом скидки ' + DISCOUNT + '%' : '') + '.</p>' +
-        '<p><a class="link" href="' + h.prepay + '">Внести предоплату</a> можно после звонка администратора.</p>' +
-        (inModal ? '<div><button class="btn btn--sm" type="button" data-close>Закрыть</button></div>' : '') + '</div>';
+      var action = form.getAttribute("action");
+      if (!action) { done(String(Date.now()).slice(-4), h); return; }   // статичная версия без сервера
+      // На сайте (MODX) заявка уходит на сервер: сохраняется в «Заявках», приходит письмом
+      var btn = q('button[type="submit"]'); btn.disabled = true; btn.textContent = "Отправляем…";
+      fetch(action, { method: "POST", body: new FormData(form), headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" }, credentials: "same-origin" })
+        .then(function (r) { return r.json().catch(function () { return { ok: false, message: "Сервер ответил с ошибкой (" + r.status + ")." }; }); })
+        .then(function (res) {
+          if (res && res.ok) { done(res.id, h); if (window.ym && window.BN_YM) window.ym(window.BN_YM, "reachGoal", "lead"); return; }
+          errBox.textContent = (res && res.message) || "Не получилось отправить заявку. Позвоните нам, пожалуйста."; errBox.hidden = false;
+          btn.disabled = false; btn.textContent = "Отправить заявку";
+        })
+        .catch(function () {
+          errBox.textContent = "Нет связи с сервером. Проверьте интернет или позвоните нам."; errBox.hidden = false;
+          btn.disabled = false; btn.textContent = "Отправить заявку";
+        });
     });
 
+    if (form.dataset.house && HOUSES[form.dataset.house]) fHouse.value = form.dataset.house;
     calc();
     return { form: form, house: fHouse, calc: calc };
   }

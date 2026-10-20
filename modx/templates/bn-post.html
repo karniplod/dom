@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+[[$bn.head? &ogtype=`article` &ogtv=`bn_cover`]]
+</head>
+<body>
+[[$bn.fox]]
+[[$bn.header]]
+<main>
+<article class="post">
+  <header class="phead phead--post on-light"><div class="wrap">
+    [[bnCrumbs]]
+    [[bnPost? &part=`meta`]]
+    <h1>[[*pagetitle]]</h1>
+    <p class="post__lead">[[*introtext]]</p>
+  </div></header>
+  <div class="wrap">[[bnPost? &part=`cover`]]</div>
+  <div class="wrap post__grid">
+    <aside class="post__aside">
+      <nav class="toc" aria-label="Содержание"><p>Содержание</p><ol>[[bnPost? &part=`toc`]]</ol></nav>
+      <div class="post__cta"><p>Три дома с баней и бассейном в Перми, сутки от [[bnMinPrice]].</p><button class="btn btn--sm" type="button" data-order>Подобрать дом</button><a class="link tnum" href="tel:[[++bn_phone_raw]]">[[++bn_phone]]</a></div>
+    </aside>
+    <div class="prose">
+      [[bnPost? &part=`body`]]
+      <footer class="share"><span>Поделиться:</span><a class="link" href="https://vk.com/share.php?url=[[bnPost? &part=`share_url`]]" target="_blank" rel="noopener">ВКонтакте</a><a class="link" href="https://t.me/share/url?url=[[bnPost? &part=`share_url`]]&amp;text=[[bnPost? &part=`share_title`]]" target="_blank" rel="noopener">Telegram</a><button class="link" type="button" data-copy>Скопировать ссылку</button></footer>
+    </div>
+  </div>
+</article>
+
+<section class="band band--soft" aria-labelledby="ph-title"><div class="wrap">
+  <div class="sec-head"><h2 class="h-sec" id="ph-title">Дома из статьи</h2></div>
+  [[bnPost? &part=`houses`]]
+</div></section>
+
+<section class="band on-light" aria-labelledby="more-title"><div class="wrap">
+  <div class="sec-row"><div class="sec-head"><h2 class="h-sec" id="more-title">Читайте также</h2></div><a class="btn btn--ghost on-light" href="[[~[[*parent]]]]">Все статьи</a></div>
+  <div class="posts posts--3">[[bnPosts? &limit=`3` &exclude=`[[*id]]`]]</div>
+</div></section>
+</main>
+[[$bn.footer]]
+[[$bn.scripts]]
+</body>
+</html>

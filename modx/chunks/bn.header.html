@@ -1,0 +1,13 @@
+<header class="top"><div class="wrap top__in">
+  <a class="brand" href="[[~[[++site_start]]]]" aria-label="[[++site_name]], на главную"><svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg><span><b>[[++site_name]]</b><small>Дома с баней и бассейном в Перми</small></span></a>
+  <nav class="nav" aria-label="Основное меню">
+    <div class="nav__drop"><button class="nav__btn" type="button" aria-expanded="false" aria-controls="nav-houses">Дома<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="nav__panel" id="nav-houses">[[bnHouses? &tpl=`bn.tpl.navHouse`]]<a class="nav__all" href="[[~[[++site_start]]]]#prices">Сравнить дома и цены</a></div></div>
+    <a href="[[~[[++site_start]]]]#prices">Цены</a>
+    <a href="[[~[[++bn_blog_id]]]]">Блог</a>
+    <a href="[[~[[++bn_contacts_id]]]]">Контакты</a>
+  </nav>
+  <a class="top__phone tnum" href="tel:[[++bn_phone_raw]]">[[++bn_phone]]</a>
+  <button class="btn btn--sm top__cta" type="button" data-order>Оставить заявку</button>
+  <button class="burger" type="button" data-drawer aria-label="Открыть меню" aria-controls="drawer"><span></span><span></span><span></span></button>
+</div></header>

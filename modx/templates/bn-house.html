@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+[[$bn.head]]
+</head>
+<body>
+[[$bn.fox]]
+[[$bn.header]]
+<main class="h-[[*bn_code]]">
+<section class="dhero" aria-labelledby="d-title">
+  [[bnHouse? &part=`hero_img`]]
+  <div class="wrap"><div class="dhero__in">
+    [[bnCrumbs]]
+    <p class="dhero__kicker">[[bnHouse? &part=`kicker`]]</p>
+    <h1 id="d-title">[[*pagetitle]]</h1>
+    <p class="intro">[[*bn_intro]]</p>
+    <div class="dfacts">[[bnHouse? &part=`facts`]]</div>
+    <p class="dprice">от [[bnHouse? &part=`min_price`]] <small>за сутки, [[bnHouse? &part=`addr`]]</small></p>
+    <div class="hero__cta"><button class="btn" type="button" data-order data-house="[[bnHouse? &part=`code`]]">Оставить заявку</button><a class="btn btn--ghost btn--ico" href="[[bnHouse? &part=`tour`]]" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>Открыть 3D-тур</a></div>
+  </div></div>
+</section>
+
+<section class="band on-light" aria-labelledby="g-title"><div class="wrap">
+  <div class="sec-head"><h2 class="h-sec" id="g-title">Фото дома</h2><p class="lead">Нажмите на фото, чтобы открыть крупно и пролистать.</p></div>
+  <div class="gal">[[bnHouse? &part=`gallery`]]</div>
+  <div class="tourband"><div><h3>3D-тур по дому</h3><p>[[*bn_tour_text]]</p></div><a class="btn" href="[[bnHouse? &part=`tour`]]" target="_blank" rel="noopener">Открыть 3D-тур</a></div>
+</div></section>
+
+<section class="band band--soft" aria-labelledby="c-title"><div class="wrap">
+  <div class="sec-head"><h2 class="h-sec" id="c-title">Мы позаботились о комфорте</h2><p class="lead">Всё для большого стола и долгого вечера уже в доме.</p></div>
+  <ul class="amen amen--4">[[bnHouse? &part=`comfort`]]</ul>
+  <p class="included"><b>Входит в стоимость:</b> постельное бельё, посуда, мангал и шампуры, чай, кофе, сахар, специи, питьевая вода.</p>
+</div></section>
+
+<section class="band on-light" id="price" aria-labelledby="p-title"><div class="wrap">
+  <div class="sec-head"><h2 class="h-sec" id="p-title">Цена за сутки</h2><p class="lead">Заезд с [[bnHouse? &part=`checkin`]], выезд до [[bnHouse? &part=`checkout`]] следующего дня. Цена для компании до [[bnHouse? &part=`base`]] человек, за каждого следующего гостя +[[bnHouse? &part=`extra`]] ₽.</p></div>
+  <div class="price-days">[[bnHouse? &part=`prices`]]</div>
+  <p class="note">Праздники считаются как выходные. Залог [[++bn_deposit]], питомец +1 000 ₽. <b>Скидка [[++bn_discount]]% при бронировании на сайте или через группу ВКонтакте.</b></p>
+  <div class="prepay" id="prepay"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 10h18M7 15h4"/></svg><div><h3>Предоплата за [[bnHouse? &part=`name_lc`]]</h3><p>Бронь подтверждается предоплатой [[++bn_prepay_percent]]% от стоимости, остальное доплачиваете при заселении. Вносите её только после того, как администратор подтвердил даты. Оплата по Системе быстрых платежей: сумму вводите сами, в комментарии укажите имя и дату заезда. При отмене предоплату возвращаем, если на ваши даты находится другой гость.</p></div><a class="btn" href="[[bnHouse? &part=`prepay_url`]]">Внести предоплату</a></div>
+</div></section>
+
+<section class="band band--soft" aria-labelledby="r-title"><div class="wrap two">
+  <div><div class="sec-head"><h2 class="h-sec" id="r-title">Правила дома</h2></div>[[bnHouse? &part=`rules`]]</div>
+  <div class="hinfo">[[bnHouse? &part=`hinfo`]]
+  </div>
+</div></section>
+
+<section class="band on-light" aria-labelledby="s-title"><div class="wrap two">
+  <div class="seo__text"><h2 class="h-sec" id="s-title" style="color:var(--bark)">[[bnHouse? &part=`name`]] в Перми посуточно</h2>[[*bn_seo]]</div>
+  <div class="faq"><div class="sec-head"><h2 class="h-sec">Вопросы о доме</h2></div>[[bnHouse? &part=`faq`]]</div>
+</div></section>
+
+[[bnHouse? &part=`reviews`]]
+
+[[$bn.orderBandHouse]]
+
+<section class="band on-light" aria-labelledby="o-title"><div class="wrap">
+  <div class="sec-head"><h2 class="h-sec" id="o-title">Другие дома</h2></div>
+  <div class="houses houses--2">[[bnHouse? &part=`others`]]</div>
+</div></section>
+</main>
+[[$bn.footer]]
+[[$bn.scripts]]
+</body>
+</html>
