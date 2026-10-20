@@ -584,3 +584,5 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .promo p a { color: inherit; }
 .sum-disc { margin-top: 4px; color: var(--fox-deep); font-weight: 600; font-size: 15px; }
 @media (max-width: 420px) { .hcard__links { font-size: 14px; gap: 6px 10px; } .hcard__links svg { width: 16px; height: 16px; } }
+.hcard__media a:first-child img { aspect-ratio: 4 / 3; }
+.hcard.h-en .hcard__media a:first-child img { object-position: 50% 22%; }
