@@ -150,10 +150,15 @@
       }
       var nights = Math.round((b - a) / 864e5), sum = 0, d = new Date(a);
       for (var i = 0; i < nights; i++) { sum += h.prices[nightType(d)]; d.setDate(d.getDate() + 1); }
-      est.innerHTML = '<div><small>' + h.name + ', ' + nights + ' ' + plural(nights, "сутки", "суток", "суток") + '</small><div class="sum tnum">≈ ' + rub(sum) + '</div></div>' +
-        '<small>Заезд с ' + h.checkin + ', выезд до ' + h.checkout + '. Праздничные дни считаются по тарифу выходных, точную сумму назовёт администратор.</small>';
+      // Доплата за гостей сверх нормы дома — один раз за всё время отдыха.
+      var g = parseInt(fGuests.value, 10) || 0, over = Math.max(0, Math.min(g, h.max) - h.base);
+      sum += over * h.extra;
+      var note = over ? ', ' + over + ' ' + plural(over, "гость", "гостя", "гостей") + ' сверх ' + h.base + ' (+' + rub(over * h.extra) + ')' : '';
+      est.innerHTML = '<div><small>' + h.name + ', ' + nights + ' ' + plural(nights, "сутки", "суток", "суток") + note + '</small><div class="sum tnum">≈ ' + rub(sum) + '</div></div>' +
+        '<small>Заезд с ' + h.checkin + ', выезд до ' + h.checkout + '. В цене до ' + h.base + ' гостей, далее ' + rub(h.extra) + ' за человека. Праздничные дни считаются по тарифу выходных, точную сумму назовёт администратор.</small>';
     }
     [fHouse, fIn, fOut].forEach(function (el) { el.addEventListener("change", calc); });
+    fGuests.addEventListener("input", calc);
     fIn.addEventListener("change", function () {
       if (fIn.value) { var n = new Date(fIn.value + "T12:00"); n.setDate(n.getDate() + 1); fOut.min = iso(n); if (!fOut.value || fOut.value <= fIn.value) fOut.value = iso(n); calc(); }
     });

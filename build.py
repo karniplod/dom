@@ -172,12 +172,14 @@ def faq_block(items, open_first=True):
 RULES = [("Залог", "5 000 – 20 000 ₽"), ("Предоплата", "50%, после звонка администратора"), ("Тишина на участке", "с 22:00 до 9:00"),
          ("Громкая музыка во дворе", "нельзя"), ("В доме при закрытых окнах", "можно праздновать"), ("Курение в доме", "нельзя"),
          ("Фейерверки, салюты, хлопушки", "нельзя"), ("Конфетти и блёстки", "нельзя"), ("Дети", "можно"),
-         ("Питомцы", "можно, +1 000 ₽"), ("Отчётные документы", "оформляем")]
+         ("Питомцы", "можно, +1 000 ₽"), ("Сауна", "топим без ограничений по времени"), ("Отчётные документы", "оформляем")]
+GUESTS_RULE = ("Гости сверх 10 (на Свиязева сверх 8)", "+500 ₽ за человека")
 SERVICES = "Приготовим из ваших продуктов шашлык (300 ₽ за кг) или плов (2 500 ₽)."
 def house_rules(k):
     h = H[k]
-    return [("Заезд / выезд", f'с {h["checkin"]} / до {h["checkout"]}'), ("Ночуют / отдыхают", f'{h["sleep"]} / до {h["max"]} гостей')]
-def rules_list(extra=()):
+    return [("Заезд / выезд", f'с {h["checkin"]} / до {h["checkout"]}'), ("Ночуют / отдыхают", f'{h["sleep"]} / до {h["max"]} гостей'),
+            (f'Гости сверх {h["base"]}', f'+{h["extra"]} ₽ за человека')]
+def rules_list(extra=(GUESTS_RULE,)):
     return '<ul class="rules">' + "".join(f'<li><span>{a}</span><span class="tnum">{b}</span></li>' for a, b in list(extra) + RULES) + "</ul>"
 
 PREPAY_TXT = "Бронь подтверждается предоплатой 50% от стоимости, остальное доплачиваете при заселении. Вносите её только после того, как администратор подтвердил даты. Оплата по Системе быстрых платежей: сумму вводите сами, в комментарии укажите имя и дату заезда. При отмене предоплату возвращаем, если на ваши даты находится другой гость."
@@ -252,6 +254,7 @@ def home():
     extra = {"en": "Сауна, бассейн, бильярд, камин", "ru": "Сауна, бассейн, бильярд, терраса", "sv": "Сауна, бассейн, джакузи, бильярд"}
     th = "".join(f'<th scope="col" class="h-{k}">{v["name"]}</th>' for k, v in H.items())
     rows = "".join(f'<tr><th scope="row">{lab}</th>' + "".join(f"<td>{fn(v)}</td>" for v in H.values()) + "</tr>" for lab, fn in table_rows)
+    rows += '<tr><th scope="row">В цене гостей</th>' + "".join(f'<td>до {v["base"]}, далее +{v["extra"]} ₽ за человека</td>' for v in H.values()) + "</tr>"
     rows += '<tr><th scope="row">Для отдыха</th>' + "".join(f"<td>{extra[k]}</td>" for k in H) + "</tr>"
     for i, d in enumerate(["Пн – Чт", "Пятница", "Суббота", "Воскресенье"]):
         rows += f'<tr class="money{" money-first" if i == 0 else ""}"><th scope="row">{d}</th>' + "".join(f'<td class="tnum">{money(v["prices"][i])}</td>' for v in H.values()) + "</tr>"
@@ -285,7 +288,7 @@ def home():
     <div class="sec-head"><h2 class="h-sec" id="comfort-title">Дизайнерские дома, где всё уже готово</h2><p class="lead">Мы позаботились о комфорте гостей. Привозите продукты и хорошую компанию, остальное в доме есть.</p></div>
     <ul class="amen">
       <li>{icon("kitchen")}<div><b>Кухня с посудой</b><span>Холодильник, плита, микроволновка, посуда на всех</span></div></li>
-      <li>{icon("steam")}<div><b>Сауна и бассейн</b><span>Бассейны круглый год, вода 28–30°. На Свиязева ещё и джакузи</span></div></li>
+      <li>{icon("steam")}<div><b>Сауна и бассейн</b><span>Баню топим без ограничений, бассейны круглый год. На Свиязева ещё и джакузи</span></div></li>
       <li>{icon("cue")}<div><b>Бильярд</b><span>В каждом доме</span></div></li>
       <li>{icon("fire")}<div><b>Мангал и беседка</b><span>Мангалы и шампуры уже на месте</span></div></li>
       <li>{icon("bed")}<div><b>Спальни и бельё</b><span>Чистое постельное бельё на всех, кто ночует</span></div></li>
@@ -314,7 +317,7 @@ def home():
 </div></section>
 
 <section class="band on-light" id="prices" aria-labelledby="prices-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="prices-title">Сравните дома и цены</h2><p class="lead">Цена за сутки зависит от дня недели. Отдельно оплачивается только питомец, 1 000 ₽.</p></div>
+  <div class="sec-head"><h2 class="h-sec" id="prices-title">Сравните дома и цены</h2><p class="lead">Цена за сутки зависит от дня недели и рассчитана на компанию до 10 человек, на Свиязева до 8. За каждого следующего гостя 500 ₽, за питомца 1 000 ₽.</p></div>
   <div class="table-wrap"><table class="cmp"><thead><tr><th scope="col"><span class="sr">Параметр</span></th>{th}</tr></thead><tbody>{rows}</tbody></table></div>
   <p class="note">Предпраздничный рабочий день считается как пятница, праздник перед выходным как суббота, праздник перед рабочим днём как воскресенье. Предоплату вносите после того, как администратор подтвердил даты.</p>
 </div></section>
@@ -336,7 +339,7 @@ def home():
     <h3>Сауна с бассейном для компании</h3>
     <p>В Английском и Русском доме ночуют 12 человек, а на вечер можно позвать до 20 гостей. Бассейны работают круглый год, а в доме на Свиязева рядом с бассейном ещё и джакузи. Это удобный вариант, когда нужна сауна с бассейном в Перми для дня рождения, девичника, встречи друзей или корпоратива.</p>
     <h3>Сколько стоит снять коттедж посуточно</h3>
-    <p>Сутки стоят от 15 000 ₽ в будни и от 25 000 ₽ в субботу. В цену входят постельное бельё, посуда, мангал и шампуры, чай и кофе. Отдельно оплачивается только питомец. Залог от 5 000 до 20 000 ₽ администратор называет при подтверждении брони.</p>
+    <p>Сутки стоят от 15 000 ₽ в будни и от 25 000 ₽ в субботу. В цену входят постельное бельё, посуда, мангал и шампуры, чай и кофе. Отдельно оплачиваются питомец и гости сверх 10 человек (на Свиязева сверх 8), по 500 ₽ за каждого. Залог от 5 000 до 20 000 ₽ администратор называет при подтверждении брони.</p>
     <h3>Как забронировать</h3>
     <p>Оставьте заявку или позвоните по номеру <span class="nb">{PHONE}</span>. Администратор проверит свободные даты, перезвонит и пришлёт ссылку на предоплату 50%.</p>
   </div>
@@ -406,7 +409,7 @@ def house_page(k):
 </div></section>
 
 <section class="band on-light" id="price" aria-labelledby="p-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="p-title">Цена за сутки</h2><p class="lead">Заезд с {h["checkin"]}, выезд до {h["checkout"]} следующего дня.</p></div>
+  <div class="sec-head"><h2 class="h-sec" id="p-title">Цена за сутки</h2><p class="lead">Заезд с {h["checkin"]}, выезд до {h["checkout"]} следующего дня. Цена для компании до {h["base"]} человек, за каждого следующего гостя +{h["extra"]} ₽.</p></div>
   <div class="price-days">{prices}</div>
   <p class="note">Праздники считаются как выходные. Залог 5 000 – 20 000 ₽, питомец +1 000 ₽.</p>
   <div class="prepay" id="prepay">{icon("card")}<div><h3>Предоплата за {h["name"].replace("Дом", "дом")}</h3><p>{PREPAY_TXT}</p></div><a class="btn" href="{h["prepay"]}" target="_blank" rel="noopener">Внести предоплату</a></div>
@@ -585,7 +588,7 @@ def post_page(p):
 # ---------- сборка ----------
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Prata&display=swap">'
 FAV = 'data:image/svg+xml,' + rd("fox.svg").replace('<path ', '<path fill="%23D8650F" ').replace('"', "'").replace("#", "%23")
-HJS = {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"]) for k, v in H.items()}
+HJS = {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"], base=v["base"], extra=v["extra"]) for k, v in H.items()}
 css, js = rd("styles.css"), rd("app.js")
 data_js = "window.HOUSES = " + json.dumps(HJS, ensure_ascii=False) + ";"
 for d in (SITE_DIR + "/css", SITE_DIR + "/js", ART):
