@@ -237,8 +237,8 @@ def house_card(k):
     <h3><a href="{h["file"]}">{h["name"]}</a></h3>
     <ul>{"".join(f"<li>{f}</li>" for f in feats)}</ul>
     <p class="hcard__price"><b class="tnum">от {money(minp(h))}</b><span>за сутки</span><em class="disc">−{DISCOUNT}% на сайте</em></p>
-    <div class="hcard__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--ghost on-light" href="{h["file"]}">Подробнее</a></div>
-    <div class="hcard__extra"><a class="btn btn--sm btn--tour" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}3D-тур</a><a class="btn btn--sm btn--ghost on-light btn--pay" href="{h["prepay"]}" target="_blank" rel="noopener">{icon("card")}Предоплата</a></div>
+    <div class="hcard__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--tour" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}3D-тур</a></div>
+    <p class="hcard__links"><a href="{h["file"]}">Подробнее о доме</a><a href="{h["prepay"]}" target="_blank" rel="noopener">{icon("card")}Внести предоплату</a></p>
   </div>
 </article>'''
 

@@ -158,8 +158,12 @@ p { margin: 0; }
 .hcard__price b { font: 400 28px/1 var(--display); }
 .hcard__price span { color: var(--ink-soft); font-size: 14.5px; }
 .hcard__cta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.hcard__extra { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 12px; border-top: 1px dashed var(--line); }
-.hcard__extra .btn { padding-inline: 10px; }
+.hcard__cta { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.hcard__cta .btn { padding-inline: 16px; }
+.hcard__links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 18px; font-size: 15px; }
+.hcard__links a { display: inline-flex; align-items: center; gap: 6px; color: var(--fox-deep); font-weight: 500; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 4px; transition: color .2s, text-decoration-color .2s; }
+.hcard__links a:hover { color: var(--bark); text-decoration-color: currentColor; }
+.hcard__links svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 
 /* 3D-туры на главной */
 .tours__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
@@ -579,3 +583,4 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .disc-line { color: var(--fox-deep); }
 .promo p a { color: inherit; }
 .sum-disc { margin-top: 4px; color: var(--fox-deep); font-weight: 600; font-size: 15px; }
+@media (max-width: 420px) { .hcard__links { font-size: 14px; gap: 6px 10px; } .hcard__links svg { width: 16px; height: 16px; } }
