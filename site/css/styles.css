@@ -543,3 +543,11 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .share a, .share button { color: var(--bark); }
 .share button { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
 .share button:hover { color: var(--fox-deep); }
+
+/* страница дома: просмотр, бассейн, повар */
+.hinfo { display: grid; gap: 14px; align-content: start; }
+.hinfo > div { padding: 20px 22px; border-radius: 6px; background: var(--card); box-shadow: 0 1px 0 var(--line); border-left: 4px solid var(--hc, var(--fox)); }
+.hinfo h3 { font-size: 24px; margin-bottom: 6px; }
+.hinfo p { color: var(--ink-soft); }
+.hinfo a { color: var(--bark); font-weight: 600; }
+.included--svc { margin-top: 10px; }
