@@ -240,7 +240,7 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 
 /* галерея-лента */
 .strip { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(240px, 28vw, 380px); gap: 10px; overflow-x: auto; padding-bottom: 14px; scrollbar-width: thin; scrollbar-color: var(--line-dark) transparent; overscroll-behavior-x: contain; }
-@media (pointer: coarse) { .strip { scroll-snap-type: x proximity; } .strip a { scroll-snap-align: start; } }
+@media (pointer: coarse) { .strip { scroll-snap-type: x proximity; } .strip > * { scroll-snap-align: start; } }
 @media (pointer: fine) { .strip { cursor: grab; } }
 .strip.is-drag { cursor: grabbing; user-select: none; }
 .strip.is-drag a { pointer-events: none; }
@@ -252,7 +252,7 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 .rail__btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; }
 .rail__btn:hover { background: var(--bark); color: var(--cream); }
 .rail.at-start [data-step="-1"], .rail.at-end [data-step="1"] { opacity: .35; pointer-events: none; }
-.strip span { position: absolute; left: 10px; bottom: 10px; font-size: 13px; background: rgba(22,12,8,.65); color: var(--cream); padding: 3px 9px; border-radius: 999px; }
+.strip > a > span { position: absolute; left: 10px; bottom: 10px; font-size: 13px; background: rgba(22,12,8,.65); color: var(--cream); padding: 3px 9px; border-radius: 999px; }
 
 /* правила и вопросы */
 .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 88px); }
@@ -637,3 +637,25 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 /* вертикальное фото фасада в блоке «Оставьте заявку» */
 .order__photo--tall { aspect-ratio: 3 / 4; }
 .order__photo--tall img { object-position: 50% 30%; }
+
+/* отзывы: карусель, как лента фото */
+.strip:has(.rev) { grid-auto-columns: clamp(280px, 31vw, 400px); align-items: stretch; }
+.rev { display: flex; flex-direction: column; gap: 14px; padding: 24px; border-radius: 8px; background: var(--bark-2); border: 1px solid var(--line-dark); user-select: text; }
+.strip.is-drag .rev { user-select: none; }
+.rev__stars { color: var(--fox-hi); font-size: 18px; letter-spacing: 3px; }
+.rev__stars span { color: var(--line-dark); }
+.rev__text { color: #EADCCB; font-size: 15.5px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
+.rev__text p + p { margin-top: 8px; }
+.rev.is-open .rev__text { display: block; -webkit-line-clamp: unset; }
+.rev__more { align-self: flex-start; background: none; border: 0; padding: 0; color: var(--fox-hi); font: 500 15px var(--text); cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.rev__foot { margin-top: auto; display: grid; gap: 2px; padding-top: 14px; border-top: 1px solid var(--line-dark); font-size: 14px; color: var(--cream-soft); }
+.rev__foot b { color: var(--cream); font: 400 19px/1.2 var(--display); }
+.rev__src { justify-self: start; margin-top: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line-dark); color: var(--cream-soft); font-size: 13px; text-decoration: none; }
+a.rev__src:hover { color: var(--cream); border-color: var(--cream-soft); }
+.rev-sum { font-size: 15px; color: var(--cream-soft); }
+.rev-sum b { font: 400 40px/1 var(--display); color: var(--cream); margin-right: 6px; }
+.rail--dark .rail__btn { border-color: rgba(246,238,227,.35); color: var(--cream); }
+.rail--dark .rail__btn:hover { background: var(--cream); color: var(--bark); }
+.rail--dark .strip { scrollbar-color: var(--line-dark) transparent; }
+.rev-cta { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; color: var(--cream-soft); }
+.rev-cta p { margin-right: 6px; }

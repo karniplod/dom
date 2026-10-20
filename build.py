@@ -13,6 +13,7 @@ from houses import H, SITE, PHONE, PHONE_RAW
 PREVIEW = bool(os.environ.get("SITE_URL"))
 SITE = os.environ.get("SITE_URL", SITE).rstrip("/")
 from blog import POSTS, CATS
+from reviews import REVIEWS, REVIEW_LINKS
 
 SRC, SITE_DIR, ART = (os.path.join(ROOT, d) for d in ("src", "site", os.path.join("build", "artifact")))
 rd = lambda n: open(os.path.join(SRC, n), encoding="utf8").read()
@@ -255,8 +256,47 @@ def tour_tile(k):
   <span class="tour__body"><b>{h["name"]}</b><small>{n.group(1) + " точек обзора" if n else "3D-тур"}</small><span class="btn btn--sm btn--tour">Открыть 3D-тур</span></span>
 </a>'''
 
-def rail(items_html, label):
-    return f'''<div class="rail" data-rail><div class="strip" aria-label="{label}">{items_html}</div>
+def review_card(r):
+    h = H.get(r.get("house", ""))
+    stars = max(1, min(5, int(r.get("rating", 5))))
+    meta = " · ".join(x for x in [h["name"] if h else "", ru_date(r["date"]) if r.get("date") else ""] if x)
+    src = esc(r.get("source", ""))
+    src_html = (f'<a class="rev__src" href="{esc(r["url"])}" target="_blank" rel="noopener nofollow">{src}</a>' if r.get("url") else f'<span class="rev__src">{src}</span>') if src else ""
+    text = "".join(f"<p>{esc(p.strip())}</p>" for p in r["text"].split("\n") if p.strip())
+    return f'''<article class="rev">
+  <p class="rev__stars" aria-label="Оценка {stars} из 5">{"★" * stars}<span aria-hidden="true">{"★" * (5 - stars)}</span></p>
+  <div class="rev__text">{text}</div>
+  <button class="rev__more" type="button" hidden>Читать полностью</button>
+  <footer class="rev__foot"><b>{esc(r["name"])}</b>{f"<span>{meta}</span>" if meta else ""}{src_html}</footer>
+</article>'''
+
+def reviews_block(house=None):
+    """Отзывы гостей: карусель с перетаскиванием. Нет отзывов — на главной места для виджетов карт, на странице дома блока нет."""
+    items = [r for r in REVIEWS if not house or r.get("house") == house]
+    links = "".join(f'<a class="btn btn--ghost btn--sm" href="{esc(u)}" target="_blank" rel="noopener">{esc(n)}</a>' for n, u in REVIEW_LINKS.items() if u)
+    cta = f'<div class="rev-cta"><p>Отдыхали у нас? Расскажите, как всё прошло:</p>{links}</div>' if links else ""
+    if not items:
+        if house: return ""
+        return f'''<section class="band band--dark" id="reviews" aria-labelledby="rev-title"><div class="wrap">
+  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей</h2><p class="lead">Показываем отзывы с карт как есть, вместе с оценками.</p></div>
+  <div class="reviews"><div class="review-slot"><h3>Яндекс Карты</h3><p>Место для официального виджета рейтинга и отзывов Яндекса.</p></div><div class="review-slot"><h3>2ГИС</h3><p>Место для виджета отзывов 2ГИС.</p></div></div>
+  {cta}
+</div></section>'''
+    avg = sum(int(r.get("rating", 5)) for r in items) / len(items)
+    summary = f'<p class="rev-sum"><b class="tnum">{avg:.1f}'.replace(".", ",") + f'</b> из 5 · {len(items)} {plural_ru(len(items), "отзыв", "отзыва", "отзывов")}</p>'
+    title = "Отзывы гостей" + ("" if not house else " об этом доме")
+    return f'''<section class="band band--dark" id="reviews" aria-labelledby="rev-title"><div class="wrap">
+  <div class="sec-row"><div class="sec-head"><h2 class="h-sec" id="rev-title">{title}</h2><p class="lead">Отзывы публикуем слово в слово и пишем, где гость их оставил.</p></div>{summary}</div>
+  {rail("".join(review_card(r) for r in items), "Отзывы гостей", "rail--dark rail--rev")}
+  {cta}
+</div></section>'''
+
+def plural_ru(n, a, b, c):
+    m10, m100 = n % 10, n % 100
+    return a if m10 == 1 and m100 != 11 else b if 2 <= m10 <= 4 and not 10 <= m100 < 20 else c
+
+def rail(items_html, label, cls=""):
+    return f'''<div class="rail {cls}" data-rail><div class="strip" aria-label="{label}">{items_html}</div>
   <div class="rail__nav"><button class="rail__btn" type="button" data-step="-1" aria-label="Листать назад"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><button class="rail__btn" type="button" data-step="1" aria-label="Листать вперёд"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div></div>'''
 
 def home():
@@ -366,10 +406,7 @@ def home():
   </div>
 </div></section>
 
-<section class="band band--dark" id="reviews" aria-labelledby="rev-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей</h2><p class="lead">Показываем отзывы с карт как есть, вместе с оценками.</p></div>
-  <div class="reviews"><div class="review-slot"><h3>Яндекс Карты</h3><p>Место для официального виджета рейтинга и отзывов Яндекса.</p></div><div class="review-slot"><h3>2ГИС</h3><p>Место для виджета отзывов 2ГИС.</p></div></div>
-</div></section>
+{reviews_block()}
 
 <section class="band on-light" aria-labelledby="blog-title"><div class="wrap">
   <div class="sec-row"><div class="sec-head"><h2 class="h-sec" id="blog-title">Блог</h2><p class="lead">Как отметить праздник, сэкономить на аренде и провести вечер в бане.</p></div><a class="btn btn--ghost on-light" href="blog.html">Все статьи</a></div>
@@ -449,6 +486,8 @@ def house_page(k):
   <div class="seo__text"><h2 class="h-sec" id="s-title" style="color:var(--bark)">{h["name"]} в Перми посуточно</h2>{seo}</div>
   <div class="faq"><div class="sec-head"><h2 class="h-sec">Вопросы о доме</h2></div>{faq_block(h["faq"])}</div>
 </div></section>
+
+{reviews_block(k)}
 
 {order_band(k, k + "/" + h["card_photos"][1], "Заявка: " + h["name"], h["name"])}
 

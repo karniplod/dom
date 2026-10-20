@@ -104,6 +104,14 @@
     rail.addEventListener("scroll", edges, { passive: true }); edges();
   });
 
+  // Отзывы: длинный текст обрезан, кнопка «Читать полностью» раскрывает.
+  $$(".rev").forEach(function (r) {
+    var t = r.querySelector(".rev__text"), b = r.querySelector(".rev__more");
+    if (!t || !b) return;
+    if (t.scrollHeight > t.clientHeight + 4) b.hidden = false;
+    b.addEventListener("click", function () { var open = r.classList.toggle("is-open"); b.textContent = open ? "Свернуть" : "Читать полностью"; });
+  });
+
   // Частые вопросы: плавное раскрытие ответа.
   $$(".faq details").forEach(function (d) {
     var s = d.querySelector("summary"), a = d.querySelector(".faq__a");
