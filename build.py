@@ -51,6 +51,7 @@ ICONS = {
  "chat": '<path d="M4 5h16v11H9l-5 4V5Z"/><path d="M8 10h8M8 13h5"/>',
  "mail": '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="m3 7 9 6 9-6"/>',
  "pin": '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>',
+ "cube": '<path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
  "card": '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 10h18M7 15h4"/>',
 }
 def icon(n): return f'<svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[n]}</svg>'
@@ -237,9 +238,18 @@ def house_card(k):
     <ul>{"".join(f"<li>{f}</li>" for f in feats)}</ul>
     <p class="hcard__price"><b class="tnum">от {money(minp(h))}</b><span>за сутки</span><em class="disc">−{DISCOUNT}% на сайте</em></p>
     <div class="hcard__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--ghost on-light" href="{h["file"]}">Подробнее</a></div>
-    <p class="hcard__links"><a class="link" href="{h["tour"]}" target="_blank" rel="noopener">3D-тур</a><a class="link" href="{h["prepay"]}" target="_blank" rel="noopener">{icon("card")}Внести предоплату</a></p>
+    <div class="hcard__extra"><a class="btn btn--sm btn--tour" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}3D-тур</a><a class="btn btn--sm btn--ghost on-light btn--pay" href="{h["prepay"]}" target="_blank" rel="noopener">{icon("card")}Предоплата</a></div>
   </div>
 </article>'''
+
+def tour_tile(k):
+    h = H[k]
+    n = re.search(r"(\d+) точ", h["tourtxt"])
+    return f'''<a class="tour h-{k}" href="{h["tour"]}" target="_blank" rel="noopener">
+  {img(k + "/" + h["card_photos"][0], h["name"] + ", 3D-тур")}
+  <span class="tour__badge">{icon("cube")}3D</span>
+  <span class="tour__body"><b>{h["name"]}</b><small>{n.group(1) + " точек обзора" if n else "3D-тур"}</small><span class="btn btn--sm btn--tour">Открыть 3D-тур</span></span>
+</a>'''
 
 def rail(items_html, label):
     return f'''<div class="rail" data-rail><div class="strip" aria-label="{label}">{items_html}</div>
@@ -278,6 +288,11 @@ def home():
 <section class="band on-light" id="houses" aria-labelledby="houses-title"><div class="wrap">
   <div class="sec-head"><h2 class="h-sec" id="houses-title">Три дома, три характера</h2><p class="lead">В каждом доме баня, бассейн, бильярд, кухня и спальни. Выбирайте по стилю, числу гостей и дню недели.</p></div>
   <div class="houses">{"".join(house_card(k) for k in H)}</div>
+</div></section>
+
+<section class="band band--dark tours" id="tours" aria-labelledby="tours-title"><div class="wrap">
+  <div class="sec-row"><div class="sec-head"><h2 class="h-sec" id="tours-title">Пройдитесь по домам в 3D</h2><p class="lead">Откройте 3D-тур и осмотрите комнаты, баню, бассейн и бильярдную до брони, как будто вы уже внутри.</p></div></div>
+  <div class="tours__grid">{"".join(tour_tile(k) for k in H)}</div>
 </div></section>
 
 <section class="band band--soft" id="comfort" aria-labelledby="comfort-title"><div class="wrap comfort">
@@ -394,7 +409,7 @@ def house_page(k):
     <p class="intro">{h["intro"]}</p>
     <div class="dfacts">{facts}</div>
     <p class="dprice">от {money(minp(h))} <small>за сутки, {h["addr"]}</small></p>
-    <div class="hero__cta"><button class="btn" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--ghost" href="{h["tour"]}" target="_blank" rel="noopener">Открыть 3D-тур</a></div>
+    <div class="hero__cta"><button class="btn" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--ghost btn--ico" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}Открыть 3D-тур</a></div>
   </div></div>
 </section>
 
