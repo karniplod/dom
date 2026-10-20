@@ -586,3 +586,17 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 @media (max-width: 420px) { .hcard__links { font-size: 14px; gap: 6px 10px; } .hcard__links svg { width: 16px; height: 16px; } }
 .hcard__media a:first-child img { aspect-ratio: 4 / 3; }
 .hcard.h-en .hcard__media a:first-child img { object-position: 50% 22%; }
+
+/* скрытые страницы предоплаты */
+.paypage { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: clamp(28px, 5vw, 72px); align-items: start; }
+@media (max-width: 860px) { .paypage { grid-template-columns: 1fr; } .paypage__qr { display: none; } }
+.paypage__main { display: grid; gap: 22px; max-width: 680px; }
+.paypage__warn { display: grid; grid-template-columns: 30px 1fr; gap: 14px; padding: 18px 20px; border-radius: 6px; background: #F7E3CF; border-left: 4px solid var(--fox-btn); }
+.paypage__warn svg { width: 28px; height: 28px; fill: none; stroke: var(--fox-deep); stroke-width: 1.5; }
+.paypage__warn a { font-weight: 600; }
+.paysteps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 12px; }
+.paysteps li { counter-increment: s; display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; font-size: 17px; }
+.paysteps li::before { content: counter(s); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--hc, var(--bark)); color: var(--cream); font: 400 18px/1 var(--display); }
+.paypage__qr { margin: 0; padding: 20px; border-radius: 8px; background: var(--card); box-shadow: 0 1px 0 var(--line); border-top: 4px solid var(--hc, var(--fox)); text-align: center; }
+.paypage__qr img { width: 100%; height: auto; }
+.paypage__qr figcaption { margin-top: 10px; font-size: 14.5px; color: var(--ink-soft); }

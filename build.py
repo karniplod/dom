@@ -156,7 +156,7 @@ def footer(house=""):
 def order_band(house="", photo="mood/dinner", title="Оставьте заявку", alt="Ужин большой компанией"):
     if house:
         h = H[house]
-        extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p><p><a class="link" href="{h["prepay"]}" target="_blank" rel="noopener">Внести предоплату</a> — после того, как администратор подтвердил даты</p>'
+        extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p><p><a class="link" href="{h["prepay"]}">Внести предоплату</a> — после того, как администратор подтвердил даты</p>'
     else:
         extra = f'<p>Viber: <a class="nb tnum" href="viber://chat?number=%2B{VIBER_RAW[1:]}">{VIBER}</a></p><p><a class="link" href="{VK}" target="_blank" rel="noopener">Мы во ВКонтакте</a> · <a class="link" href="kontakty.html">Все контакты</a></p>'
     return f'''<section class="band band--soft on-light" id="order" aria-labelledby="order-title"><div class="wrap order">
@@ -238,7 +238,7 @@ def house_card(k):
     <ul>{"".join(f"<li>{f}</li>" for f in feats)}</ul>
     <p class="hcard__price"><b class="tnum">от {money(minp(h))}</b><span>за сутки</span><em class="disc">−{DISCOUNT}% на сайте</em></p>
     <div class="hcard__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--tour" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}3D-тур</a></div>
-    <p class="hcard__links"><a href="{h["file"]}">Подробнее о доме</a><a href="{h["prepay"]}" target="_blank" rel="noopener">{icon("card")}Внести предоплату</a></p>
+    <p class="hcard__links"><a href="{h["file"]}">Подробнее о доме</a><a href="{h["prepay"]}">{icon("card")}Внести предоплату</a></p>
   </div>
 </article>'''
 
@@ -270,7 +270,7 @@ def home():
     rows += '<tr><th scope="row">Для отдыха</th>' + "".join(f"<td>{extra[k]}</td>" for k in H) + "</tr>"
     for i, d in enumerate(["Пн – Чт", "Пятница", "Суббота", "Воскресенье"]):
         rows += f'<tr class="money{" money-first" if i == 0 else ""}"><th scope="row">{d}</th>' + "".join(f'<td class="tnum">{money(v["prices"][i])}</td>' for v in H.values()) + "</tr>"
-    rows += '<tr><th scope="row"><span class="sr">Ссылки</span></th>' + "".join(f'<td><a href="{v["file"]}">Подробнее о доме</a><br><a href="{v["prepay"]}" target="_blank" rel="noopener">Внести предоплату</a></td>' for v in H.values()) + "</tr>"
+    rows += '<tr><th scope="row"><span class="sr">Ссылки</span></th>' + "".join(f'<td><a href="{v["file"]}">Подробнее о доме</a><br><a href="{v["prepay"]}">Внести предоплату</a></td>' for v in H.values()) + "</tr>"
     posts = "".join(post_card(p) for p in POSTS[:3])
     body = f'''{header()}
 <main>
@@ -429,7 +429,7 @@ def house_page(k):
   <div class="sec-head"><h2 class="h-sec" id="p-title">Цена за сутки</h2><p class="lead">Заезд с {h["checkin"]}, выезд до {h["checkout"]} следующего дня. Цена для компании до {h["base"]} человек, за каждого следующего гостя +{h["extra"]} ₽.</p></div>
   <div class="price-days">{prices}</div>
   <p class="note">Праздники считаются как выходные. Залог 5 000 – 20 000 ₽, питомец +1 000 ₽. <b>Скидка {DISCOUNT}% при бронировании на сайте или через группу ВКонтакте.</b></p>
-  <div class="prepay" id="prepay">{icon("card")}<div><h3>Предоплата за {h["name"].replace("Дом", "дом")}</h3><p>{PREPAY_TXT}</p></div><a class="btn" href="{h["prepay"]}" target="_blank" rel="noopener">Внести предоплату</a></div>
+  <div class="prepay" id="prepay">{icon("card")}<div><h3>Предоплата за {h["name"].replace("Дом", "дом")}</h3><p>{PREPAY_TXT}</p></div><a class="btn" href="{h["prepay"]}">Внести предоплату</a></div>
 </div></section>
 
 <section class="band band--soft" aria-labelledby="r-title"><div class="wrap two">
@@ -468,7 +468,7 @@ def contacts_page():
     <p class="cplace__addr">{icon("pin")}Пермь, {h["addr"]}</p>
     <p>Заезд с {h["checkin"]}, выезд до {h["checkout"]}. Ночуют {h["sleep"]}, отдыхают до {h["max"]} гостей. Посмотреть дом можно ежедневно {h["view"]}.</p>
     <p class="cplace__links"><a class="link" href="https://yandex.ru/maps/?rtext=~{q}&amp;rtt=auto" target="_blank" rel="noopener">Маршрут в Яндекс Картах</a><a class="link" href="https://2gis.ru/perm/search/{q}" target="_blank" rel="noopener">Найти в 2ГИС</a></p>
-    <div class="cplace__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--ghost on-light" href="{h["prepay"]}" target="_blank" rel="noopener">Внести предоплату</a></div>
+    <div class="cplace__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--ghost on-light" href="{h["prepay"]}">Внести предоплату</a></div>
   </div>
 </article>'''
     body = f'''{header("contacts")}
@@ -496,7 +496,7 @@ def contacts_page():
 
 <section class="band on-light" aria-labelledby="pay-title"><div class="wrap two">
   <div><div class="sec-head"><h2 class="h-sec" id="pay-title">Предоплата</h2><p class="lead">{PREPAY_TXT}</p></div></div>
-  <div class="paylist">{"".join(f'<a class="paylist__item h-{k}" href="{v["prepay"]}" target="_blank" rel="noopener"><span><b>{v["name"]}</b><small>{v["addr"]}</small></span><span class="btn btn--sm">Внести предоплату</span></a>' for k, v in H.items())}</div>
+  <div class="paylist">{"".join(f'<a class="paylist__item h-{k}" href="{v["prepay"]}"><span><b>{v["name"]}</b><small>{v["addr"]}</small></span><span class="btn btn--sm">Внести предоплату</span></a>' for k, v in H.items())}</div>
 </div></section>
 
 <section class="band band--soft" aria-labelledby="req-title"><div class="wrap">
@@ -602,6 +602,41 @@ def post_page(p):
     extra = f'<meta property="article:published_time" content="{p["date"]}"><meta property="article:section" content="{CATS[p["cat"]]}">'
     return dict(fn=post_file(p), title=f'{p["title"]} — {BRAND}', desc=p["desc"], body=body, lds=[ld, cr_ld], og=p["cover"], ogtype="article", extra=extra, lastmod=p.get("updated", p["date"]))
 
+# ---------- скрытые страницы предоплаты (адреса как на старом сайте: /Предоплата1/ …) ----------
+def prepay_page(k):
+    h = H[k]
+    cr, cr_ld = crumbs([("Главная", "index.html"), (h["name"], h["file"]), ("Предоплата", None)])
+    body = f'''{header()}
+<main class="h-{k}">
+<section class="phead on-light"><div class="wrap">
+  {cr}
+  <h1>Предоплата: {h["name"].replace("Дом", "дом")}</h1>
+  <p class="lead">{h["addr"]}. Бронь подтверждается предоплатой 50% от стоимости, остальное доплачиваете при заселении.</p>
+</div></section>
+<section class="band band--tight on-light" aria-label="Как внести предоплату"><div class="wrap paypage">
+  <div class="paypage__main">
+    <div class="paypage__warn">{icon("card")}<p><b>Вносите предоплату только после того, как администратор записал вас и согласовал сумму.</b> Если ещё не договорились, позвоните: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
+    <ol class="paysteps">
+      <li>Нажмите «Оплатить через СБП», откроется страница Системы быстрых платежей.</li>
+      <li>Выберите свой банк и подтвердите переход в приложение.</li>
+      <li>Введите сумму, которую назвал администратор. В комментарии укажите имя и дату заезда.</li>
+    </ol>
+    <div class="hero__cta"><a class="btn" href="{h["sbp"]}" target="_blank" rel="noopener">Оплатить через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="{k}">Оставить заявку</button></div>
+    <p class="note">В случае отказа от брони предоплата возвращается, только если на это время запишется другой гость.</p>
+  </div>
+  <figure class="paypage__qr"><img src="img/qr/{k}.svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>
+</div></section>
+</main>
+{footer(k)}'''
+    n = h["prepay"].strip("/")
+    return dict(fn=f"{n}/index.html", title=f'Предоплата — {h["name"]} — {BRAND}', desc=f'Внести предоплату за {h["name"].replace("Дом", "дом")} через Систему быстрых платежей.',
+                body=body, lds=[cr_ld], og=k + "/facade", noindex=True)
+
+def relink(doc, up):
+    """Страница во вложенной папке: относительные ссылки на файлы сайта получают префикс ../"""
+    doc = re.sub(r'(\b(?:href|src)=")(?!https?:|#|tel:|mailto:|viber:|data:|/|\.\./)([^"]+")', lambda m: m.group(1) + up + m.group(2), doc)
+    return doc.replace('"prepay": "', '"prepay": "' + up)
+
 # ---------- сборка ----------
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Prata&display=swap">'
 FAV = 'data:image/svg+xml,' + rd("fox.svg").replace('<path ', '<path fill="%23D8650F" ').replace('"', "'").replace("#", "%23")
@@ -613,7 +648,7 @@ for d in (SITE_DIR + "/css", SITE_DIR + "/js", ART):
 open(f"{SITE_DIR}/css/styles.css", "w", encoding="utf8").write(css)
 open(f"{SITE_DIR}/js/app.js", "w", encoding="utf8").write(js)
 open(f"{SITE_DIR}/img/fox.svg", "w", encoding="utf8").write(rd("fox.svg").replace("<path ", '<path fill="#D8650F" '))
-pages = [home()] + [house_page(k) for k in H] + [contacts_page(), blog_index()] + [post_page(p) for p in POSTS]
+pages = [home()] + [house_page(k) for k in H] + [contacts_page(), blog_index()] + [post_page(p) for p in POSTS] + [prepay_page(k) for k in H]
 def og_image(pg):
     u = f'{SITE}/img/{pg["og"]}.jpg'
     wh = jpeg_size(f'{SITE_DIR}/img/{pg["og"]}.jpg')
@@ -624,15 +659,20 @@ def og_image(pg):
 RSS_LINK = f'<link rel="alternate" type="application/rss+xml" title="Блог — {BRAND}" href="rss.xml">'
 for pg in pages:
     fn, title, desc = pg["fn"], pg["title"], pg["desc"]
-    url = f"{SITE}/" + ("" if fn == "index.html" else fn)
+    url = f"{SITE}/" + (fn[:-len("index.html")] if fn.endswith("index.html") else fn)
     body = rd("fox.symbol.html") + "\n" + pg["body"]
     ld = "".join(f'<script type="application/ld+json">{json.dumps(x, ensure_ascii=False)}</script>' for x in pg["lds"])
     head = (f'<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
             f'<title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><link rel="canonical" href="{url}">'
-            f'<meta property="og:type" content="{pg.get("ogtype", "website")}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="{BRAND}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{url}">{og_image(pg)}{pg.get("extra", "")}{'<meta name="robots" content="noindex, nofollow">' if PREVIEW else ""}'
+            f'<meta property="og:type" content="{pg.get("ogtype", "website")}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="{BRAND}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{url}">{og_image(pg)}{pg.get("extra", "")}{'<meta name="robots" content="noindex, nofollow">' if PREVIEW or pg.get("noindex") else ""}'
             f'<meta name="theme-color" content="#22140E"><link rel="icon" href="{FAV}">{RSS_LINK}{FONTS}{ld}')
-    open(f"{SITE_DIR}/{fn}", "w", encoding="utf8").write(f'<!doctype html>\n<html lang="ru">\n<head>{head}<link rel="stylesheet" href="css/styles.css"></head>\n<body>\n{body}\n<script>{data_js}</script>\n<script src="js/app.js"></script>\n</body>\n</html>\n')
+    doc = f'<!doctype html>\n<html lang="ru">\n<head>{head}<link rel="stylesheet" href="css/styles.css"></head>\n<body>\n{body}\n<script>{data_js}</script>\n<script src="js/app.js"></script>\n</body>\n</html>\n'
     art = f'<!doctype html>\n<html lang="ru">\n<head>{head}<style>\n{css}\n</style></head>\n<body>\n{body}\n<script>{data_js}\n{js}</script>\n</body>\n</html>\n'
+    depth = fn.count("/")
+    if depth:
+        doc, art = relink(doc, "../" * depth), relink(art, "../" * depth)
+        for d in (SITE_DIR, ART): os.makedirs(os.path.join(d, os.path.dirname(fn)), exist_ok=True)
+    open(f"{SITE_DIR}/{fn}", "w", encoding="utf8").write(doc)
     open(f"{ART}/{fn}", "w", encoding="utf8").write(art)
 
 # robots, sitemap, rss, llms.txt
@@ -640,7 +680,7 @@ open(f"{SITE_DIR}/robots.txt", "w", encoding="utf8").write("User-agent: *\nDisal
 def sm(p):
     lm = f"<lastmod>{p['lastmod']}</lastmod>" if p.get("lastmod") else ""
     return f"<url><loc>{SITE}/{'' if p['fn'] == 'index.html' else p['fn']}</loc>{lm}<changefreq>monthly</changefreq></url>"
-urls = "".join(sm(p) for p in pages)
+urls = "".join(sm(p) for p in pages if not p.get("noindex"))
 open(f"{SITE_DIR}/sitemap.xml", "w", encoding="utf8").write(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
 def rfc822(iso):
     import datetime

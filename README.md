@@ -15,11 +15,13 @@ src/              исходники — правим только здесь
 site/             готовые страницы (собираются, руками не править)
   index.html, angliyskij-dom.html, russkij-dom.html, dom-na-sviyazeva.html
   kontakty.html, blog.html, blog-<статья>.html
+  Предоплата1/ (Русский), Предоплата2/ (Английский), Предоплата3/ (Свиязева) — скрытые страницы оплаты по СБП, адреса как на старом сайте, noindex
   img/en|ru|sv|mood/  обработанные фото
   robots.txt, sitemap.xml, rss.xml, llms.txt
 docs/             семантика и SEO, контент старого сайта, ссылки
 build.py          сборка: src → site
-tools/prep_img.py обработка фото из images/ в site/img/
+tools/prep_img.py обработка фото из images/ в site/img/ (файлы по имени)
+tools/make_qr.py  QR-коды СБП для страниц предоплаты (ссылки — поле sbp в houses.py)
 ```
 
 ## Работа в VS Code

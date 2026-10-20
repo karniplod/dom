@@ -192,7 +192,7 @@
       var inModal = !!form.closest("dialog");
       form.innerHTML = '<div class="form__ok" role="status"><svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg><h3>Заявка №' + num + ' принята</h3>' +
         '<p>' + h.name + ': администратор перезвонит, подтвердит даты и назовёт сумму предоплаты' + (DISCOUNT ? ' с учётом скидки ' + DISCOUNT + '%' : '') + '.</p>' +
-        '<p><a class="link" href="' + h.prepay + '" target="_blank" rel="noopener">Внести предоплату</a> можно после звонка администратора.</p>' +
+        '<p><a class="link" href="' + h.prepay + '">Внести предоплату</a> можно после звонка администратора.</p>' +
         (inModal ? '<div><button class="btn btn--sm" type="button" data-close>Закрыть</button></div>' : '') + '</div>';
     });
 
