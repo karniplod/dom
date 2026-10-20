@@ -2,25 +2,132 @@
    Данные домов приходят в window.HOUSES (собирается из src/houses.py, в MODX — из TV). */
 (function () {
   var HOUSES = window.HOUSES || {};
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+  var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  var rub = function (n) { return n.toLocaleString("ru-RU").replace(/ |,/g, " ") + " ₽"; };
+  var rub = function (n) { return n.toLocaleString("ru-RU").replace(/ |,/g, " ") + " ₽"; };
   function plural(n, a, b, c) { var m10 = n % 10, m100 = n % 100; if (m10 === 1 && m100 !== 11) return a; if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return b; return c; }
 
+  // Плавные окна на <dialog>: форма заявки, мобильное меню, просмотр фото.
+  var openCount = 0;
+  function openModal(dlg) {
+    if (!dlg || dlg.open || !dlg.showModal) return;
+    dlg.showModal(); openCount++;
+    document.documentElement.classList.add("is-locked");
+    requestAnimationFrame(function () { requestAnimationFrame(function () { dlg.classList.add("is-open"); }); });
+  }
+  function closeModal(dlg, then) {
+    if (!dlg || !dlg.open || dlg.classList.contains("is-closing")) return;
+    dlg.classList.remove("is-open"); dlg.classList.add("is-closing");
+    setTimeout(function () {
+      dlg.classList.remove("is-closing"); dlg.close();
+      if (--openCount <= 0) { openCount = 0; document.documentElement.classList.remove("is-locked"); }
+      if (then) then();
+    }, calm ? 0 : 320);
+  }
+  $$("dialog.modal").forEach(function (dlg) {
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); closeModal(dlg); });
+    dlg.addEventListener("click", function (e) { if (e.target === dlg || e.target.closest("[data-close]")) closeModal(dlg); });
+  });
 
+  // Меню: выпадающий список домов на десктопе, выезжающая панель на телефоне.
+  $$(".nav__drop").forEach(function (drop) {
+    var btn = drop.querySelector(".nav__btn");
+    function set(on) { drop.classList.toggle("is-open", on); btn.setAttribute("aria-expanded", on ? "true" : "false"); }
+    btn.addEventListener("click", function (e) { e.stopPropagation(); set(!drop.classList.contains("is-open")); });
+    document.addEventListener("click", function (e) { if (!drop.contains(e.target)) set(false); });
+    drop.addEventListener("keydown", function (e) { if (e.key === "Escape") { set(false); btn.focus(); } });
+    drop.addEventListener("focusout", function (e) { if (!drop.contains(e.relatedTarget)) set(false); });
+  });
+  var drawer = document.getElementById("drawer");
+  $$("[data-drawer]").forEach(function (b) { b.addEventListener("click", function () { openModal(drawer); }); });
+  if (drawer) $$("a", drawer).forEach(function (a) { a.addEventListener("click", function () { if (a.hash && a.pathname === location.pathname) closeModal(drawer); }); });
 
-  // Лайтбокс для фото: ссылки с data-lb открывают диалог с листанием.
-  var links = Array.prototype.slice.call(document.querySelectorAll("a[data-lb]"));
+  // Лайтбокс для фото: ссылки с data-lb открывают окно с листанием.
+  var links = $$("a[data-lb]");
   if (links.length) {
-    var dlg = document.createElement("dialog"); dlg.className = "lb"; dlg.setAttribute("aria-label", "Фото");
+    var dlg = document.createElement("dialog"); dlg.className = "modal lb"; dlg.setAttribute("aria-label", "Фото");
     dlg.innerHTML = '<img alt=""><div class="lb__bar"><button type="button" data-d="-1" aria-label="Предыдущее фото">Назад</button><span class="lb__cap"></span><span><button type="button" data-d="1" aria-label="Следующее фото">Дальше</button> <button type="button" data-close aria-label="Закрыть">Закрыть</button></span></div>';
     document.body.appendChild(dlg);
     var lbImg = dlg.querySelector("img"), lbCap = dlg.querySelector(".lb__cap"), cur = 0, group = links;
     function show(i) { cur = (i + group.length) % group.length; var a = group[cur]; lbImg.src = a.href; lbImg.alt = a.getAttribute("data-cap") || ""; lbCap.textContent = (a.getAttribute("data-cap") || "") + "  " + (cur + 1) + " / " + group.length; }
-    links.forEach(function (a) { a.addEventListener("click", function (e) { if (!dlg.showModal) return; e.preventDefault(); group = links.filter(function (x) { return x.getAttribute("data-lb") === a.getAttribute("data-lb"); }); show(group.indexOf(a)); dlg.showModal(); }); });
-    dlg.addEventListener("click", function (e) { var t = e.target; if (t === dlg || t.hasAttribute("data-close")) dlg.close(); else if (t.hasAttribute("data-d")) show(cur + Number(t.getAttribute("data-d"))); });
+    links.forEach(function (a) { a.addEventListener("click", function (e) { if (!dlg.showModal) return; e.preventDefault(); group = links.filter(function (x) { return x.getAttribute("data-lb") === a.getAttribute("data-lb"); }); show(group.indexOf(a)); openModal(dlg); }); });
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); closeModal(dlg); });
+    dlg.addEventListener("click", function (e) { var t = e.target; if (t === dlg || t.hasAttribute("data-close")) closeModal(dlg); else if (t.hasAttribute("data-d")) show(cur + Number(t.getAttribute("data-d"))); });
     dlg.addEventListener("keydown", function (e) { if (e.key === "ArrowRight") show(cur + 1); if (e.key === "ArrowLeft") show(cur - 1); });
   }
 
+  // Лента фото: перетаскивание мышью с инерцией, кнопки листания. На телефоне — родная прокрутка.
+  $$("[data-rail]").forEach(function (box) {
+    var rail = box.querySelector(".strip"), down = false, moved = false, x0 = 0, l0 = 0, lastX = 0, lastT = 0, v = 0, raf = 0;
+    function glide() { v *= 0.94; if (Math.abs(v) < 0.05) return; rail.scrollLeft -= v * 16; raf = requestAnimationFrame(glide); }
+    rail.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      down = true; moved = false; x0 = lastX = e.clientX; l0 = rail.scrollLeft; lastT = performance.now(); v = 0; cancelAnimationFrame(raf);
+    });
+    window.addEventListener("pointermove", function (e) {
+      if (!down) return;
+      var dx = e.clientX - x0;
+      if (!moved && Math.abs(dx) > 5) { moved = true; rail.classList.add("is-drag"); }
+      if (!moved) return;
+      var t = performance.now(); v = 0.8 * ((e.clientX - lastX) / Math.max(1, t - lastT)) + 0.2 * v; lastX = e.clientX; lastT = t;
+      rail.scrollLeft = l0 - dx;
+    });
+    window.addEventListener("pointerup", function () {
+      if (!down) return; down = false; rail.classList.remove("is-drag");
+      if (moved && !calm) raf = requestAnimationFrame(glide);
+    });
+    rail.addEventListener("click", function (e) { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
+    rail.addEventListener("dragstart", function (e) { e.preventDefault(); });
+    $$("[data-step]", box).forEach(function (b) {
+      b.addEventListener("click", function () { cancelAnimationFrame(raf); rail.scrollBy({ left: Number(b.getAttribute("data-step")) * rail.clientWidth * 0.8, behavior: calm ? "auto" : "smooth" }); });
+    });
+    function edges() { var max = rail.scrollWidth - rail.clientWidth - 2; box.classList.toggle("at-start", rail.scrollLeft <= 2); box.classList.toggle("at-end", rail.scrollLeft >= max); }
+    rail.addEventListener("scroll", edges, { passive: true }); edges();
+  });
+
+  // Частые вопросы: плавное раскрытие ответа.
+  $$(".faq details").forEach(function (d) {
+    var s = d.querySelector("summary"), a = d.querySelector(".faq__a");
+    if (!a || !a.animate) return;
+    s.addEventListener("click", function (e) {
+      if (calm) return;
+      e.preventDefault();
+      if (d.classList.contains("is-anim")) return;
+      d.classList.add("is-anim");
+      if (!d.open) {
+        d.open = true;
+        var h = a.scrollHeight;
+        a.animate([{ height: "0px", opacity: 0 }, { height: h + "px", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2,.7,.2,1)" }).onfinish = function () { d.classList.remove("is-anim"); };
+      } else {
+        d.classList.add("is-closing");
+        a.animate([{ height: a.offsetHeight + "px", opacity: 1 }, { height: "0px", opacity: 0 }], { duration: 260, easing: "ease-in-out" }).onfinish = function () { d.open = false; d.classList.remove("is-anim", "is-closing"); };
+      }
+    });
+  });
+
+  // Фильтр статей в блоге.
+  $$("[data-cat-filter]").forEach(function (bar) {
+    var cards = $$("[data-cat]", document.querySelector(bar.getAttribute("data-cat-filter")));
+    $$("button", bar).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var c = b.getAttribute("data-c");
+        $$("button", bar).forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+        cards.forEach(function (card) { card.hidden = c !== "all" && card.getAttribute("data-cat") !== c; });
+      });
+    });
+  });
+
+  // Копировать ссылку на статью.
+  $$("[data-copy]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var done = function () { b.textContent = "Ссылка скопирована"; };
+      if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(done, function () {}); else done();
+    });
+  });
+
+  // Форма заявки — в окне #order-modal на каждой странице.
+  var modal = document.getElementById("order-modal");
   var form = document.getElementById("order-form");
   if (!form) return;
   var fHouse = form.querySelector("#f-house"), fIn = form.querySelector("#f-in"), fOut = form.querySelector("#f-out"),
@@ -52,14 +159,15 @@
     if (fIn.value) { var n = new Date(fIn.value + "T12:00"); n.setDate(n.getDate() + 1); fOut.min = iso(n); if (!fOut.value || fOut.value <= fIn.value) fOut.value = iso(n); calc(); }
   });
 
-  // Кнопки «Оставить заявку» с поводом или домом подставляют значения в форму.
-  document.querySelectorAll("[data-occasion],[data-house]").forEach(function (btn) {
+  // Любая кнопка с data-order открывает форму; data-house и data-occasion подставляют значения.
+  $$("[data-order]").forEach(function (btn) {
     btn.addEventListener("click", function (e) {
+      e.preventDefault();
       var occ = btn.getAttribute("data-occasion"), house = btn.getAttribute("data-house");
       if (occ) { var r = form.querySelector('input[name="occasion"][value="' + occ + '"]'); if (r) r.checked = true; }
-      if (house) { fHouse.value = house; calc(); }
-      if (btn.tagName === "BUTTON") { e.preventDefault(); document.getElementById("order").scrollIntoView(); }
-      setTimeout(function () { form.querySelector("#f-name").focus({ preventScroll: true }); }, 400);
+      if (house && HOUSES[house]) { fHouse.value = house; calc(); }
+      var go = function () { openModal(modal); setTimeout(function () { var n = form.querySelector("#f-name"); if (n) n.focus({ preventScroll: true }); }, 350); };
+      if (drawer && drawer.open) closeModal(drawer, go); else go();
     });
   });
 
@@ -91,7 +199,8 @@
     var num = String(Date.now()).slice(-4);
     form.innerHTML = '<div class="form__ok" role="status"><svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg><h3>Заявка №' + num + ' принята</h3>' +
       '<p>' + h.name + ': администратор перезвонит, подтвердит даты и назовёт сумму предоплаты.</p>' +
-      '<p><a class="link" href="' + h.prepay + '" target="_blank" rel="noopener">Внести предоплату</a> можно после звонка администратора.</p></div>';
+      '<p><a class="link" href="' + h.prepay + '" target="_blank" rel="noopener">Внести предоплату</a> можно после звонка администратора.</p>' +
+      '<div><button class="btn btn--sm" type="button" data-close>Закрыть</button></div></div>';
   });
 
   if (form.dataset.house) fHouse.value = form.dataset.house;
