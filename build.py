@@ -153,7 +153,7 @@ def footer(house=""):
 {order_modal(house)}
 {drawer()}'''
 
-def order_band(house="", photo="mood/dinner", title="Оставьте заявку", alt="Ужин большой компанией"):
+def order_band(house="", photo="en/facade", title="Оставьте заявку", alt="Английский дом, фасад"):
     if house:
         h = H[house]
         extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p><p><a class="link" href="{h["prepay"]}">Внести предоплату</a> — после того, как администратор подтвердил даты</p>'
@@ -163,7 +163,7 @@ def order_band(house="", photo="mood/dinner", title="Оставьте заявк
   <div class="order__txt">
     <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты 50%, остальное — при заселении.</p><p class="disc-line">Скидка {DISCOUNT}% при бронировании на сайте или через группу ВКонтакте</p></div>
     <div class="order__contacts"><a class="big tnum nb" href="tel:{PHONE_RAW}">{PHONE}</a>{extra}</div>
-    <div class="order__photo">{img(photo, alt)}</div>
+    <div class="order__photo{" order__photo--tall" if photo == "en/facade" else ""}">{img(photo, alt)}</div>
   </div>
   {form(house, "o")}
 </div></section>'''

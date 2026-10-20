@@ -633,3 +633,7 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .hcard__zoom { position: absolute; left: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(20,12,8,.62); color: var(--cream); font-size: 14px; font-weight: 500; backdrop-filter: blur(6px); transition: background .2s; }
 .hcard__zoom svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
 .hcard__media a:first-child:hover .hcard__zoom { background: var(--fox-btn); }
+
+/* вертикальное фото фасада в блоке «Оставьте заявку» */
+.order__photo--tall { aspect-ratio: 3 / 4; }
+.order__photo--tall img { object-position: 50% 30%; }
