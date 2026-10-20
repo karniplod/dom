@@ -240,16 +240,16 @@ def home():
     posts = "".join(post_card(p) for p in POSTS[:3])
     body = f'''{header()}
 <main>
-<section class="hero-band" aria-labelledby="hero-title"><div class="wrap"><div class="hero">
-  {img("ru/hero", "Русский дом вечером, огни на фасаде", "hero__img", lazy=False)}
-  <div class="hero__in">
+<section class="hero" aria-labelledby="hero-title">
+  {img("ru/hero-2", "Русский дом: фасад и беседка во дворе", "hero__img", lazy=False)}
+  <div class="wrap"><div class="hero__in">
     <p class="hero__kicker">{BRAND}</p>
     <h1 id="hero-title">Снять дом с сауной и бассейном в Перми</h1>
     <p class="hero__sub">Три дома в трёх стилях: Английский, Русский и дом на Свиязева. Сауна, бассейн, бильярд и мангал, а на праздник можно позвать до 20 гостей.</p>
     <div class="hero__cta"><button class="btn" type="button" data-order>Оставить заявку</button><a class="btn btn--ghost" href="#houses">Выбрать дом</a></div>
     <div class="facts-row"><span>сутки от 15 000 ₽</span><span>до 20 гостей</span><span>в черте города</span><span>можно с питомцами</span></div>
-  </div>
-</div></div></section>
+  </div></div>
+</section>
 
 <section class="band on-light" id="houses" aria-labelledby="houses-title"><div class="wrap">
   <div class="sec-head"><h2 class="h-sec" id="houses-title">Три дома, три характера</h2><p class="lead">В каждом доме сауна, бассейн, бильярд, кухня и спальни. Выбирайте по стилю, числу гостей и дню недели.</p></div>
@@ -342,7 +342,7 @@ def home():
 {footer()}'''
     return dict(fn="index.html", title=f"Снять дом с сауной и бассейном в Перми посуточно — {BRAND}",
                 desc="Аренда домов с сауной, бассейном и бильярдом в Перми на сутки: Английский, Русский и дом на Свиязева. До 20 гостей, мангал, кухня. От 15 000 ₽ за сутки.",
-                body=body, lds=[ld_org(), ld_faq(HOME_FAQ)], og="ru/hero")
+                body=body, lds=[ld_org(), ld_faq(HOME_FAQ)], og="ru/hero-2")
 
 # ---------- страница дома ----------
 def house_page(k):
@@ -360,9 +360,9 @@ def house_page(k):
     cr, cr_ld = crumbs([("Главная", "index.html"), (h["name"], None)])
     body = f'''{header(k)}
 <main class="h-{k}">
-<section class="hero-band" aria-labelledby="d-title"><div class="wrap"><div class="dhero">
+<section class="dhero" aria-labelledby="d-title">
   {img(k + "/hero", h["name"] + ", " + h["gallery"][0][1], "dhero__img", lazy=False)}
-  <div class="dhero__in">
+  <div class="wrap"><div class="dhero__in">
     {cr}
     <p class="dhero__kicker">{h["kicker"]}</p>
     <h1 id="d-title">{h["h1"]}</h1>
@@ -370,8 +370,8 @@ def house_page(k):
     <div class="dfacts">{facts}</div>
     <p class="dprice">от {money(minp(h))} <small>за сутки, {h["addr"]}</small></p>
     <div class="hero__cta"><button class="btn" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--ghost" href="{h["tour"]}" target="_blank" rel="noopener">Открыть 3D-тур</a></div>
-  </div>
-</div></div></section>
+  </div></div>
+</section>
 
 <section class="band on-light" aria-labelledby="g-title"><div class="wrap">
   <div class="sec-head"><h2 class="h-sec" id="g-title">Фото дома</h2><p class="lead">Нажмите на фото, чтобы открыть крупно и пролистать.</p></div>
