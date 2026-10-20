@@ -551,3 +551,13 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .hinfo p { color: var(--ink-soft); }
 .hinfo a { color: var(--bark); font-weight: 600; }
 .included--svc { margin-top: 10px; }
+
+/* скидка 5% за бронь на сайте */
+.hcard__price { flex-wrap: wrap; }
+.hcard__price .disc, .disc-chip, .omodal__disc, .disc-line { font-style: normal; font-weight: 600; }
+.hcard__price .disc { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: #F7E3CF; color: var(--fox-deep); font-size: 13.5px; }
+.facts-row .disc-chip { background: var(--fox-btn); border-color: var(--fox-btn); color: var(--cream); }
+.omodal__disc { justify-self: start; padding: 5px 12px; border-radius: 999px; background: #F7E3CF; color: var(--fox-deep) !important; font-size: 14.5px; }
+.disc-line { color: var(--fox-deep); }
+.promo p a { color: inherit; }
+.sum-disc { margin-top: 4px; color: var(--fox-deep); font-weight: 600; font-size: 15px; }

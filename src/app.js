@@ -2,6 +2,7 @@
    Данные домов приходят в window.HOUSES (собирается из src/houses.py, в MODX — из TV). */
 (function () {
   var HOUSES = window.HOUSES || {};
+  var DISCOUNT = HOUSES._discount || 0; delete HOUSES._discount;
   var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
   var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -154,7 +155,7 @@
       var g = parseInt(fGuests.value, 10) || 0, over = Math.max(0, Math.min(g, h.max) - h.base);
       sum += over * h.extra;
       var note = over ? ', ' + over + ' ' + plural(over, "гость", "гостя", "гостей") + ' сверх ' + h.base + ' (+' + rub(over * h.extra) + ')' : '';
-      est.innerHTML = '<div><small>' + h.name + ', ' + nights + ' ' + plural(nights, "сутки", "суток", "суток") + note + '</small><div class="sum tnum">≈ ' + rub(sum) + '</div></div>' +
+      est.innerHTML = '<div><small>' + h.name + ', ' + nights + ' ' + plural(nights, "сутки", "суток", "суток") + note + '</small><div class="sum tnum">≈ ' + rub(sum) + '</div>' + (DISCOUNT ? '<div class="sum-disc tnum">со скидкой ' + DISCOUNT + '% на сайте ≈ ' + rub(Math.round(sum * (100 - DISCOUNT) / 100 / 10) * 10) + '</div>' : '') + '</div>' +
         '<small>Заезд с ' + h.checkin + ', выезд до ' + h.checkout + '. В цене до ' + h.base + ' гостей, далее ' + rub(h.extra) + ' за человека. Праздничные дни считаются по тарифу выходных, точную сумму назовёт администратор.</small>';
     }
     [fHouse, fIn, fOut].forEach(function (el) { el.addEventListener("change", calc); });
@@ -190,7 +191,7 @@
       var num = String(Date.now()).slice(-4);
       var inModal = !!form.closest("dialog");
       form.innerHTML = '<div class="form__ok" role="status"><svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg><h3>Заявка №' + num + ' принята</h3>' +
-        '<p>' + h.name + ': администратор перезвонит, подтвердит даты и назовёт сумму предоплаты.</p>' +
+        '<p>' + h.name + ': администратор перезвонит, подтвердит даты и назовёт сумму предоплаты' + (DISCOUNT ? ' с учётом скидки ' + DISCOUNT + '%' : '') + '.</p>' +
         '<p><a class="link" href="' + h.prepay + '" target="_blank" rel="noopener">Внести предоплату</a> можно после звонка администратора.</p>' +
         (inModal ? '<div><button class="btn btn--sm" type="button" data-close>Закрыть</button></div>' : '') + '</div>';
     });
