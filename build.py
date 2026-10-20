@@ -226,7 +226,11 @@ HOME_FAQ = [
 def house_card(k):
     h = H[k]; ph = h["card_photos"]
     caps = dict(h["gallery"])
-    media = "".join(f'<a href="img/{k}/{p}.jpg" data-lb="card-{k}" data-cap="{esc(h["name"] + ": " + caps.get(p, ""))}">{img(k + "/" + p, h["name"] + ": " + caps.get(p, "фото"))}</a>' for p in ph)
+    total = len(set(ph) | set(caps))
+    hint = f'<span class="hcard__zoom"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5M11 8.5v5M8.5 11h5"/></svg>Смотреть все {total} фото</span>'
+    media = "".join(f'<a href="img/{k}/{p}.jpg" data-lb="card-{k}" data-cap="{esc(h["name"] + ": " + caps.get(p, ""))}" aria-label="{esc(h["name"])}: открыть фото">{img(k + "/" + p, h["name"] + ": " + caps.get(p, "фото"))}{hint if i == 0 else ""}</a>' for i, p in enumerate(ph))
+    # остальные фото дома — в той же группе, чтобы из карточки листалась вся галерея дома
+    media += "".join(f'<a href="img/{k}/{p}.jpg" data-lb="card-{k}" data-cap="{esc(h["name"] + ": " + c)}" hidden></a>' for p, c in h["gallery"] if p not in ph)
     feats = {"en": ["Баня и бассейн", "Американский бильярд и камин", "4 спальни, кухня с духовкой", "Ночуют 12, отдыхают до 20"],
              "ru": ["Баня и бассейн", "Бильярдная, массажное кресло", "Терраса, беседка, выезд до 14:00", "Ночуют 12, отдыхают до 20"],
              "sv": ["Бассейн-джакузи круглый год", "Баня и бильярд", "Беседка с мангалом", "Ночуют 8, отдыхают до 15"]}[k]

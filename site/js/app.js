@@ -44,18 +44,35 @@
   $$("[data-drawer]").forEach(function (b) { b.addEventListener("click", function () { openModal(drawer); }); });
   if (drawer) $$("a", drawer).forEach(function (a) { a.addEventListener("click", function () { if (a.hash && a.pathname === location.pathname) closeModal(drawer); }); });
 
-  // Лайтбокс для фото: ссылки с data-lb открывают окно с листанием.
+  // Лайтбокс для фото: ссылки с data-lb открывают окно. Каждая группа data-lb листается отдельно.
   var links = $$("a[data-lb]");
   if (links.length) {
-    var dlg = document.createElement("dialog"); dlg.className = "modal lb"; dlg.setAttribute("aria-label", "Фото");
-    dlg.innerHTML = '<img alt=""><div class="lb__bar"><button type="button" data-d="-1" aria-label="Предыдущее фото">Назад</button><span class="lb__cap"></span><span><button type="button" data-d="1" aria-label="Следующее фото">Дальше</button> <button type="button" data-close aria-label="Закрыть">Закрыть</button></span></div>';
+    var ARR = function (d) { return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + (d < 0 ? "m15 5-7 7 7 7" : "m9 5 7 7-7 7") + '"/></svg>'; };
+    var dlg = document.createElement("dialog"); dlg.className = "modal lb"; dlg.setAttribute("aria-label", "Просмотр фото");
+    dlg.innerHTML = '<div class="lb__stage"><img alt=""><button class="lb__nav lb__prev" type="button" data-d="-1" aria-label="Предыдущее фото">' + ARR(-1) + '</button><button class="lb__nav lb__next" type="button" data-d="1" aria-label="Следующее фото">' + ARR(1) + '</button></div>' +
+      '<div class="lb__bar"><span class="lb__cap"></span><span class="lb__count tnum"></span></div>' +
+      '<button class="lb__x" type="button" data-close aria-label="Закрыть"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>';
     document.body.appendChild(dlg);
-    var lbImg = dlg.querySelector("img"), lbCap = dlg.querySelector(".lb__cap"), cur = 0, group = links;
-    function show(i) { cur = (i + group.length) % group.length; var a = group[cur]; lbImg.src = a.href; lbImg.alt = a.getAttribute("data-cap") || ""; lbCap.textContent = (a.getAttribute("data-cap") || "") + "  " + (cur + 1) + " / " + group.length; }
+    var lbImg = dlg.querySelector("img"), lbCap = dlg.querySelector(".lb__cap"), lbCount = dlg.querySelector(".lb__count"), cur = 0, group = links;
+    function show(i) {
+      cur = (i + group.length) % group.length; var a = group[cur];
+      lbImg.classList.add("is-swap");
+      var pre = new Image(); pre.onload = pre.onerror = function () { lbImg.src = a.href; lbImg.alt = a.getAttribute("data-cap") || ""; lbImg.classList.remove("is-swap"); }; pre.src = a.href;
+      lbCap.textContent = a.getAttribute("data-cap") || ""; lbCount.textContent = (cur + 1) + " / " + group.length;
+      dlg.classList.toggle("is-single", group.length < 2);
+    }
     links.forEach(function (a) { a.addEventListener("click", function (e) { if (!dlg.showModal) return; e.preventDefault(); group = links.filter(function (x) { return x.getAttribute("data-lb") === a.getAttribute("data-lb"); }); show(group.indexOf(a)); openModal(dlg); }); });
     dlg.addEventListener("cancel", function (e) { e.preventDefault(); closeModal(dlg); });
-    dlg.addEventListener("click", function (e) { var t = e.target; if (t === dlg || t.hasAttribute("data-close")) closeModal(dlg); else if (t.hasAttribute("data-d")) show(cur + Number(t.getAttribute("data-d"))); });
+    dlg.addEventListener("click", function (e) {
+      var t = e.target, d = t.closest("[data-d]");
+      if (d) show(cur + Number(d.getAttribute("data-d")));
+      else if (t === dlg || t.classList.contains("lb__stage") || t.closest("[data-close]")) closeModal(dlg);
+    });
     dlg.addEventListener("keydown", function (e) { if (e.key === "ArrowRight") show(cur + 1); if (e.key === "ArrowLeft") show(cur - 1); });
+    // Свайп на телефоне
+    var sx = 0, sy = 0;
+    dlg.addEventListener("touchstart", function (e) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+    dlg.addEventListener("touchend", function (e) { var dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) show(cur + (dx < 0 ? 1 : -1)); }, { passive: true });
   }
 
   // Лента фото: перетаскивание мышью с инерцией, кнопки листания. На телефоне — родная прокрутка.
