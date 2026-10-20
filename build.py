@@ -9,11 +9,26 @@ from urllib.parse import quote
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 from houses import H, SITE, PHONE, PHONE_RAW
+# Превью на GitHub Pages: SITE_URL=https://karniplod.github.io/dom — мета-теги и картинки ведут туда, поиск закрыт.
+PREVIEW = bool(os.environ.get("SITE_URL"))
+SITE = os.environ.get("SITE_URL", SITE).rstrip("/")
 from blog import POSTS, CATS
 
 SRC, SITE_DIR, ART = (os.path.join(ROOT, d) for d in ("src", "site", os.path.join("build", "artifact")))
 rd = lambda n: open(os.path.join(SRC, n), encoding="utf8").read()
 esc = html.escape
+def jpeg_size(path):
+    """Ширина и высота JPEG без Pillow — для og:image:width/height."""
+    with open(path, "rb") as f:
+        data = f.read()
+    i = 2
+    while i < len(data):
+        if data[i] != 0xFF: i += 1; continue
+        m = data[i + 1]
+        if m in (0xC0, 0xC1, 0xC2):
+            return int.from_bytes(data[i + 7:i + 9], "big"), int.from_bytes(data[i + 5:i + 7], "big")
+        i += 2 + int.from_bytes(data[i + 2:i + 4], "big")
+    return None
 def money(n): return f"{n:,}".replace(",", " ") + " ₽"
 def minp(h): return min(h["prices"])
 
@@ -183,7 +198,7 @@ def ld_faq(items):
     return {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in items]}
 ORG = {"@type": "Organization", "name": BRAND, "url": SITE + "/", "logo": SITE + "/img/fox.svg"}
 def ld_org():
-    return {"@context": "https://schema.org", **ORG, "telephone": PHONE, "email": MAIL,
+    return {"@context": "https://schema.org", **ORG, "image": f"{SITE}/img/ru/hero-2.jpg", "telephone": PHONE, "email": MAIL,
             "sameAs": [VK], "department": [{"@type": "LodgingBusiness", "name": v["name"], "url": f'{SITE}/{v["file"]}'} for v in H.values()]}
 
 # ---------- главная ----------
@@ -340,7 +355,7 @@ def home():
 {footer()}'''
     return dict(fn="index.html", title=f"Снять дом с сауной и бассейном в Перми посуточно — {BRAND}",
                 desc="Аренда домов с сауной, бассейном и бильярдом в Перми на сутки: Английский, Русский и дом на Свиязева. До 20 гостей, мангал, кухня. От 15 000 ₽ за сутки.",
-                body=body, lds=[ld_org(), ld_faq(HOME_FAQ)], og="ru/hero-2")
+                body=body, lds=[ld_org(), ld_faq(HOME_FAQ)], og="ru/hero-2", og_alt="Русский дом: фасад и беседка во дворе")
 
 # ---------- страница дома ----------
 def house_page(k):
@@ -563,6 +578,13 @@ open(f"{SITE_DIR}/css/styles.css", "w", encoding="utf8").write(css)
 open(f"{SITE_DIR}/js/app.js", "w", encoding="utf8").write(js)
 open(f"{SITE_DIR}/img/fox.svg", "w", encoding="utf8").write(rd("fox.svg").replace("<path ", '<path fill="#D8650F" '))
 pages = [home()] + [house_page(k) for k in H] + [contacts_page(), blog_index()] + [post_page(p) for p in POSTS]
+def og_image(pg):
+    u = f'{SITE}/img/{pg["og"]}.jpg'
+    wh = jpeg_size(f'{SITE_DIR}/img/{pg["og"]}.jpg')
+    alt = esc(pg.get("og_alt", pg["title"]))
+    size = f'<meta property="og:image:width" content="{wh[0]}"><meta property="og:image:height" content="{wh[1]}">' if wh else ""
+    return (f'<meta property="og:image" content="{u}"><meta property="og:image:secure_url" content="{u}"><meta property="og:image:type" content="image/jpeg">{size}<meta property="og:image:alt" content="{alt}">'
+            f'<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{u}"><link rel="image_src" href="{u}">')
 RSS_LINK = f'<link rel="alternate" type="application/rss+xml" title="Блог — {BRAND}" href="rss.xml">'
 for pg in pages:
     fn, title, desc = pg["fn"], pg["title"], pg["desc"]
@@ -571,14 +593,14 @@ for pg in pages:
     ld = "".join(f'<script type="application/ld+json">{json.dumps(x, ensure_ascii=False)}</script>' for x in pg["lds"])
     head = (f'<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
             f'<title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><link rel="canonical" href="{url}">'
-            f'<meta property="og:type" content="{pg.get("ogtype", "website")}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="{BRAND}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{SITE}/img/{pg["og"]}.jpg">{pg.get("extra", "")}'
+            f'<meta property="og:type" content="{pg.get("ogtype", "website")}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="{BRAND}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{url}">{og_image(pg)}{pg.get("extra", "")}{'<meta name="robots" content="noindex, nofollow">' if PREVIEW else ""}'
             f'<meta name="theme-color" content="#22140E"><link rel="icon" href="{FAV}">{RSS_LINK}{FONTS}{ld}')
     open(f"{SITE_DIR}/{fn}", "w", encoding="utf8").write(f'<!doctype html>\n<html lang="ru">\n<head>{head}<link rel="stylesheet" href="css/styles.css"></head>\n<body>\n{body}\n<script>{data_js}</script>\n<script src="js/app.js"></script>\n</body>\n</html>\n')
     art = f'<!doctype html>\n<html lang="ru">\n<head>{head}<style>\n{css}\n</style></head>\n<body>\n{body}\n<script>{data_js}\n{js}</script>\n</body>\n</html>\n'
     open(f"{ART}/{fn}", "w", encoding="utf8").write(art)
 
 # robots, sitemap, rss, llms.txt
-open(f"{SITE_DIR}/robots.txt", "w", encoding="utf8").write(f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n")
+open(f"{SITE_DIR}/robots.txt", "w", encoding="utf8").write("User-agent: *\nDisallow: /\n" if PREVIEW else f"User-agent: *\nAllow: /\n\nSitemap: {SITE}/sitemap.xml\n")
 def sm(p):
     lm = f"<lastmod>{p['lastmod']}</lastmod>" if p.get("lastmod") else ""
     return f"<url><loc>{SITE}/{'' if p['fn'] == 'index.html' else p['fn']}</loc>{lm}<changefreq>monthly</changefreq></url>"
