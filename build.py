@@ -83,15 +83,16 @@ def drawer():
   </div>
 </dialog>'''
 
-def form(house=""):
+def form(house="", p="f"):
+    """Форма заявки. p — префикс id: «f» в окне, «o» в блоке внизу страницы."""
     opts = "".join(f'<option value="{k}"{" selected" if k == house else ""}>{v["name"]} — до {v["max"]} гостей</option>' for k, v in H.items())
-    return f'''<form class="form" id="order-form" novalidate>
-  <div class="field full"><label for="f-house">Дом</label><select id="f-house" name="house"><option value="">Выберите дом</option>{opts}</select></div>
-  <div class="field"><label for="f-in">Заезд</label><input id="f-in" name="checkin" type="date"></div>
-  <div class="field"><label for="f-out">Выезд</label><input id="f-out" name="checkout" type="date"></div>
-  <div class="estimate" id="estimate" aria-live="polite"></div>
-  <div class="field"><label for="f-guests">Сколько гостей</label><input id="f-guests" name="guests" type="number" min="1" max="20" inputmode="numeric" placeholder="до 20"></div>
-  <div class="field"><label for="f-contact">Как с вами связаться</label><select id="f-contact" name="contact"><option>Позвонить</option><option>Telegram</option><option>MAX</option><option>WhatsApp</option></select></div>
+    return f'''<form class="form order-form" id="{p}-form" novalidate>
+  <div class="field full"><label for="{p}-house">Дом</label><select id="{p}-house" name="house"><option value="">Выберите дом</option>{opts}</select></div>
+  <div class="field"><label for="{p}-in">Заезд</label><input id="{p}-in" name="checkin" type="date"></div>
+  <div class="field"><label for="{p}-out">Выезд</label><input id="{p}-out" name="checkout" type="date"></div>
+  <div class="estimate" aria-live="polite"></div>
+  <div class="field"><label for="{p}-guests">Сколько гостей</label><input id="{p}-guests" name="guests" type="number" min="1" max="20" inputmode="numeric" placeholder="до 20"></div>
+  <div class="field"><label for="{p}-contact">Как с вами связаться</label><select id="{p}-contact" name="contact"><option>Позвонить</option><option>Telegram</option><option>MAX</option><option>WhatsApp</option></select></div>
   <fieldset class="field full"><legend>Повод</legend><div class="chips">
     <label><input type="radio" name="occasion" value="birthday"><span>День рождения</span></label>
     <label><input type="radio" name="occasion" value="corporate"><span>Корпоратив</span></label>
@@ -99,13 +100,13 @@ def form(house=""):
     <label><input type="radio" name="occasion" value="family"><span>Семья</span></label>
     <label><input type="radio" name="occasion" value="other"><span>Другое</span></label>
   </div></fieldset>
-  <div class="field"><label for="f-name">Имя</label><input id="f-name" name="name" type="text" autocomplete="name"></div>
-  <div class="field"><label for="f-phone">Телефон</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 (___) ___-__-__"></div>
-  <div class="field full"><label for="f-comment">Комментарий</label><textarea id="f-comment" name="comment" placeholder="Например: приедем с собакой, нужен детский стульчик"></textarea></div>
-  <div class="hp" aria-hidden="true"><label for="f-website">Сайт</label><input id="f-website" name="website" tabindex="-1" autocomplete="off"></div>
-  <label class="check full"><input type="checkbox" id="f-agree" name="agree"><span>Согласен на обработку персональных данных по <a class="link" href="#privacy">политике конфиденциальности</a></span></label>
-  <label class="check full"><input type="checkbox" id="f-sms" name="sms"><span>Можно прислать SMS о брони и после отдыха</span></label>
-  <p class="err full" id="f-err" role="alert" hidden></p>
+  <div class="field"><label for="{p}-name">Имя</label><input id="{p}-name" name="name" type="text" autocomplete="name"></div>
+  <div class="field"><label for="{p}-phone">Телефон</label><input id="{p}-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 (___) ___-__-__"></div>
+  <div class="field full"><label for="{p}-comment">Комментарий</label><textarea id="{p}-comment" name="comment" placeholder="Например: приедем с собакой, нужен детский стульчик"></textarea></div>
+  <div class="hp" aria-hidden="true"><label for="{p}-website">Сайт</label><input id="{p}-website" name="website" tabindex="-1" autocomplete="off"></div>
+  <label class="check full"><input type="checkbox" id="{p}-agree" name="agree"><span>Согласен на обработку персональных данных по <a class="link" href="#privacy">политике конфиденциальности</a></span></label>
+  <label class="check full"><input type="checkbox" id="{p}-sms" name="sms"><span>Можно прислать SMS о брони и после отдыха</span></label>
+  <p class="err full" role="alert" hidden></p>
   <div class="full"><button class="btn" type="submit">Отправить заявку</button></div>
 </form>'''
 
@@ -138,19 +139,16 @@ def footer(house=""):
 def order_band(house="", photo="mood/dinner", title="Оставьте заявку", alt="Ужин большой компанией"):
     if house:
         h = H[house]
-        extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p>'
-        btns = f'<button class="btn" type="button" data-order data-house="{house}">Оставить заявку</button><a class="btn btn--ghost on-light" href="{h["prepay"]}" target="_blank" rel="noopener">Внести предоплату</a>'
+        extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p><p><a class="link" href="{h["prepay"]}" target="_blank" rel="noopener">Внести предоплату</a> — после того, как администратор подтвердил даты</p>'
     else:
         extra = f'<p>Viber: <a class="nb tnum" href="viber://chat?number=%2B{VIBER_RAW[1:]}">{VIBER}</a></p><p><a class="link" href="{VK}" target="_blank" rel="noopener">Мы во ВКонтакте</a> · <a class="link" href="kontakty.html">Все контакты</a></p>'
-        btns = '<button class="btn" type="button" data-order>Оставить заявку</button>'
     return f'''<section class="band band--soft on-light" id="order" aria-labelledby="order-title"><div class="wrap order">
-  <div class="order__photo">{img(photo, alt)}</div>
   <div class="order__txt">
     <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним, подтвердим даты и назовём сумму предоплаты. Бронь действует после предоплаты.</p></div>
     <div class="order__contacts"><a class="big tnum nb" href="tel:{PHONE_RAW}">{PHONE}</a>{extra}</div>
-    <div class="hero__cta">{btns}</div>
-    {'<p class="note">Предоплату вносите после того, как администратор подтвердил даты.</p>' if house else ""}
+    <div class="order__photo">{img(photo, alt)}</div>
   </div>
+  {form(house, "o")}
 </div></section>'''
 
 def faq_block(items, open_first=True):

@@ -259,12 +259,13 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 @media (max-width: 760px) { .reviews { grid-template-columns: 1fr; } }
 
 /* форма */
-.order { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 88px); align-items: center; }
+.order { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(32px, 6vw, 88px); align-items: start; }
+.order > .form { background: var(--card); padding: clamp(20px, 3vw, 36px); border-radius: 6px; box-shadow: 0 1px 0 var(--line), 0 30px 60px -40px rgba(34,20,14,.6); }
 @media (max-width: 900px) { .order { grid-template-columns: 1fr; } }
 .order__txt { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
 .order__txt .sec-head { margin-bottom: 0; }
-.order__photo { border-radius: 200px 200px 6px 6px; overflow: hidden; aspect-ratio: 4 / 3.4; }
-@media (max-width: 900px) { .order__photo { border-radius: 6px; aspect-ratio: 16 / 10; } }
+.order__photo { margin-top: 6px; border-radius: 6px; overflow: hidden; aspect-ratio: 4 / 3; }
+@media (max-width: 900px) { .order__photo { display: none; } }
 .order__photo img { width: 100%; height: 100%; object-fit: cover; }
 .order__contacts { display: grid; gap: 8px; }
 .order__contacts .big { font: 400 30px/1.1 var(--display); text-decoration: none; }

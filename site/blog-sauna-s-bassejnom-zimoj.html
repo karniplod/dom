@@ -112,11 +112,11 @@
   <div class="omodal__box">
     <button class="x" type="button" data-close aria-label="Закрыть форму"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     <div class="omodal__head"><h2 id="om-title">Оставить заявку</h2><p>Перезвоним, подтвердим даты и назовём сумму предоплаты. Или позвоните: <a class="nb tnum" href="tel:+73422776622">+7 (342) 277-66-22</a></p></div>
-    <form class="form" id="order-form" novalidate>
+    <form class="form order-form" id="f-form" novalidate>
   <div class="field full"><label for="f-house">Дом</label><select id="f-house" name="house"><option value="">Выберите дом</option><option value="en">Английский дом — до 20 гостей</option><option value="ru">Русский дом — до 20 гостей</option><option value="sv">Дом на Свиязева — до 15 гостей</option></select></div>
   <div class="field"><label for="f-in">Заезд</label><input id="f-in" name="checkin" type="date"></div>
   <div class="field"><label for="f-out">Выезд</label><input id="f-out" name="checkout" type="date"></div>
-  <div class="estimate" id="estimate" aria-live="polite"></div>
+  <div class="estimate" aria-live="polite"></div>
   <div class="field"><label for="f-guests">Сколько гостей</label><input id="f-guests" name="guests" type="number" min="1" max="20" inputmode="numeric" placeholder="до 20"></div>
   <div class="field"><label for="f-contact">Как с вами связаться</label><select id="f-contact" name="contact"><option>Позвонить</option><option>Telegram</option><option>MAX</option><option>WhatsApp</option></select></div>
   <fieldset class="field full"><legend>Повод</legend><div class="chips">
@@ -132,7 +132,7 @@
   <div class="hp" aria-hidden="true"><label for="f-website">Сайт</label><input id="f-website" name="website" tabindex="-1" autocomplete="off"></div>
   <label class="check full"><input type="checkbox" id="f-agree" name="agree"><span>Согласен на обработку персональных данных по <a class="link" href="#privacy">политике конфиденциальности</a></span></label>
   <label class="check full"><input type="checkbox" id="f-sms" name="sms"><span>Можно прислать SMS о брони и после отдыха</span></label>
-  <p class="err full" id="f-err" role="alert" hidden></p>
+  <p class="err full" role="alert" hidden></p>
   <div class="full"><button class="btn" type="submit">Отправить заявку</button></div>
 </form>
   </div>
