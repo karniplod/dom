@@ -25,7 +25,7 @@
   <p class="bk-warn bk-app__offline" data-app-offline hidden>Нет связи с интернетом. Занятость дат не показывается — она всегда загружается заново.</p>
   <main class="bk-app__main">
     <section data-app-pane="book">
-      <h1 class="bk-app__h1">Забронировать дом</h1>
+      <h1 class="bk-app__h1">Забронировать Дом</h1>
       [[!booking.form? &mode=`full` &client=`pwa`]]
     </section>
     <section data-app-pane="request" hidden>

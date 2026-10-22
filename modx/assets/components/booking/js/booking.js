@@ -307,7 +307,7 @@
     this.api.call('booking_get_availability', { house: h.code, addon: 1, date: date }, 'GET').then(function (res) {
       if (!res.success) { self.el.slots.textContent = res.message; return; }
       var d = res.data;
-      if (d.day_busy) { self.el.slots.innerHTML = '<span class="bk-warn">В этот день дом забронирован — баня занята</span>'; return; }
+      if (d.day_busy) { self.el.slots.innerHTML = '<span class="bk-warn">В этот день Дом забронирован — баня занята</span>'; return; }
       self.el.slots.innerHTML = d.slots_busy.length
         ? 'Занято: ' + d.slots_busy.map(function (s) { return esc(s.from + '–' + s.to); }).join(', ') + '. Между сеансами ' + d.buffer_minutes + ' мин на уборку.'
         : 'Весь день свободен.';
@@ -667,7 +667,7 @@
     var self = this, f = this.listFilter;
     var st = [['new,confirmed', 'Активные'], ['new', 'Новые'], ['cancel_requested', 'Просят отмену'], ['confirmed', 'Подтверждённые'], ['completed', 'Завершённые'], ['cancelled', 'Отменённые'], ['', 'Все']];
     this.pane.innerHTML = '<form class="bk-bar" data-filter><select name="status">' + st.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === f.status ? ' selected' : '') + '>' + s[1] + '</option>'; }).join('') + '</select>'
-      + '<select name="house">' + this.houseOptions(f.house, 'Все дома') + '</select><input name="q" type="search" placeholder="Имя, телефон, №" value="' + esc(f.q) + '">'
+      + '<select name="house">' + this.houseOptions(f.house, 'Все Дома') + '</select><input name="q" type="search" placeholder="Имя, телефон, №" value="' + esc(f.q) + '">'
       + '<button class="bk-btn bk-btn--sm bk-btn--ghost" type="submit">Найти</button>'
       + '<button class="bk-btn bk-btn--sm" type="button" data-manual>Бронь по телефону</button></form><div class="bk-listwrap"><p class="bk-muted">Загружаем…</p></div>';
     var ff = qs(this.pane, '[data-filter]');
@@ -695,7 +695,7 @@
     var self = this, box = qs(this.dialog, '.bk-dialog__body');
     box.innerHTML = '<h3>Бронь по телефону</h3><p class="bk-muted">Сразу подтверждённая: даты займутся. Те же проверки пересечений, что и при подтверждении.</p>'
       + '<form class="bk-formgrid" data-manual-form><label class="bk-field"><span>Дом</span><select name="house" required>' + this.houseOptions('') + '</select></label>'
-      + '<label class="bk-field"><span>Только баня</span><select name="addon"><option value="0">нет, дом на сутки</option><option value="1">да, баня по часам</option></select></label>'
+      + '<label class="bk-field"><span>Только баня</span><select name="addon"><option value="0">нет, Дом на сутки</option><option value="1">да, баня по часам</option></select></label>'
       + '<label class="bk-field"><span>Заезд / дата</span><input name="date_from" type="date" required></label><label class="bk-field"><span>Выезд</span><input name="date_to" type="date"></label>'
       + '<label class="bk-field"><span>Баня с</span><input name="time_from" type="time" step="1800"></label><label class="bk-field"><span>Баня до</span><input name="time_to" type="time" step="1800"></label>'
       + '<label class="bk-field"><span>Гостей</span><input name="guests" type="number" min="1" required></label><label class="bk-field"><span>Питомцев</span><input name="pets" type="number" min="0" value="0"></label>'
@@ -734,7 +734,7 @@
           + '<label class="bk-field"><span>Выезд</span><input name="checkout_time" type="time" value="' + h.checkout_time + '"></label>'
           + '<label class="bk-field"><span>Порядок</span><input name="sort" type="number" min="0" value="' + h.sort + '"></label>'
           + '<label class="bk-check"><input type="checkbox" name="active"' + (h.active ? ' checked' : '') + '> показывать в форме</label>'
-          + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Сохранить дом</button></div></form>'
+          + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Сохранить Дом</button></div></form>'
           + '<form class="bk-formgrid" data-addon="' + esc(h.code) + '"><input type="hidden" name="house" value="' + esc(h.code) + '">'
           + '<label class="bk-check bk-full"><input type="checkbox" name="bookable_separately"' + (h.addon_bookable_separately ? ' checked' : '') + '> баню можно бронировать отдельно (по часам)</label>'
           + '<label class="bk-field"><span>Цена бани за час, ₽</span><input name="price_per_hour" type="number" min="1" value="' + (a.price_per_hour || '') + '"></label>'
@@ -837,7 +837,7 @@
         + '<div class="bk-full"><button class="bk-btn" type="submit">Закрыть</button></div></form></section>'
         + (res.data.items.length ? '<table class="bk-table"><thead><tr><th>Дом</th><th>Что</th><th>Даты</th><th>Причина</th><th>Кто</th><th></th></tr></thead><tbody>'
           + res.data.items.map(function (s) {
-            return '<tr><td>' + esc(s.house_name) + '</td><td>' + (s.addon_id ? 'баня' + (s.time_from ? ' ' + s.time_from.slice(0, 5) + '–' + s.time_to.slice(0, 5) : '') : 'дом') + '</td>'
+            return '<tr><td>' + esc(s.house_name) + '</td><td>' + (s.addon_id ? 'баня' + (s.time_from ? ' ' + s.time_from.slice(0, 5) + '–' + s.time_to.slice(0, 5) : '') : 'Дом') + '</td>'
               + '<td>' + human(s.date_from) + ' — ' + human(s.date_to) + '</td><td>' + esc(s.reason) + '</td><td><small>' + esc(s.created_by) + '</small></td>'
               + '<td><button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-del="' + s.id + '">Открыть</button></td></tr>';
           }).join('') + '</tbody></table>' : '<p class="bk-muted">Закрытых дат нет.</p>');
@@ -889,7 +889,7 @@
     this.pane.innerHTML = '<section class="bk-box"><h3>Перенос прежних заявок</h3><p class="bk-muted">Заявки из раздела «Заявки» переносятся в брони: новые и «связались» — новыми, подтверждённые — подтверждёнными (если даты свободны), выполненные — завершёнными, отклонённые — отменёнными. Повторный запуск ничего не дублирует.</p>'
       + '<div class="bk-bar"><button type="button" class="bk-btn bk-btn--ghost" data-m="preview">Посмотреть</button><button type="button" class="bk-btn" data-m="run">Перенести</button>'
       + '<button type="button" class="bk-btn bk-btn--danger" data-m="retire">Вывести прежние «Заявки» из работы</button></div><div data-mout></div></section>';
-    var LABEL = { move: 'будет перенесена', exists: 'уже перенесена', no_house: 'дом не найден', bad_dates: 'неверные даты' };
+    var LABEL = { move: 'будет перенесена', exists: 'уже перенесена', no_house: 'Дом не найден', bad_dates: 'неверные даты' };
     qsa(this.pane, '[data-m]').forEach(function (b) {
       b.addEventListener('click', function () {
         var op = b.getAttribute('data-m');

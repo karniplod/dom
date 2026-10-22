@@ -46,9 +46,9 @@ $tplId = $textTpl ? $textTpl->get('id') : (int)$modx->getOption('default_templat
 $formPage = (int)$modx->getOption('booking.form_page');
 if (!$exists($formPage)) {
     $page = $modx->getObject(modResource::class, ['alias' => 'booking', 'parent' => 0, 'deleted' => 0]) ?: $make([
-        'pagetitle' => 'Бронирование', 'longtitle' => 'Забронировать дом с баней', 'alias' => 'booking', 'parent' => 0,
+        'pagetitle' => 'Бронирование', 'longtitle' => 'Забронировать Дом с баней', 'alias' => 'booking', 'parent' => 0,
         'isfolder' => 1, 'template' => $tplId, 'cacheable' => 0,
-        'description' => 'Выберите дом и даты: календарь занятости, расчёт стоимости и заявка онлайн. Администратор перезвонит и подтвердит бронь.',
+        'description' => 'Выберите Дом и даты: календарь занятости, расчёт стоимости и заявка онлайн. Администратор перезвонит и подтвердит бронь.',
         'content' => '[[!booking.form? &mode=`full`]]',
     ]);
     $formPage = (int)$page->get('id');

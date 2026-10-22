@@ -19,7 +19,7 @@ with sync_playwright() as pw:
         res = page.locator("[data-bk-result]")
         res.locator(".bk-card").wait_for()
         t = res.inner_text().replace(" ", " ")
-        check(f"Заявка №{r['id']}" in t and "Новая" in t and "Английский дом" in t, "по ссылке видна своя заявка")
+        check(f"Заявка №{r['id']}" in t and "Новая" in t and "Английский Дом" in t, "по ссылке видна своя заявка")
         if width == 1440:
             res.locator("textarea[name=reason]").fill("ТЕСТ заболели")
             res.locator("[data-bk-cancel] button").click()

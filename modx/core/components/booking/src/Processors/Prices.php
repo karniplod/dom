@@ -45,7 +45,7 @@ class Prices extends Base
             throw new BookingError('Доплаты не могут быть отрицательными, норма гостей — от 1', 400);
         }
         if ($limit > (int)$h->get('capacity_party')) {
-            throw BookingError::field('extra_guest_limit', 'Норма гостей больше, чем вмещает дом');
+            throw BookingError::field('extra_guest_limit', 'Норма гостей больше, чем вмещает Дом');
         }
         $old = $this->forHouse($h);
         foreach ($prices as $t => $p) {

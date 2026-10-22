@@ -47,7 +47,7 @@ class Block extends Base
         $b = $this->booking;
         $house = $this->modx->getObject(HouseRow::class, ['code' => $this->str('house', 20)]);
         if (!$house) {
-            throw BookingError::field('house', 'Выберите дом');
+            throw BookingError::field('house', 'Выберите Дом');
         }
         $from = $b->date($this->str('date_from', 10), 'date_from');
         $to = $b->date($this->str('date_to', 10), 'date_to');
@@ -60,7 +60,7 @@ class Block extends Base
         if ($this->bool('addon')) {
             $addon = $this->modx->getObject(AddonRow::class, ['house_id' => $house->get('id')]);
             if (!$addon) {
-                throw BookingError::field('addon', 'У дома нет бани');
+                throw BookingError::field('addon', 'У Дома нет бани');
             }
             if ($to < $from) {
                 throw BookingError::field('date_to', 'Конец раньше начала');

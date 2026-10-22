@@ -15,10 +15,10 @@ if ($modx->getCount('Booking\\Model\\House') > 0) {
     return true;
 }
 $houses = [
-    ['code' => 'en', 'name' => 'Английский дом', 'slug' => 'angliyskij-dom', 'address' => 'ул. Космонавта Беляева, 111',
+    ['code' => 'en', 'name' => 'Английский Дом', 'slug' => 'angliyskij-dom', 'address' => 'ул. Космонавта Беляева, 111',
         'capacity_sleep' => 12, 'capacity_party' => 20, 'checkin_time' => '15:00:00', 'checkout_time' => '12:00:00', 'sort' => 1,
         'prices' => [18000, 22000, 27000, 19000], 'limit' => 10],
-    ['code' => 'ru', 'name' => 'Русский дом', 'slug' => 'russkij-dom', 'address' => 'ул. Космонавта Беляева, 111/1',
+    ['code' => 'ru', 'name' => 'Русский Дом', 'slug' => 'russkij-dom', 'address' => 'ул. Космонавта Беляева, 111/1',
         'capacity_sleep' => 12, 'capacity_party' => 20, 'checkin_time' => '17:00:00', 'checkout_time' => '14:00:00', 'sort' => 2,
         'prices' => [18000, 22000, 27000, 19000], 'limit' => 10],
     ['code' => 'sv', 'name' => 'Дом на Свиязева', 'slug' => 'dom-na-sviyazeva', 'address' => 'ул. Архитектора Свиязева, 59',
@@ -47,5 +47,5 @@ foreach ($houses as $h) {
     $a->fromArray(['house_id' => $house->get('id'), 'name' => 'Баня', 'price_per_hour' => null, 'min_hours' => 2, 'buffer_minutes' => 30, 'active' => 1]);
     $a->save();
 }
-$modx->log(\xPDO\xPDO::LOG_LEVEL_INFO, 'booking: стартовые дома и цены записаны');
+$modx->log(\xPDO\xPDO::LOG_LEVEL_INFO, 'booking: стартовые Дома и цены записаны');
 return true;

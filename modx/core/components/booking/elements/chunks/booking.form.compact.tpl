@@ -8,7 +8,7 @@
   <input type="radio" name="addon" value="0" checked hidden>
   <div class="bk-formgrid">
     <label class="bk-field bk-full"><span>Дом</span>
-      <select name="house" required><option value="">Выберите дом</option>[[+options]]</select>
+      <select name="house" required><option value="">Выберите Дом</option>[[+options]]</select>
       <b class="bk-err" data-si-error="house"></b></label>
     <div class="bk-field bk-full"><span>Даты</span>
       <button type="button" class="bk-datebtn" data-bk-dates aria-live="polite">Выбрать даты</button>

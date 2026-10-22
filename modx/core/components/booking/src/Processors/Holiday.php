@@ -87,7 +87,7 @@ class Holiday extends Base
             }
             $house = $this->modx->getObject(HouseRow::class, ['code' => (string)$code]);
             if (!$house) {
-                throw BookingError::field('prices', 'Неизвестный дом: ' . $code);
+                throw BookingError::field('prices', 'Неизвестный Дом: ' . $code);
             }
             if (!preg_match('~^\d+$~', (string)$price) || (int)$price <= 0) {
                 throw BookingError::field('prices', 'Особая цена — целое число больше нуля');

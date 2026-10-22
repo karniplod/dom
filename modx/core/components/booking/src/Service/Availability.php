@@ -168,7 +168,7 @@ class Availability
         $next = (new \DateTimeImmutable($date))->modify('+1 day')->format('Y-m-d');
         $nights = $this->bookedNights($houseId, $date, $next);
         if ($nights) {
-            throw new BookingError('Баня занята: в эти сутки дом забронирован (бронь №' . reset($nights) . ')', 409, [
+            throw new BookingError('Баня занята: в эти сутки Дом забронирован (бронь №' . reset($nights) . ')', 409, [
                 'field' => 'dates', 'conflict' => ['booking_id' => reset($nights), 'nights' => [$date]],
             ]);
         }
@@ -199,7 +199,7 @@ class Availability
         $modx = $this->booking->modx;
         $stmt = $modx->prepare('SELECT id FROM ' . $modx->getTableName(House::class) . ' WHERE id = ? FOR UPDATE');
         if (!$stmt || !$stmt->execute([$houseId])) {
-            throw new BookingError('Не удалось заблокировать дом для проверки', 500);
+            throw new BookingError('Не удалось заблокировать Дом для проверки', 500);
         }
         $stmt->closeCursor();
     }
@@ -208,7 +208,7 @@ class Availability
     public function occupy(BookingRow $b): void
     {
         if ($b->get('addon_id')) {
-            return;  // сеанс бани ночей дома не занимает
+            return;  // сеанс бани ночей Дома не занимает
         }
         $modx = $this->booking->modx;
         $table = $modx->getTableName(Night::class);

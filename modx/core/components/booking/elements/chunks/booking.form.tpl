@@ -6,7 +6,7 @@
   <input type="hidden" name="date_to" value="">
   <div class="bk-formgrid">
     <label class="bk-field"><span>Дом</span>
-      <select name="house" required><option value="">Выберите дом</option>[[+options]]</select>
+      <select name="house" required><option value="">Выберите Дом</option>[[+options]]</select>
       <b class="bk-err" data-si-error="house"></b></label>
     <fieldset class="bk-field bk-kind" data-bk-kind hidden><legend>Что бронируете</legend>
       <div class="bk-chips">

@@ -68,7 +68,7 @@ class House extends Base
 
         $code = $id ? $h->get('code') : strtolower($this->str('code', 20));
         if (!preg_match('~^[a-z][a-z0-9_-]{0,19}$~', $code)) {
-            throw BookingError::field('code', 'Код дома — латиница, до 20 знаков');
+            throw BookingError::field('code', 'Код Дома — латиница, до 20 знаков');
         }
         $name = $this->str('name', 100);
         if ($name === '') {
@@ -91,7 +91,7 @@ class House extends Base
         foreach (['code' => $code, 'slug' => $slug] as $f => $v) {
             $dup = $this->modx->getObject(HouseRow::class, [$f => $v, 'id:!=' => $id]);
             if ($dup) {
-                throw BookingError::field($f, 'Уже есть дом с таким ' . ($f === 'code' ? 'кодом' : 'адресом страницы'));
+                throw BookingError::field($f, 'Уже есть Дом с таким ' . ($f === 'code' ? 'кодом' : 'адресом страницы'));
             }
         }
         $h->fromArray([
@@ -105,7 +105,7 @@ class House extends Base
             'active' => $this->getProperty('active') === null ? ($id ? $h->get('active') : 1) : $this->bool('active'),
         ]);
         if (!$h->save()) {
-            throw new BookingError('Не удалось сохранить дом', 500);
+            throw new BookingError('Не удалось сохранить Дом', 500);
         }
         if (!$id) {
             // у нового дома — баня (выключена отдельно) и пустые правила цен

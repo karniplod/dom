@@ -145,7 +145,7 @@ class Booking
         }
         $house = $code !== '' ? $this->modx->getObject(House::class, $where) : null;
         if (!$house) {
-            throw BookingError::field('house', 'Выберите дом');
+            throw BookingError::field('house', 'Выберите Дом');
         }
         return $house;
     }
