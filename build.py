@@ -253,7 +253,7 @@ def house_card(k):
     <ul>{mark("features", "".join(f"<li>{f}</li>" for f in feats))}</ul>
     <p class="hcard__price"><b class="tnum">от {money(minp(h))}</b><span>за сутки</span><em class="disc">−{DISCOUNT}% через ВКонтакте</em></p>
     <div class="hcard__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--tour" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}3D-тур</a></div>
-    <p class="hcard__links"><a href="{h["file"]}">Подробнее о доме</a><a class="btn btn--sm" href="{h["prepay"]}">{icon("card")}Внести предоплату</a></p>
+    <p class="hcard__links"><a class="btn btn--sm" href="{h["prepay"]}">{icon("card")}Внести предоплату</a><a href="{h["file"]}">Подробнее о доме</a></p>
   </div>
 </article>'''
 
@@ -359,7 +359,7 @@ def home():
     <h1 id="hero-title">Снять Дом с баней и бассейном в Перми</h1>
     <p class="hero__sub">Три Дома в трёх стилях: Английский, Русский и Дом на Свиязева. Баня, бассейн, бильярд и мангал, а на праздник можно позвать до 20 гостей.</p>
     <div class="hero__cta"><button class="btn" type="button" data-order>Оставить заявку</button><a class="btn btn--ghost" href="#houses">Выбрать Дом</a></div>
-    <div class="facts-row"><a class="disc-chip" href="{VK}" target="_blank" rel="noopener">−{DISCOUNT}% при бронировании через ВКонтакте</a><span>сутки от 15 000 ₽</span><span>до 20 гостей</span><span>в черте города</span><span>можно с питомцами</span></div>
+    <div class="facts-row"><a class="btn btn--sm disc-btn" href="{VK}" target="_blank" rel="noopener">−{DISCOUNT}% при бронировании через ВКонтакте</a><span>сутки от 15 000 ₽</span><span>до 20 гостей</span><span>в черте города</span><span>можно с питомцами</span></div>
   </div></div>
 </section>
 
