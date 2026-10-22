@@ -476,9 +476,12 @@ class Bania
             occasion VARCHAR(30) NOT NULL DEFAULT \'\', contact VARCHAR(30) NOT NULL DEFAULT \'\',
             name VARCHAR(100) NOT NULL DEFAULT \'\', phone VARCHAR(30) NOT NULL DEFAULT \'\', comment TEXT NULL,
             sms_consent TINYINT(1) NOT NULL DEFAULT 0, source VARCHAR(255) NOT NULL DEFAULT \'\', ip VARCHAR(45) NOT NULL DEFAULT \'\',
-            note TEXT NULL, prepaid INT UNSIGNED NOT NULL DEFAULT 0,
+            note TEXT NULL,
             KEY status (status), KEY house_dates (house_id, checkin), KEY created (created_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+        // предоплата не учитывается в заявках (ст. 2.1 конституции): колонку из ранних версий убираем
+        $col = $db->query("SHOW COLUMNS FROM " . self::table('leads') . " LIKE 'prepaid'");
+        if ($col && $col->fetch()) $db->exec('ALTER TABLE ' . self::table('leads') . ' DROP COLUMN prepaid');
         // ночи подтверждённых броней: одна ночь дома — одна строка; уникальный ключ не даёт продать ночь дважды
         $db->exec('CREATE TABLE IF NOT EXISTS ' . self::table('nights') . ' (
             house_id INT UNSIGNED NOT NULL, night DATE NOT NULL, lead_id INT UNSIGNED NOT NULL,
@@ -575,7 +578,7 @@ class Bania
      * если хоть одна ночь уже занята другой подтверждённой заявкой — статус не меняется и возвращается её номер.
      * Другой статус освобождает ночи. Основа для будущего онлайн-бронирования и календаря занятости.
      */
-    public static function setStatus($id, $status, $note = null, $prepaid = null) {
+    public static function setStatus($id, $status, $note = null) {
         $modx = self::$modx;
         if (!isset(self::STATUSES[$status])) return 'неизвестный статус';
         $l = self::lead($id); if (!$l) return 'заявка не найдена';
@@ -595,8 +598,8 @@ class Bania
                     }
                 }
             }
-            $sql = 'UPDATE ' . self::table('leads') . ' SET status = ?, updated_at = NOW()' . ($note !== null ? ', note = ?' : '') . ($prepaid !== null ? ', prepaid = ?' : '') . ' WHERE id = ?';
-            $args = [$status]; if ($note !== null) $args[] = mb_substr($note, 0, 2000); if ($prepaid !== null) $args[] = max(0, (int)$prepaid); $args[] = (int)$id;
+            $sql = 'UPDATE ' . self::table('leads') . ' SET status = ?, updated_at = NOW()' . ($note !== null ? ', note = ?' : '') . ' WHERE id = ?';
+            $args = [$status]; if ($note !== null) $args[] = mb_substr($note, 0, 2000); $args[] = (int)$id;
             $modx->prepare($sql)->execute($args);
             $modx->commit();
         } catch (\Throwable $e) { $modx->rollBack(); return $e->getMessage(); }

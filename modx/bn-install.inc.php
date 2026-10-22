@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-20 18:02",
+ "version": "2026-10-22 16:03",
  "chunks": [
   {
    "name": "bn.fox",

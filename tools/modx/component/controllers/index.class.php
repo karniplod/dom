@@ -1,6 +1,7 @@
 <?php
 /**
- * Страница «Заявки» в админке MODX (меню «Пакеты» → «Заявки»): список заявок с сайта, статусы, заметки, предоплата.
+ * Страница «Заявки» в админке MODX (меню «Пакеты» → «Заявки»): список заявок с сайта, статусы, заметки.
+ * Предоплата здесь не учитывается — она вне системы заявок (конституция, ст. 2.1).
  * Подтверждённая заявка занимает ночи дома — вторую заявку на те же ночи подтвердить нельзя.
  */
 require_once dirname(__DIR__) . '/Bania.php';
@@ -26,7 +27,7 @@ class BaniaIndexManagerController extends \MODX\Revolution\modExtraManagerContro
             $msg = '';
             if (!hash_equals((string)$token, (string)($_POST['token'] ?? ''))) $msg = 'Сессия устарела, обновите страницу';
             else {
-                $err = Bania::setStatus((int)($_POST['id'] ?? 0), (string)($_POST['status'] ?? ''), (string)($_POST['note'] ?? ''), (string)($_POST['prepaid'] ?? '0'));
+                $err = Bania::setStatus((int)($_POST['id'] ?? 0), (string)($_POST['status'] ?? ''), (string)($_POST['note'] ?? ''));
                 $msg = $err === '' ? 'Заявка №' . (int)$_POST['id'] . ' сохранена' : 'Заявка №' . (int)$_POST['id'] . ': ' . $err;
             }
             $back = (string)($_POST['back'] ?? '');
@@ -51,9 +52,9 @@ class BaniaIndexManagerController extends \MODX\Revolution\modExtraManagerContro
             header('Content-Disposition: attachment; filename="zayavki-' . date('Y-m-d') . '.csv"');
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['№', 'Создана', 'Статус', 'Дом', 'Заезд', 'Выезд', 'Суток', 'Гостей', 'Примерно, ₽', 'Имя', 'Телефон', 'Связь', 'Повод', 'Комментарий', 'Предоплата, ₽', 'Заметка'], ';');
+            fputcsv($out, ['№', 'Создана', 'Статус', 'Дом', 'Заезд', 'Выезд', 'Суток', 'Гостей', 'Примерно, ₽', 'Имя', 'Телефон', 'Связь', 'Повод', 'Комментарий', 'Заметка'], ';');
             foreach ($rows as $r) fputcsv($out, [$r['id'], $r['created_at'], Bania::STATUSES[$r['status']] ?? $r['status'], $r['house_name'], $r['checkin'], $r['checkout'], $r['nights'], $r['guests'],
-                                                 $r['estimate'], $r['name'], $r['phone'], $r['contact'], $r['occasion'], $r['comment'], $r['prepaid'], $r['note']], ';');
+                                                 $r['estimate'], $r['name'], $r['phone'], $r['contact'], $r['occasion'], $r['comment'], $r['note']], ';');
             fclose($out);
             exit;
         }
@@ -88,7 +89,7 @@ class BaniaIndexManagerController extends \MODX\Revolution\modExtraManagerContro
 
         if (!$rows) return $html . '<p>Заявок нет.</p></div>';
         $html .= '<table style="width:100%;border-collapse:collapse;background:#fff"><thead><tr style="text-align:left;background:#f1e7da">'
-            . '<th style="padding:8px">№ / когда</th><th style="padding:8px">Дом и даты</th><th style="padding:8px">Гость</th><th style="padding:8px">Комментарий</th><th style="padding:8px;width:340px">Статус, предоплата, заметка</th></tr></thead><tbody>';
+            . '<th style="padding:8px">№ / когда</th><th style="padding:8px">Дом и даты</th><th style="padding:8px">Гость</th><th style="padding:8px">Комментарий</th><th style="padding:8px;width:340px">Статус и заметка</th></tr></thead><tbody>';
         foreach ($rows as $r) {
             $dates = $r['checkin'] ? date('d.m.Y', strtotime($r['checkin'])) . ' – ' . ($r['checkout'] ? date('d.m.Y', strtotime($r['checkout'])) : '?') : 'даты не указаны';
             $sel = '';
@@ -102,8 +103,7 @@ class BaniaIndexManagerController extends \MODX\Revolution\modExtraManagerContro
                 . '<td style="padding:8px;max-width:280px;white-space:pre-wrap">' . $e($r['comment']) . '</td>'
                 . '<td style="padding:8px"><form method="post" action="' . $e($base) . '" style="display:grid;gap:6px">'
                 . '<input type="hidden" name="token" value="' . $e($token) . '"><input type="hidden" name="id" value="' . (int)$r['id'] . '"><input type="hidden" name="back" value="' . $e($back) . '">'
-                . '<div style="display:flex;gap:6px"><select name="status" style="padding:4px">' . $sel . '</select>'
-                . '<input name="prepaid" type="number" min="0" step="100" value="' . (int)$r['prepaid'] . '" title="Предоплата, ₽" style="width:110px;padding:4px"> ₽</div>'
+                . '<div style="display:flex;gap:6px"><select name="status" style="padding:4px">' . $sel . '</select></div>'
                 . '<textarea name="note" rows="2" placeholder="Заметка администратора" style="padding:4px">' . $e($r['note']) . '</textarea>'
                 . '<button style="justify-self:start;padding:4px 12px">Сохранить</button></form></td></tr>';
         }
