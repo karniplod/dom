@@ -277,7 +277,7 @@
     this.api.call('booking_get_availability', { house: h.code, from: r.from, to: r.to }, 'GET').then(function (res) {
       if (req !== self.req) return;
       if (!res.success) { self.cal.setBusy([], !!res.offline); if (!res.offline) self.error(res.message); return; }
-      self.cal.setBusy(res.data.busy);
+      self.cal.setBusy(self.isBath() ? res.data.busy_bath : res.data.busy);
     });
   };
   GuestForm.prototype.req = 0;
@@ -956,6 +956,13 @@
   };
   App.prototype.tryToken = function (t, fresh) {
     var self = this, login = qs(this.root, '[data-app-login]'), box = qs(this.root, '[data-app-admin]'), err = qs(login, '[data-app-err]');
+    // токен — латиница, цифры, «-» и «_»; иное браузер даже не отправит в заголовке
+    if (!/^[A-Za-z0-9_-]{20,128}$/.test(t)) {
+      self.setToken('');
+      err.textContent = 'Токен не подошёл: скопируйте его из админки целиком';
+      login.hidden = false; box.hidden = true;
+      return;
+    }
     var client = new Client(this.api, { token: t, client: this.client });
     client.call('booking_manage_house', { op: 'list' }).then(function (res) {
       if (res.offline) { err.textContent = res.message; login.hidden = false; box.hidden = true; return; }

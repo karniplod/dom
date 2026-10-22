@@ -131,13 +131,13 @@ description: "Задачи реализации компонента брони�
 
 **Independent Test**: quickstart №10, №11, №15: особая цена праздника, закрытая дата серая, новая цена видна в `booking.prices` и в расчёте
 
-- [ ] T050 [P] [US4] Процессор `booking_manage_house` в `C/src/Processors/House.php` (list/save/toggle; checkin_time ≥ checkout_time; capacity_party ≥ capacity_sleep)
-- [ ] T051 [P] [US4] Процессор `booking_manage_prices` в `C/src/Processors/Prices.php` (цены weekday/friday/saturday/sunday > 0, extra_guest_price, extra_guest_limit, pet_price — во всех строках дома; очистка кеша ресурсов)
-- [ ] T052 [P] [US4] Процессор `booking_manage_holiday` в `C/src/Processors/Holiday.php` (list/save/delete; holiday_type из трёх значений; особые цены по домам в `booking_holiday_prices`)
-- [ ] T053 [P] [US4] Процессор `booking_manage_block` в `C/src/Processors/Block.php` (reason обязателен; 409 при пересечении с confirmed — не создавать молча)
-- [ ] T054 [US4] Сниппет `booking.prices` в `C/elements/snippets/booking.prices.php` и чанк `C/elements/chunks/booking.prices.tpl` — разметка `.price-days` как в блоке «Цена за сутки» сайта (самый дорогой день — `class="hot"`)
-- [ ] T055 [US4] Вкладки CMP «Дома и бани», «Цены», «Праздники» (с особыми ценами по домам), «Закрытые даты» в `C/controllers/index.class.php` и `A/js/booking.js`
-- [ ] T056 [US4] E2E `C/_build/tests/e2e_us4.py`: quickstart №10, №11, №15
+- [X] T050 [P] [US4] Процессор `booking_manage_house` в `C/src/Processors/House.php` (list/save/toggle; checkin_time ≥ checkout_time; capacity_party ≥ capacity_sleep)
+- [X] T051 [P] [US4] Процессор `booking_manage_prices` в `C/src/Processors/Prices.php` (цены weekday/friday/saturday/sunday > 0, extra_guest_price, extra_guest_limit, pet_price — во всех строках дома; очистка кеша ресурсов)
+- [X] T052 [P] [US4] Процессор `booking_manage_holiday` в `C/src/Processors/Holiday.php` (list/save/delete; holiday_type из трёх значений; особые цены по домам в `booking_holiday_prices`)
+- [X] T053 [P] [US4] Процессор `booking_manage_block` в `C/src/Processors/Block.php` (reason обязателен; 409 при пересечении с confirmed — не создавать молча)
+- [X] T054 [US4] Сниппет `booking.prices` в `C/elements/snippets/booking.prices.php` и чанк `C/elements/chunks/booking.prices.tpl` — разметка `.price-days` как в блоке «Цена за сутки» сайта (самый дорогой день — `class="hot"`)
+- [X] T055 [US4] Вкладки CMP «Дома и бани», «Цены», «Праздники» (с особыми ценами по домам), «Закрытые даты» в `C/controllers/index.class.php` и `A/js/booking.js`
+- [X] T056 [US4] E2E `C/_build/tests/e2e_us4.py`: quickstart №10, №11, №15
 
 ---
 
@@ -147,11 +147,11 @@ description: "Задачи реализации компонента брони�
 
 **Independent Test**: quickstart №13, №14: без токена админ-вкладка недоступна; с токеном подтверждение даёт те же отказы; офлайн занятость не показывается как актуальная
 
-- [ ] T057 [US5] Процессор `booking_issue_token` в `C/src/Processors/Token.php` (issue — токен показывается один раз, хранится SHA-256; list; revoke) и вкладка CMP «Токены»
-- [ ] T058 [P] [US5] PWA `A/app/index.html` + `A/app/manifest.webmanifest`: вкладки «Забронировать» (`booking.js` guest), «Моя заявка», «Администратор» (ввод токена → localStorage устройства, режим admin-grid с карточками); запросы — только `A/api.php` с `Authorization: Bearer`
-- [ ] T059 [P] [US5] Service Worker `A/app/sw.js`: кеш только статики (html, css, js, иконки); `api.php` — только сеть, без кеша; офлайн — сообщение «нет связи, занятость не показывается»
+- [X] T057 [US5] Процессор `booking_issue_token` в `C/src/Processors/Token.php` (issue — токен показывается один раз, хранится SHA-256; list; revoke) и вкладка CMP «Токены»
+- [X] T058 [P] [US5] PWA — страница MODX `/booking/app` на своём шаблоне `booking.app` (`C/elements/templates/booking.app.tpl`, `<base href>` для SendIt) + `A/app/manifest.webmanifest`, иконки: вкладки «Забронировать» (та же `booking.form` через SendIt — ст. 8.1), «Моя заявка», «Администратор» (токен → localStorage устройства, режим admin-grid с карточками); запросы администратора — только `A/api.php` с `Authorization: Bearer`. (Статичный index.html в assets не годится: SendIt выдаёт токен формы только страницам MODX)
+- [X] T059 [P] [US5] Service Worker `A/app/sw.js`, отдаётся страницей `/booking/sw.js` (сниппет `booking.sw`, область `/booking/`): кеш только статики компонента; `api.php` и SendIt — только сеть; офлайн — сообщение «нет связи, занятость не показывается»
 - [ ] T060 [US5] Инструкция для мини-приложения MAX в `C/docs/max.md` (адрес приложения для кнопки бота, где взять токен) — без токенов в файле (ст. 7.4)
-- [ ] T061 [US5] E2E `C/_build/tests/e2e_us5.py`: quickstart №13, №14 (Playwright, offline), повтор T040 через PWA
+- [X] T061 [US5] E2E `C/_build/tests/e2e_us5.py`: quickstart №13, №14 (Playwright, offline), повтор T040 через PWA
 
 ---
 
@@ -161,10 +161,10 @@ description: "Задачи реализации компонента брони�
 
 **Independent Test**: quickstart №12: 18:00 после сеанса 15–18 недоступно, 18:30 доступно; баня в ночь confirmed-брони дома — отказ
 
-- [ ] T062 [P] [US6] Процессор `booking_manage_addon` в `C/src/Processors/Addon.php` (price_per_hour обязателен при включении addon_bookable_separately; min_hours ≥ 1; buffer_minutes) и поля бани во вкладке «Дома и бани»
-- [ ] T063 [US6] Бронь бани в `C/src/Processors/Request/Create.php` и `C/src/Processors/Booking/Confirm.php`: addon_id, date_from=date_to, time_from/time_to (≥ min_hours), проверка буфера и ночей дома через `Availability`
-- [ ] T064 [US6] Выбор «только баня» и почасовой выбор в `A/js/booking.js` и `C/elements/chunks/booking.form.tpl` (только если у дома включено)
-- [ ] T065 [US6] E2E `C/_build/tests/e2e_us6.py`: quickstart №12
+- [X] T062 [P] [US6] Процессор `booking_manage_addon` в `C/src/Processors/Addon.php` (price_per_hour обязателен при включении addon_bookable_separately; min_hours ≥ 1; buffer_minutes) и поля бани во вкладке «Дома и бани»
+- [X] T063 [US6] Бронь бани в `C/src/Processors/Request/Create.php` и `C/src/Processors/Booking/Confirm.php`: addon_id, date_from=date_to, time_from/time_to (≥ min_hours), проверка буфера и ночей дома через `Availability`
+- [X] T064 [US6] Выбор «только баня» и почасовой выбор в `A/js/booking.js` и `C/elements/chunks/booking.form.tpl` (только если у дома включено)
+- [X] T065 [US6] E2E `C/_build/tests/e2e_us6.py`: quickstart №12
 
 ---
 

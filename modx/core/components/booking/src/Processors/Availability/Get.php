@@ -57,6 +57,10 @@ class Get extends Base
             'busy' => array_values(array_unique(array_merge($cal['nights_busy'], $cal['nights_blocked'], $sessions))),
         ];
         sort($out['busy']);
+        // для бани отдельно: день занят только ночью брони Дома или закрытием — сеансы бани проверяются по часам
+        $bath = array_values(array_unique(array_merge($cal['nights_busy'], $cal['nights_blocked'])));
+        sort($bath);
+        $out['busy_bath'] = $bath;
         if ($b->isAdmin()) {
             $out['nights_busy'] = $cal['nights_busy'];
             $out['nights_blocked'] = $cal['nights_blocked'];

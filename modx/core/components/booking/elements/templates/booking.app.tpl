@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- SendIt подключает свои скрипты относительным путём «assets/…»: на вложенной странице /booking/app без base они не найдутся -->
+<base href="[[++base_url]]">
 <title>Бронирование — [[++site_name]]</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#22140E">

@@ -228,4 +228,5 @@
   .bk-dl { grid-template-columns: 1fr; gap: 2px; }
   .bk-dl dd { margin-bottom: 6px; }
 }
+@media (max-width: 420px) { .bk-tabs--app .bk-tab { padding: 10px 9px; font-size: 14px; } }
 @media (prefers-reduced-motion: reduce) { .bk-btn { transition: none; } }
