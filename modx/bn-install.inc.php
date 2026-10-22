@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-22 22:37",
+ "version": "2026-10-22 22:50",
  "chunks": [
   {
    "name": "bn.fox",
@@ -713,6 +713,18 @@ $manifest = <<<'JSON'
    "category": "Дом"
   },
   {
+   "name": "bn_jacuzzi",
+   "caption": "Бассейн-джакузи",
+   "type": "text",
+   "description": "Если поле «Бассейн» пустое — блок «Бассейн-джакузи»: размеры, например «2,5 × 2 м, глубина 1 м»",
+   "default": "",
+   "elements": "",
+   "templates": [
+    "bn-house"
+   ],
+   "category": "Дом"
+  },
+  {
    "name": "bn_price_wd",
    "caption": "Цена Пн–Чт, ₽",
    "type": "number",
@@ -764,7 +776,31 @@ $manifest = <<<'JSON'
    "name": "bn_tour",
    "caption": "3D-тур",
    "type": "text",
-   "description": "Полная ссылка на 3D-тур",
+   "description": "Ссылка на 3D-тур: vtour/<папка>/tour.html (туры в assets/vtour/) или полный адрес",
+   "default": "",
+   "elements": "",
+   "templates": [
+    "bn-house"
+   ],
+   "category": "Дом"
+  },
+  {
+   "name": "bn_tour2",
+   "caption": "Второй 3D-тур",
+   "type": "text",
+   "description": "Необязательно: ещё один тур Дома — vtour/<папка>/tour.html",
+   "default": "",
+   "elements": "",
+   "templates": [
+    "bn-house"
+   ],
+   "category": "Дом"
+  },
+  {
+   "name": "bn_tour2_text",
+   "caption": "Что во втором 3D-туре",
+   "type": "text",
+   "description": "Подсказка к кнопке «Второй 3D-тур»",
    "default": "",
    "elements": "",
    "templates": [

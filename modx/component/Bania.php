@@ -110,18 +110,31 @@ class Bania
         }
         return self::$houses;
     }
-    /** Цены суток из компонента бронирования (одна база цен для сайта и брони, ст. 6.3); нет компонента — null */
-    public static function bookingPrices($code) {
+    /**
+     * Данные Дома из компонента бронирования — одно место правки для сайта и брони (ст. 6.3):
+     * цены суток, время заезда и выезда, сколько ночуют и отдыхают, норма гостей в цене и доплата сверх неё.
+     * Компонента нет или Дома в нём нет — null, сайт берёт поля страницы Дома.
+     */
+    public static function bookingHouse($code) {
         if (!self::$modx->services->has('booking') || !class_exists('Booking\\Model\\House')) return null;
         $h = self::$modx->getObject(\Booking\Model\House::class, ['code' => $code]);
         if (!$h) return null;
         $rules = self::$modx->services->get('booking')->pricing()->rules($h->get('id'));
-        $out = [];
+        $prices = [];
         foreach (['weekday', 'friday', 'saturday', 'sunday'] as $t) {
-            if (!isset($rules[$t])) return null;
-            $out[] = (int)$rules[$t]->get('price');
+            if (!isset($rules[$t])) { $prices = null; break; }
+            $prices[] = (int)$rules[$t]->get('price');
         }
-        return $out;
+        $base = $rules['weekday'] ?? null;
+        return [
+            'prices' => $prices,
+            'checkin' => substr((string)$h->get('checkin_time'), 0, 5),
+            'checkout' => substr((string)$h->get('checkout_time'), 0, 5),
+            'sleep' => (int)$h->get('capacity_sleep'),
+            'max' => (int)$h->get('capacity_party'),
+            'base' => $base ? (int)$base->get('extra_guest_limit') : null,
+            'extra' => $base ? (int)$base->get('extra_guest_price') : null,
+        ];
     }
     public static function houseById($id) {
         foreach (self::houses() as $h) if ((int)$h['id'] === (int)$id) return $h;
@@ -132,7 +145,8 @@ class Bania
         $tv = function ($n, $d = '') use ($r) { $v = $r->getTVValue($n); return ($v === null || $v === '') ? $d : $v; };
         $code = preg_replace('~[^a-z0-9_-]~', '', (string)$tv('bn_code', 'h' . $r->get('id')));
         $name = (string)$r->get('pagetitle');
-        $prices = self::bookingPrices($code) ?: [(int)$tv('bn_price_wd'), (int)$tv('bn_price_fri'), (int)$tv('bn_price_sat'), (int)$tv('bn_price_sun')];
+        $bk = self::bookingHouse($code) ?: [];
+        $prices = ($bk['prices'] ?? null) ?: [(int)$tv('bn_price_wd'), (int)$tv('bn_price_fri'), (int)$tv('bn_price_sat'), (int)$tv('bn_price_sun')];
         $gallery = [];
         foreach (self::lines($tv('bn_gallery')) as [$f, $cap]) { $s = self::src($f, $code); if ($s) $gallery[] = ['src' => $s, 'cap' => $cap]; }
         $prepay = self::$modx->getObject(modResource::class, ['parent' => $r->get('id'), 'template' => self::templateId('bn-prepay'), 'published' => 1, 'deleted' => 0]);
@@ -144,16 +158,27 @@ class Bania
             'addr' => (string)$tv('bn_addr'), 'street' => $street, 'street_q' => rawurlencode('Пермь, ' . $street),
             'kicker' => (string)$tv('bn_kicker'), 'intro' => (string)$tv('bn_intro'),
             'area' => (string)$tv('bn_area'), 'floors' => (string)$tv('bn_floors', 'Дом, 2 этажа'), 'rooms' => (int)$tv('bn_rooms'), 'plot' => (string)$tv('bn_plot'),
-            'sleep' => (int)$tv('bn_sleep'), 'max' => (int)$tv('bn_max', 20), 'base' => (int)$tv('bn_base', 10), 'extra' => (int)$tv('bn_extra', 0),
-            'checkin' => (string)$tv('bn_checkin'), 'checkout' => (string)$tv('bn_checkout'), 'view' => (string)$tv('bn_view'), 'pool' => (string)$tv('bn_pool'),
+            'sleep' => $bk['sleep'] ?? (int)$tv('bn_sleep'), 'max' => $bk['max'] ?? (int)$tv('bn_max', 20),
+            'base' => $bk['base'] ?? (int)$tv('bn_base', 10), 'extra' => $bk['extra'] ?? (int)$tv('bn_extra', 0),
+            'checkin' => ($bk['checkin'] ?? '') ?: (string)$tv('bn_checkin'), 'checkout' => ($bk['checkout'] ?? '') ?: (string)$tv('bn_checkout'), 'view' => (string)$tv('bn_view'), 'pool' => (string)$tv('bn_pool'), 'jacuzzi' => (string)$tv('bn_jacuzzi'),
             'prices' => $prices, 'min' => $pos ? min($pos) : 0, 'max_price' => $pos ? max($pos) : 0, 'min_price' => $pos ? self::money(min($pos)) : '',
-            'tour' => (string)$tv('bn_tour'), 'tour_text' => $tourText, 'tour_points' => preg_match('~(\d+) точ~u', $tourText, $m) ? $m[1] . ' точек обзора' : '3D-тур',
+            'tour' => self::tourUrl($tv('bn_tour')), 'tour_text' => $tourText, 'tour2' => self::tourUrl($tv('bn_tour2')), 'tour2_text' => (string)$tv('bn_tour2_text'), 'tour_points' => preg_match('~(\d+) точ~u', $tourText, $m) ? $m[1] . ' точек обзора' : '3D-тур',
             'sbp' => (string)$tv('bn_sbp'), 'hero' => self::src($tv('bn_hero'), $code), 'hero_alt' => (string)$tv('bn_hero_alt', 'фото'), 'gallery' => $gallery, 'photo' => $gallery[0]['src'] ?? '', 'photo2' => $gallery[1]['src'] ?? ($gallery[0]['src'] ?? ''),
             'features' => array_map(function ($l) { return $l[0]; }, self::lines($tv('bn_features'), 1)), 'table_extra' => (string)$tv('bn_table_extra'),
             'comfort' => self::lines($tv('bn_comfort'), 3), 'faq' => self::lines($tv('bn_faq')), 'seo' => (string)$tv('bn_seo'),
             'prepay_id' => $prepay ? (int)$prepay->get('id') : 0, 'prepay_url' => $prepay ? self::url($prepay->get('id')) : (string)$tv('bn_sbp'),
             'title' => (string)$r->get('longtitle'), 'description' => (string)$r->get('description'),
         ];
+    }
+    /** Ссылка на 3D-тур: «vtour/…» — тур на этом сайте (assets/vtour/), иначе адрес как есть */
+    public static function tourUrl($v) {
+        $v = trim((string)$v);
+        return strpos($v, 'vtour/') === 0 ? self::$modx->getOption('base_url') . 'assets/' . $v : $v;
+    }
+    /** Кнопка второго 3D-тура Дома — повторяет build.py tour2_btn */
+    public static function tour2Btn(array $h) {
+        if ($h['tour2'] === '') return '';
+        return '<a class="btn btn--ghost" href="' . self::e($h['tour2']) . '" target="_blank" rel="noopener" title="' . self::e($h['tour2_text']) . '">Второй 3D-тур</a>';
     }
     /** Плейсхолдеры дома для чанков (карточка, плитка 3D-тура, пункт меню…) */
     public static function housePh(array $h, $i = 0) {
@@ -231,7 +256,7 @@ class Bania
     public static function hinfo(array $h) {
         $phone = self::e(self::opt('bn_phone')); $raw = self::e(self::opt('bn_phone_raw'));
         $pool = $h['pool'] !== '' ? '<div><h3>Бассейн</h3><p>Работает круглый год: ' . $h['pool'] . '.</p></div>'
-                                  : '<div><h3>Бассейн-джакузи</h3><p>Бассейн всесезонный, с функцией джакузи. Рядом баня.</p></div>';
+                                  : '<div><h3>Бассейн-джакузи</h3><p>Бассейн всесезонный, с функцией джакузи' . ($h['jacuzzi'] !== '' ? ': ' . $h['jacuzzi'] : '') . '. Рядом баня.</p></div>';
         return '<div><h3>Посмотреть Дом</h3><p>Ежедневно ' . $h['view'] . ', между заездами гостей. Позвоните заранее: <a class="nb tnum" href="tel:' . $raw . '">' . $phone . '</a></p></div>'
             . "\n    " . $pool . "\n    " . '<div><h3>Повар</h3><p>' . self::opt('bn_services', '') . ' Скажите об этом при бронировании.</p></div>';
     }

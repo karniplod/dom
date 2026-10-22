@@ -230,6 +230,12 @@ HOME_FAQ = [
  ("Что такое залог?", "Сумма от 5 000 до 20 000 ₽ на случай повреждений в доме. Точную сумму администратор назовёт при подтверждении брони. Зависит от количества и возраста гостей."),
 ]
 
+def tour2_btn(h):
+    """Кнопка второго 3D-тура Дома (поле tour2 в houses.py), с подписью tour2txt"""
+    if not h.get("tour2"):
+        return ""
+    return f'<a class="btn btn--ghost" href="{h["tour2"]}" target="_blank" rel="noopener" title="{esc(h.get("tour2txt", ""))}">Второй 3D-тур</a>'
+
 def house_card(k):
     h = H[k]; ph = h["card_photos"]
     caps = dict(h["gallery"])
@@ -485,7 +491,7 @@ def house_page(k):
 <section class="band on-light" aria-labelledby="g-title"><div class="wrap">
   <div class="sec-head"><h2 class="h-sec" id="g-title">Фото Дома</h2><p class="lead">Нажмите на фото, чтобы открыть крупно и пролистать.</p></div>
   <div class="gal">{mark("gallery", gal)}</div>
-  <div class="tourband"><div><h3>3D-тур по дому</h3><p>{mark("v:tour_text", h["tourtxt"])}</p></div><a class="btn" href="{h["tour"]}" target="_blank" rel="noopener">Открыть 3D-тур</a></div>
+  <div class="tourband"><div><h3>3D-тур по дому</h3><p>{mark("v:tour_text", h["tourtxt"])}</p></div><div class="tourband__btns"><a class="btn" href="{h["tour"]}" target="_blank" rel="noopener">Открыть 3D-тур</a>{mark("tour2", tour2_btn(h))}</div></div>
 </div></section>
 
 <section class="band band--soft" aria-labelledby="c-title"><div class="wrap">
@@ -505,7 +511,7 @@ def house_page(k):
   <div><div class="sec-head"><h2 class="h-sec" id="r-title">Правила Дома</h2></div>{mark("houseRules", rules_list(house_rules(k)))}</div>
   <div class="hinfo">{mark("hinfo", f'''
     <div><h3>Посмотреть Дом</h3><p>Ежедневно {h["view"]}, между заездами гостей. Позвоните заранее: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
-    {f'<div><h3>Бассейн</h3><p>Работает круглый год: {h["pool"]}.</p></div>' if h["pool"] else '<div><h3>Бассейн-джакузи</h3><p>Бассейн всесезонный, с функцией джакузи. Рядом баня.</p></div>'}
+    {f'<div><h3>Бассейн</h3><p>Работает круглый год: {h["pool"]}.</p></div>' if h["pool"] else f'<div><h3>Бассейн-джакузи</h3><p>Бассейн всесезонный, с функцией джакузи{": " + h["jacuzzi"] if h.get("jacuzzi") else ""}. Рядом баня.</p></div>'}
     <div><h3>Повар</h3><p>{SERVICES} Скажите об этом при бронировании.</p></div>''')}
   </div>
 </div></section>

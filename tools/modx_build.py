@@ -301,7 +301,7 @@ TEMPLATES["bn-home"] = ("Главная: дома, комфорт, праздн�
 hb = B.house_page(k0)["body"]
 _, mattrs, hm, _ = page_parts(hb)
 for name, repl in (("crumbs", "[[bnCrumbs]]"), ("houseHero", HP("hero_img")), ("v:intro", "[[*bn_intro]]"), ("facts", HP("facts")), ("gallery", HP("gallery")),
-                   ("v:tour_text", "[[*bn_tour_text]]"), ("comfort", HP("comfort")), ("prices", HP("prices")), ("houseRules", HP("rules")), ("hinfo", HP("hinfo")),
+                   ("v:tour_text", "[[*bn_tour_text]]"), ("tour2", HP("tour2")), ("comfort", HP("comfort")), ("prices", HP("prices")), ("houseRules", HP("rules")), ("hinfo", HP("hinfo")),
                    ("houseSeo", "[[*bn_seo]]"), ("houseFaq", HP("faq")), ("houseReviews", HP("reviews")), ("houseOrder", "[[$bn.orderBandHouse]]"), ("otherHouses", HP("others"))):
     hm = unmark(hm, name, repl)
 hm = hm.replace("<h1 id=\"d-title\">%s</h1>" % H[k0]["h1"], "<h1 id=\"d-title\">[[*pagetitle]]</h1>")
@@ -378,11 +378,14 @@ HOUSE_TVS = [
     ("bn_checkout", "Выезд до", "text", "Например «12:00»", ""),
     ("bn_view", "Посмотреть Дом", "text", "Когда можно приехать посмотреть: «с 12:00 до 15:00»", ""),
     ("bn_pool", "Бассейн", "text", "Размеры и температура: «3 × 2,5 м, глубина 1,5 м, вода 28–30°». Пусто — «бассейн-джакузи»", ""),
+    ("bn_jacuzzi", "Бассейн-джакузи", "text", "Если поле «Бассейн» пустое — блок «Бассейн-джакузи»: размеры, например «2,5 × 2 м, глубина 1 м»", ""),
     ("bn_price_wd", "Цена Пн–Чт, ₽", "number", "Сутки с заездом с понедельника по четверг", ""),
     ("bn_price_fri", "Цена Пт, ₽", "number", "Сутки с заездом в пятницу (и в предпраздничный рабочий день)", ""),
     ("bn_price_sat", "Цена Сб, ₽", "number", "Сутки с заездом в субботу (и в праздник перед выходным)", ""),
     ("bn_price_sun", "Цена Вс, ₽", "number", "Сутки с заездом в воскресенье (и в праздник перед рабочим днём)", ""),
-    ("bn_tour", "3D-тур", "text", "Полная ссылка на 3D-тур", ""),
+    ("bn_tour", "3D-тур", "text", "Ссылка на 3D-тур: vtour/<папка>/tour.html (туры в assets/vtour/) или полный адрес", ""),
+    ("bn_tour2", "Второй 3D-тур", "text", "Необязательно: ещё один тур Дома — vtour/<папка>/tour.html", ""),
+    ("bn_tour2_text", "Что во втором 3D-туре", "text", "Подсказка к кнопке «Второй 3D-тур»", ""),
     ("bn_tour_text", "Что в 3D-туре", "textarea", "«14 точек обзора: прихожая, кухня-гостиная…» — число точек выводится на плитке тура", ""),
     ("bn_sbp", "Ссылка на оплату СБП", "text", "Ссылка qr.nspk.ru/… для страницы предоплаты. QR-код — файл assets/img/qr/КОД.svg", ""),
     ("bn_gallery", "Галерея", "textarea", "По фото в строке: «файл | подпись». Файл — из папки assets/img/КОД/ (загрузите через «Медиа»). Первые три фото — в карточке дома", ""),
@@ -479,7 +482,7 @@ for i, (k, h) in enumerate(H.items()):
                 "bn_rooms": h["rooms"], "bn_plot": h["plot"], "bn_sleep": h["sleep"], "bn_max": h["max"], "bn_base": h["base"], "bn_extra": h["extra"],
                 "bn_checkin": h["checkin"], "bn_checkout": h["checkout"], "bn_view": h["view"], "bn_pool": h["pool"],
                 "bn_price_wd": h["prices"][0], "bn_price_fri": h["prices"][1], "bn_price_sat": h["prices"][2], "bn_price_sun": h["prices"][3],
-                "bn_tour": h["tour"], "bn_tour_text": h["tourtxt"], "bn_sbp": h["sbp"],
+                "bn_tour": h["tour"], "bn_tour_text": h["tourtxt"], "bn_tour2": h.get("tour2", ""), "bn_jacuzzi": h.get("jacuzzi", ""), "bn_tour2_text": h.get("tour2txt", ""), "bn_sbp": h["sbp"],
                 "bn_gallery": lines([("%s.jpg" % p, c) for p, c in h["gallery"]]), "bn_features": "\n".join(h["features"]), "bn_table_extra": h["table_extra"],
                 "bn_comfort": lines(h["comfort"]), "bn_seo": "".join("<p>%s</p>" % t for t in h["seo"]), "bn_faq": lines(h["faq"])},
     })
@@ -579,7 +582,7 @@ with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
             for f in files:
                 full = os.path.join(base, f)
                 z.write(full, PKG + "/" + os.path.relpath(full, OUT).replace("\\", "/"))
-    for d in ("css", "js", "img"):
+    for d in ("css", "js", "img", "vtour"):
         for base, _, files in os.walk(os.path.join(ROOT, "site", d)):
             for f in files:
                 full = os.path.join(base, f)

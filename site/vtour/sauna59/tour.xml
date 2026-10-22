@@ -1,0 +1,218 @@
+﻿<krpano version="1.19" title="Баня на Свиязева,59">
+
+	<include url="skin/vtourskin.xml" />
+
+	<!-- customize skin settings: maps, gyro, webvr, thumbnails, tooltips, layout, design, ... -->
+	<skin_settings maps="false"
+	               maps_type="google"
+	               maps_bing_api_key=""
+	               maps_google_api_key=""
+	               maps_zoombuttons="false"
+	               gyro="true"
+	               webvr="true"
+	               webvr_gyro_keeplookingdirection="false"
+	               webvr_prev_next_hotspots="true"
+	               littleplanetintro="false"
+	               title="true"
+	               thumbs="true"
+	               thumbs_width="120" thumbs_height="80" thumbs_padding="10" thumbs_crop="0|40|240|160"
+	               thumbs_opened="false"
+	               thumbs_text="false"
+	               thumbs_dragging="true"
+	               thumbs_onhoverscrolling="false"
+	               thumbs_scrollbuttons="false"
+	               thumbs_scrollindicator="false"
+	               thumbs_loop="false"
+	               tooltips_buttons="true"
+	               tooltips_thumbs="true"
+	               tooltips_hotspots="true"
+	               tooltips_mapspots="false"
+	               deeplinking="false"
+	               loadscene_flags="MERGE"
+	               loadscene_blend="OPENBLEND(0.5, 0.0, 0.75, 0.05, linear)"
+	               loadscene_blend_prev="SLIDEBLEND(0.5, 180, 0.75, linear)"
+	               loadscene_blend_next="SLIDEBLEND(0.5,   0, 0.75, linear)"
+	               loadingtext="loading..."
+	               layout_width="100%"
+	               layout_maxwidth="814"
+	               controlbar_width="-24"
+	               controlbar_height="40"
+	               controlbar_offset="20"
+	               controlbar_offset_closed="-40"
+	               controlbar_overlap.no-fractionalscaling="10"
+	               controlbar_overlap.fractionalscaling="0"
+	               design_skin_images="vtourskin.png"
+	               design_bgcolor="0x2D3E50"
+	               design_bgalpha="0.8"
+	               design_bgborder="0"
+	               design_bgroundedge="1"
+	               design_bgshadow="0 4 10 0x000000 0.3"
+	               design_thumbborder_bgborder="3 0xFFFFFF 1.0"
+	               design_thumbborder_padding="2"
+	               design_thumbborder_bgroundedge="0"
+	               design_text_css="color:#FFFFFF; font-family:Arial;"
+	               design_text_shadow="1"
+	               />
+
+	<!--
+	    For an alternative skin design either change the <skin_settings> values 
+	    from above or optionally include one of the predefined designs from below.
+	-->
+	<!-- <include url="skin/vtourskin_design_flat_light.xml"  /> -->
+	<!-- <include url="skin/vtourskin_design_glass.xml"       /> -->
+	<!-- <include url="skin/vtourskin_design_ultra_light.xml" /> -->
+	<!-- <include url="skin/vtourskin_design_117.xml"         /> -->
+	<!-- <include url="skin/vtourskin_design_117round.xml"    /> -->
+	<!-- <include url="skin/vtourskin_design_black.xml"       /> -->
+
+
+	<!-- startup action - load the first scene -->
+	<action name="startup" autorun="onstart">
+		if(startscene === null OR !scene[get(startscene)], copy(startscene,scene[0].name); );
+		loadscene(get(startscene), null, MERGE);
+		if(startactions !== null, startactions() );
+	</action>
+	
+	<scene name="scene_ulica_sviazeva" title="Мангальная зона" onstart="" thumburl="panos/ulica_sviazeva.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-400.871" vlookat="-15.187" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/ulica_sviazeva.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/ulica_sviazeva.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-28.035" atv="0.893" linkedscene="scene_02_prihozka" />
+
+	</scene>
+
+	
+	<scene name="scene_02_prihozka" title="Прихожая" onstart="" thumburl="panos/02_prihozka.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="0.0" vlookat="0.0" fovtype="MFOV" fov="120" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/02_prihozka.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/02_prihozka.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-27.688" atv="-2.246" linkedscene="scene_03_zal_sviazeva2" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="-126.985" atv="12.995" linkedscene="scene_ulica_sviazeva" />
+
+	</scene>
+
+	<scene name="scene_03_zal_sviazeva2" title="Зал" onstart="" thumburl="panos/03_zal_sviazeva2.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="12.109" vlookat="16.835" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/03_zal_sviazeva2.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/03_zal_sviazeva2.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="71.687" atv="9.622" linkedscene="scene_04_biliard_sviazeva" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="41.403" atv="10.672" linkedscene="scene_06_moika" />
+		<hotspot name="spot3" style="skin_hotspotstyle" ath="109.332" atv="15.150" linkedscene="scene_02_prihozka" />
+		<hotspot name="spot4" style="skin_hotspotstyle" ath="53.939" atv="11.279" linkedscene="scene_tualet" />
+
+	</scene>
+	
+	<scene name="scene_tualet" title="Санузел" onstart="" thumburl="panos/tualet.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="306.885" vlookat="14.589" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/tualet.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/tualet.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-99.677" atv="11.942" linkedscene="scene_03_zal_sviazeva2" />
+
+	</scene>
+
+	<scene name="scene_04_biliard_sviazeva" title="Бильярд" onstart="" thumburl="panos/04_biliard_sviazeva.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="24.188" vlookat="14.589" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/04_biliard_sviazeva.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/04_biliard_sviazeva.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="140.817" atv="18.772" linkedscene="scene_05_spalna2" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="78.190" atv="21.026" linkedscene="scene_03_zal_sviazeva2" />
+
+	</scene>
+
+	<scene name="scene_05_spalna2" title="Спальная комната" onstart="" thumburl="panos/05_spalna2.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="388.435" vlookat="14.589" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/05_spalna2.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/05_spalna2.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="104.395" atv="10.362" linkedscene="scene_04_biliard_sviazeva" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="-132.877" atv="18.964" linkedscene="scene_spal_mini" />
+
+	</scene>
+	
+	<scene name="scene_06_moika" title="Помывочная" onstart="" thumburl="panos/06_moika.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="102.170" vlookat="22.971" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/06_moika.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/06_moika.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-57.395" atv="9.954" linkedscene="scene_08_sauna" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="-91.709" atv="10.417" linkedscene="scene_03_zal_sviazeva2" />
+		<hotspot name="spot3" style="skin_hotspotstyle" ath="118.370" atv="12.341" linkedscene="scene_07_dzhakuzi2" />
+
+	</scene>
+
+	<scene name="scene_07_dzhakuzi2" title="Джакузи" onstart="" thumburl="panos/07_dzhakuzi2.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="0.0" vlookat="0.0" fovtype="MFOV" fov="120" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/07_dzhakuzi2.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/07_dzhakuzi2.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-43.775" atv="14.952" linkedscene="scene_06_moika" />
+
+	</scene>
+
+	<scene name="scene_08_sauna" title="Баня" onstart="" thumburl="panos/08_sauna.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="10.279" vlookat="25.038" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range"  vlookatmax="+67" /> />
+
+		<preview url="panos/08_sauna.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/08_sauna.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="133.714" atv="13.968" linkedscene="scene_06_moika" />
+
+	</scene>
+	
+	<scene name="scene_spal_mini" title="Малая спальная комната" onstart="" thumburl="panos/spal_mini.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-15.066" vlookat="16.397" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-85.460" vlookatmax="85.460" />
+
+		<preview url="panos/spal_mini.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/spal_mini.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="74.860" atv="22.561" linkedscene="scene_05_spalna2" />
+
+	</scene>
+	
+
+	
+
+</krpano>

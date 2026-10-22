@@ -1,0 +1,291 @@
+﻿<krpano version="1.19" title="Гостевой дом на Беляева,111">
+
+	<include url="skin/vtourskin.xml" />
+
+	<!-- customize skin settings: maps, gyro, webvr, thumbnails, tooltips, layout, design, ... -->
+	<skin_settings maps="false"
+	               maps_type="google"
+	               maps_bing_api_key=""
+	               maps_google_api_key=""
+	               maps_zoombuttons="false"
+	               gyro="true"
+	               webvr="true"
+	               webvr_gyro_keeplookingdirection="false"
+	               webvr_prev_next_hotspots="true"
+	               littleplanetintro="false"
+	               title="true"
+	               thumbs="true"
+	               thumbs_width="120" thumbs_height="80" thumbs_padding="10" thumbs_crop="0|40|240|160"
+	               thumbs_opened="false"
+	               thumbs_text="true"
+	               thumbs_dragging="true"
+	               thumbs_onhoverscrolling="false"
+	               thumbs_scrollbuttons="false"
+	               thumbs_scrollindicator="false"
+	               thumbs_loop="false"
+	               tooltips_buttons="true"
+	               tooltips_thumbs="false"
+	               tooltips_hotspots="true"
+	               tooltips_mapspots="false"
+	               deeplinking="false"
+	               loadscene_flags="MERGE"
+	               loadscene_blend="OPENBLEND(0.5, 0.0, 0.75, 0.05, linear)"
+	               loadscene_blend_prev="SLIDEBLEND(0.5, 180, 0.75, linear)"
+	               loadscene_blend_next="SLIDEBLEND(0.5,   0, 0.75, linear)"
+	               loadingtext="loading..."
+	               layout_width="100%"
+	               layout_maxwidth="814"
+	               controlbar_width="-24"
+	               controlbar_height="40"
+	               controlbar_offset="20"
+	               controlbar_offset_closed="-40"
+	               controlbar_overlap.no-fractionalscaling="10"
+	               controlbar_overlap.fractionalscaling="0"
+	               design_skin_images="vtourskin.png"
+	               design_bgcolor="0x2D3E50"
+	               design_bgalpha="0.8"
+	               design_bgborder="0"
+	               design_bgroundedge="1"
+	               design_bgshadow="0 4 10 0x000000 0.3"
+	               design_thumbborder_bgborder="3 0xFFFFFF 1.0"
+	               design_thumbborder_padding="2"
+	               design_thumbborder_bgroundedge="0"
+	               design_text_css="color:#FFFFFF; font-family:Arial;"
+	               design_text_shadow="1"
+	               />
+
+	<!--
+	    For an alternative skin design either change the <skin_settings> values 
+	    from above or optionally include one of the predefined designs from below.
+	-->
+	<!-- <include url="skin/vtourskin_design_flat_light.xml"  /> -->
+	<!-- <include url="skin/vtourskin_design_glass.xml"       /> -->
+	<!-- <include url="skin/vtourskin_design_ultra_light.xml" /> -->
+	<!-- <include url="skin/vtourskin_design_117.xml"         /> -->
+	<!-- <include url="skin/vtourskin_design_117round.xml"    /> -->
+	<!-- <include url="skin/vtourskin_design_black.xml"       /> -->
+
+
+	<!-- startup action - load the first scene -->
+	<action name="startup" autorun="onstart">
+		if(startscene === null OR !scene[get(startscene)], copy(startscene,scene[0].name); );
+		loadscene(get(startscene), null, MERGE);
+		if(startactions !== null, startactions() );
+	</action>
+
+
+	
+	<scene name="scene_01_fasad" title="Фасад" onstart="" thumburl="panos/01_fasad.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="4.135" vlookat="-3.249" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-60"  vlookatmax="+67" /> />
+
+		<preview url="panos/01_fasad.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/01_fasad.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-0.092" atv="9.645" linkedscene="scene_02_prihozhaya" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="-43.509" atv="13.467" linkedscene="scene_14_pavilon" />
+
+	</scene>
+
+	<scene name="scene_02_prihozhaya" title="Прихожая" onstart="" thumburl="panos/02_prihozhaya.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="340.500" vlookat="18.376" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-60"  vlookatmax="+67" />/>
+
+		<preview url="panos/02_prihozhaya.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/02_prihozhaya.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="8.645" atv="25.015" linkedscene="scene_03_holl1" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="112.332" atv="14.694" linkedscene="scene_01_fasad" />
+
+	</scene>
+
+	<scene name="scene_03_holl1" title="Большая комната-кухня" onstart="" thumburl="panos/03_holl1.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-47.312" vlookat="17.071" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-70"  vlookatmax="+67" />/>
+
+		<preview url="panos/03_holl1.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/03_holl1.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="152.196" atv="18.561" linkedscene="scene_02_prihozhaya" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="-128.347" atv="21.757" linkedscene="scene_04_sanuzel_1et" />
+		<hotspot name="spot3" style="skin_hotspotstyle" ath="-126.383" atv="8.667" linkedscene="scene_05_basein" />
+		<hotspot name="spot4" style="skin_hotspotstyle" ath="-136.670" atv="1.272" linkedscene="scene_08_biliard" />
+		
+		<hotspot name="spot5" style="button" ath="151.195" atv="11.048"
+keep="false" visible="true" enabled="true" alpha="1" handcursor="true"
+capture="true" children="true"
+
+zorder="2" onhover="showtext([b]Посмотреть фото[/b], infostyle)" onclick="set(plugin[pic19].visible,true);" >
+</hotspot>
+
+<plugin name="pic19" url="%SWFPATH%\foto\foto1.jpg" type="image"
+keep="false" zoom="true" distorted="true" width="460" height="550" scale="1" align="center" x="0" y="0"
+edge="center" visible="false" enabled="true" handcursor="true" capture="true" children="false"
+zorder="2"
+alpha="1.00" blendmode="normal" smoothing="true" refreshrate="auto"
+onhover="showtext([b]Посмотреть фото[/b], infostyle);"
+onclick="set(plugin[pic19].visible,false);" 
+/>
+		
+		<hotspot name="spot5" style="skin_hotspotstyle" ath="-100.110" atv="4.462" linkedscene="scene_14_pavilon" />
+
+	</scene>
+
+	<scene name="scene_04_sanuzel_1et" title="Санузел" onstart="" thumburl="panos/04_sanuzel_1et.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-335.122" vlookat="29.029" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-60"  vlookatmax="+58" />/>
+
+		<preview url="panos/04_sanuzel_1et.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/04_sanuzel_1et.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-119.284" atv="8.338" linkedscene="scene_03_holl1" />
+
+	</scene>
+
+	<scene name="scene_05_basein" title="Бассейн" onstart="" thumburl="panos/05_basein.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="709.920" vlookat="33.144" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-77"  vlookatmax="+67" />/>
+
+		<preview url="panos/05_basein.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/05_basein.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="112.408" atv="21.451" linkedscene="scene_06_dush_1_et" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="156.398" atv="18.492" linkedscene="scene_07_sauna" />
+		<hotspot name="spot3" style="skin_hotspotstyle" ath="53.412" atv="18.345" linkedscene="scene_03_holl1" />
+
+	</scene>
+
+	<scene name="scene_06_dush_1_et" title="Душевая комната" onstart="" thumburl="panos/06_dush_1_et.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="46.907" vlookat="19.056" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmax="+61" />/> />
+
+		<preview url="panos/06_dush_1_et.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/06_dush_1_et.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-26.255" atv="16.536" linkedscene="scene_05_basein" />
+
+	</scene>
+
+	<scene name="scene_07_sauna" title="Баня" onstart="" thumburl="panos/07_sauna.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="0.0" vlookat="0.0" fovtype="MFOV" fov="120" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-88.180" vlookatmax="+62" />
+
+		<preview url="panos/07_sauna.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/07_sauna.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-172.840" atv="17.732" linkedscene="scene_05_basein" />
+
+	</scene>
+
+	<scene name="scene_08_biliard" title="Бильярд" onstart="" thumburl="panos/08_biliard.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-234.028" vlookat="19.053" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-86.045" vlookatmax="+69" />
+
+		<preview url="panos/08_biliard.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/08_biliard.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="131.251" atv="19.081" linkedscene="scene_09_spal1-1" />
+		<hotspot name="spot2" style="skin_hotspotstyle" ath="164.066" atv="31.677" linkedscene="scene_03_holl1" />
+		<hotspot name="spot3" style="skin_hotspotstyle" ath="-138.741" atv="20.581" linkedscene="scene_10_san2et" />
+		<hotspot name="spot4" style="skin_hotspotstyle" ath="-106.674" atv="17.012" linkedscene="scene_11_spal2-2" />
+		<hotspot name="spot5" style="skin_hotspotstyle" ath="-79.370" atv="13.291" linkedscene="scene_12_spal3-1" />
+		<hotspot name="spot6" style="skin_hotspotstyle" ath="-57.062" atv="12.114" linkedscene="scene_13_spal4-2" />
+
+	</scene>
+
+	<scene name="scene_09_spal1-1" title="Спальня №1" onstart="" thumburl="panos/09_spal1-1.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-16.835" vlookat="23.920" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-86.365" vlookatmax="+69" />
+
+		<preview url="panos/09_spal1-1.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/09_spal1-1.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="119.650" atv="9.980" linkedscene="scene_08_biliard" />
+
+	</scene>
+
+	<scene name="scene_10_san2et" title="Санузел" onstart="" thumburl="panos/10_san2et.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-195.032" vlookat="32.928" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmax="+69" /> />
+
+		<preview url="panos/10_san2et.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/10_san2et.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-87.464" atv="8.292" linkedscene="scene_08_biliard" />
+
+	</scene>
+
+	<scene name="scene_11_spal2-2" title="Спальня №2" onstart="" thumburl="panos/11_spal2-2.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="9.747" vlookat="11.980" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-80" vlookatmax="+67" />
+
+		<preview url="panos/11_spal2-2.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/11_spal2-2.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="165.373" atv="17.101" linkedscene="scene_08_biliard" />
+
+	</scene>
+
+	<scene name="scene_12_spal3-1" title="Спальня №3" onstart="" thumburl="panos/12_spal3-1.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="5.169" vlookat="19.493" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-81" vlookatmax="+67" />
+
+		<preview url="panos/12_spal3-1.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/12_spal3-1.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="-154.370" atv="26.709" linkedscene="scene_08_biliard" />
+
+	</scene>
+
+	<scene name="scene_13_spal4-2" title="Спальня №4" onstart="" thumburl="panos/13_spal4-2.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-47.682" vlookat="16.398" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-81" vlookatmax="+67" />
+
+		<preview url="panos/13_spal4-2.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/13_spal4-2.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="87.450" atv="18.812" linkedscene="scene_08_biliard" />
+
+	</scene>
+
+	<scene name="scene_14_pavilon" title="Крытая беседка" onstart="" thumburl="panos/14_pavilon.tiles/thumb.jpg" lat="" lng="" heading="">
+
+		<view hlookat="-13.097" vlookat="18.165" fovtype="MFOV" fov="120.000" maxpixelzoom="2.0" fovmin="70" fovmax="140" limitview="range" vlookatmin="-81" vlookatmax="+68" />
+
+		<preview url="panos/14_pavilon.tiles/preview.jpg" />
+
+		<image>
+			<cube url="panos/14_pavilon.tiles/pano_%s.jpg" />
+		</image>
+		<hotspot name="spot1" style="skin_hotspotstyle" ath="53.906" atv="34.609" linkedscene="scene_01_fasad" />
+
+	</scene>
+
+
+</krpano>

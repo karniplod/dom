@@ -12,6 +12,7 @@ switch ($part) {
     case 'comfort': return Bania::comfort($h);
     case 'prices': return Bania::priceDays($h);
     case 'hinfo': return Bania::hinfo($h);
+    case 'tour2': return Bania::tour2Btn($h);
     case 'rules': return Bania::rules($h['id']);
     case 'faq': return Bania::faqHtml($h['faq']);
     case 'reviews': return Bania::reviews($h['id']);
