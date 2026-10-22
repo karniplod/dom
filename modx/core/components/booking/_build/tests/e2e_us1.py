@@ -71,7 +71,7 @@ with sync_playwright() as pw:
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(BASE + "/booking", wait_until="networkidle")
         page.evaluate("document.addEventListener('si:send:after', e => { window.__si = e.detail && e.detail.result && e.detail.result.message; })")
-        form = page.locator('form[data-bk="guest"]')
+        form = page.locator('main form[data-bk="guest"]')
         check(form.count() == 1, "форма booking.form на странице /booking")
         form.locator("select[name=house]").select_option("ru")
         page.wait_for_timeout(800)
@@ -94,7 +94,7 @@ with sync_playwright() as pw:
         form.locator("input[name=agree]").check()
         humanize(page, 150)  # и заодно больше 3 с заполнения (minFillTime SendIt)
         form.locator("button[type=submit]").click()
-        done = page.locator("[data-bk-done]")
+        done = page.locator("main [data-bk-done]")
         try:
             done.wait_for(state="visible", timeout=30000)
         except Exception:
@@ -125,7 +125,7 @@ with sync_playwright() as pw:
         hscroll = page.evaluate("document.scrollingElement.scrollWidth > window.innerWidth")
         check(not hscroll, "нет горизонтальной прокрутки")
         page.evaluate("window.scrollTo(0, 0)")
-        page.locator('form[data-bk="guest"] select[name=house]').select_option("en")
+        page.locator('main form[data-bk="guest"] select[name=house]').select_option("en")
         page.wait_for_timeout(900)
         page.screenshot(path=str(SHOTS / f"us1-form-{width}.png"), full_page=True)
         errs = [e for e in errors if "favicon" not in e]

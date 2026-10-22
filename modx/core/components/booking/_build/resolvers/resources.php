@@ -10,6 +10,7 @@
  * @var array $options
  */
 use MODX\Revolution\modContentType;
+use MODX\Revolution\modDocument;
 use MODX\Revolution\modResource;
 use MODX\Revolution\modSystemSetting;
 use MODX\Revolution\modTemplate;
@@ -31,9 +32,9 @@ $exists = function ($id) use ($modx) {
     return $id > 0 && $modx->getObject(modResource::class, ['id' => $id, 'deleted' => 0]);
 };
 $make = function (array $f) use ($modx) {
-    $r = $modx->newObject(modResource::class);
+    $r = $modx->newObject(modDocument::class);
     $r->fromArray(array_merge([
-        'class_key' => modResource::class, 'published' => 1, 'hidemenu' => 1, 'searchable' => 1, 'cacheable' => 1,
+        'class_key' => modDocument::class, 'published' => 1, 'hidemenu' => 1, 'searchable' => 1, 'cacheable' => 1,
         'richtext' => 0, 'context_key' => 'web', 'content_type' => 1, 'publishedon' => time(), 'createdon' => time(),
     ], $f));
     $r->save();

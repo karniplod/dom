@@ -65,7 +65,7 @@ with sync_playwright() as pw:
     g = br.new_page(viewport={"width": 1440, "height": 900})
     gerrs = console_errors(g)
     g.goto(BASE + "/booking", wait_until="networkidle")
-    form = g.locator('form[data-bk="guest"]')
+    form = g.locator('main form[data-bk="guest"]')
     form.locator("select[name=house]").select_option("sv")
     g.wait_for_timeout(1000)
     for _ in range(3):
