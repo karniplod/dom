@@ -31,7 +31,7 @@ description: "Задачи реализации компонента брони�
 
 **Purpose**: каркас дополнения и стенд
 
-- [ ] T001 ⚠️ ТОЛЬКО ПОСЛЕ РАЗРЕШЕНИЯ ВЛАДЕЛЬЦА (plan.md, Complexity Tracking): в `tools/modx_build.py` заменить `shutil.rmtree(OUT)` на очистку только своих путей сборщика сайта (`modx/chunks`, `modx/templates`, `modx/snippets`, `modx/component`, `modx/resources.json`, `modx/bn-install*.php`, `modx/INSTALL.md`, `modx/.htaccess`), чтобы `modx/core/` и `modx/assets/` сохранялись; проверить `python tools/modx_build.py` — пакет сайта собирается как раньше
+- [x] T001 (разрешено владельцем 22.10.2026) В `tools/modx_build.py` заменить `shutil.rmtree(OUT)` на очистку только своих путей сборщика сайта (`modx/chunks`, `modx/templates`, `modx/snippets`, `modx/component`, `modx/resources.json`, `modx/bn-install*.php`, `modx/INSTALL.md`, `modx/.htaccess`), чтобы `modx/core/` и `modx/assets/` сохранялись; проверить `python tools/modx_build.py` — пакет сайта собирается как раньше
 - [ ] T002 Создать структуру каталогов по plan.md: `C/{src/Model,src/Service,src/Processors,controllers,elements/snippets,elements/chunks,presets,lexicon/ru,lexicon/en,schema,_build/resolvers,_build/tests}` и `A/{js,css,app}`
 - [ ] T003 [P] Создать `C/composer.json` (PSR-4 `"Booking\\": "src/"`) и `C/bootstrap.php`: регистрация автозагрузки `Booking\` и сервиса `booking` (`Booking\Service\Booking`) в `$modx->services`
 - [ ] T004 [P] Создать лексиконы `C/lexicon/ru/default.inc.php` и `C/lexicon/en/default.inc.php` (меню «Бронирование», статусы new/confirmed/cancelled/completed, статусы залога not_set/pending/paid/returned, тексты ошибок пересечения и диапазона залога)
@@ -100,7 +100,7 @@ description: "Задачи реализации компонента брони�
 - [ ] T036 [US2] Процессор `booking_confirm` в `C/src/Processors/Booking/Confirm.php`: только new → confirmed; `Availability::assertFree` в транзакции + запись `booking_nights`; необязательный deposit_amount «NULL или 5 000…20 000» → deposit_status pending; 409 с `conflict {booking_id, nights}`; повторное подтверждение не создаёт дублей; журнал
 - [ ] T037 [P] [US2] Процессоры `C/src/Processors/Booking/Cancel.php` (`booking_cancel`: reason обязателен, освобождает `booking_nights`, бронь не удаляется, статус залога сохраняется) и `C/src/Processors/Booking/Complete.php` (`booking_complete`: confirmed → completed)
 - [ ] T038 [P] [US2] Процессор `booking_set_deposit` в `C/src/Processors/Booking/SetDeposit.php`: сумма 5 000–20 000 или NULL; переходы not_set → pending → paid → returned; только confirmed/completed/cancelled-с-залогом; журнал
-- [ ] T039 [US2] Процессор `booking_create_manual` в `C/src/Processors/Booking/CreateManual.php` (допущение spec: бронь за гостя по телефону) — сразу confirmed через ту же проверку, source=admin
+- [ ] T039 [US2] Процессор `booking_create_manual` в `C/src/Processors/Booking/CreateManual.php` (решение владельца 22.10.2026: бронь за гостя по телефону) — сразу confirmed через ту же проверку, source=admin
 - [ ] T040 [US2] Тест одновременности `C/_build/tests/concurrency_confirm.py`: две пересекающиеся заявки, два параллельных `booking_confirm` через `A/api.php` с токеном → ровно один 200 и один 409 (SC-002)
 - [ ] T041 [US2] Контроллер CMP `C/controllers/index.class.php` (`BookingIndexManagerController`, право `booking_admin`) и резолвер `C/_build/resolvers/menu.php` (пункт «Пакеты → Бронирование»)
 - [ ] T042 [US2] Режим admin-grid в `A/js/booking.js` (тот же модуль, ст. 7.3): сетка «дома и бани × даты», подсказка при наведении (имя гостя, кратко), карточка по клику с кнопками «Подтвердить» (+ поле залога), «Отменить» (причина), «Завершить», «Залог»; цвета docs/04 (подтверждено — зелёный, запрошена отмена — оранжевый)
@@ -194,7 +194,7 @@ description: "Задачи реализации компонента брони�
 
 ### Phase Dependencies
 
-- **Setup (1)**: T001 ждёт разрешения владельца; остальное — сразу
+- **Setup (1)**: T001 выполнена; остальное — сразу
 - **Foundational (2)**: после Setup; блокирует все сценарии
 - **US1 (3), US2 (4)**: после Foundational; US2 для проверки удобнее делать после US1 (заявки создаются формой), но может опираться на ручную бронь T039
 - **US3 (5)**: после US1 (нужна заявка гостя)
@@ -237,7 +237,7 @@ Task: "T031 [US1] Стили A/css/booking.css"
 
 ### MVP First (User Story 1 Only)
 
-1. Phase 1 (T001 — после разрешения) → Phase 2
+1. Phase 1 → Phase 2
 2. Phase 3 (US1): форма, расчёт, отправка через SendIt
 3. **STOP and VALIDATE**: quickstart №1–3, №9, №18
 4. Показать владельцу на стенде
@@ -259,4 +259,4 @@ Task: "T031 [US1] Стили A/css/booking.css"
 - [P] = разные файлы, нет зависимостей; [Story] связывает задачу со сценарием
 - Каждый сценарий проверяется отдельно по quickstart.md
 - Коммит после каждой задачи или логической группы; перед коммитом — проверка T074
-- ⚠️ T001, T069, T070 — только после явного «да» владельца
+- ⚠️ T069, T070 — только после явного «да» владельца (T001 разрешена 22.10.2026)

@@ -518,9 +518,16 @@ RES += [
 ]
 
 # ---------------------------------------------------------------- пакет modx/
-if os.path.isdir(OUT):
-    shutil.rmtree(OUT)
-os.makedirs(OUT)
+# Чистим только своё: modx/core/ и modx/assets/ — компонент booking, его не трогаем
+OWN = ("chunks", "templates", "snippets", "component", "resources.json", "bn-install.php",
+       "bn-install.inc.php", "INSTALL.md", ".htaccess")
+os.makedirs(OUT, exist_ok=True)
+for name in OWN:
+    p = os.path.join(OUT, name)
+    if os.path.isdir(p):
+        shutil.rmtree(p)
+    elif os.path.exists(p):
+        os.remove(p)
 chunk_list = []
 for n, (cat, text) in CHUNKS.items():
     write("chunks/%s.html" % n, text)
@@ -564,10 +571,12 @@ os.makedirs(DIST, exist_ok=True)
 zpath = os.path.join(DIST, PKG + ".zip")
 n_site = 0
 with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
-    for base, _, files in os.walk(OUT):
-        for f in files:
-            full = os.path.join(base, f)
-            z.write(full, PKG + "/" + os.path.relpath(full, OUT).replace("\\", "/"))
+    for name in OWN:
+        p = os.path.join(OUT, name)
+        for base, _, files in (os.walk(p) if os.path.isdir(p) else [(OUT, None, [name])]):
+            for f in files:
+                full = os.path.join(base, f)
+                z.write(full, PKG + "/" + os.path.relpath(full, OUT).replace("\\", "/"))
     for d in ("css", "js", "img"):
         for base, _, files in os.walk(os.path.join(ROOT, "site", d)):
             for f in files:
