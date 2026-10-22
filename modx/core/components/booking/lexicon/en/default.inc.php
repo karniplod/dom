@@ -18,8 +18,10 @@ $_lang['booking.err_deposit'] = 'Deposit must be 5,000–20,000 RUB';
 
 $_lang['setting_booking.admin_email'] = 'Admin email';
 $_lang['setting_booking.admin_email_desc'] = 'Where new requests and cancellation requests go. Comma-separated. Empty — emailsender.';
-$_lang['setting_booking.site_discount'] = 'Website booking discount, %';
-$_lang['setting_booking.site_discount_desc'] = 'Applied to the whole amount of requests from the site, app and MAX.';
+$_lang['setting_booking.vk_discount'] = 'VK booking discount, %';
+$_lang['setting_booking.vk_discount_desc'] = 'Not applied on the website: the admin ticks it in phone bookings for guests from the VK group.';
+$_lang['setting_booking.vk_url'] = 'VK group';
+$_lang['setting_booking.vk_url_desc'] = 'Where the "Get discount" button in the form leads.';
 $_lang['setting_booking.request_link_page'] = '"My request" page';
 $_lang['setting_booking.request_link_page_desc'] = 'Resource ID with [[!booking.request]].';
 $_lang['setting_booking.form_page'] = 'Booking page';

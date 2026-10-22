@@ -199,8 +199,8 @@
 .bk-dialog__x { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; font-size: 28px; line-height: 1; cursor: pointer; color: var(--bk-ink); }
 .bk-dialog__x:hover { background: rgba(34,20,14,.07); }
 
-/* админка MODX: страница целиком */
-.bk-cmp { padding: 20px 24px 40px; background: var(--paper, #F4EBDF); min-height: calc(100vh - 60px); }
+/* админка MODX: #modx-content не прокручивается (у body overflow: hidden) — прокручиваем свою страницу */
+.bk-cmp { height: 100vh; height: 100dvh; overflow-y: auto; padding: 20px 24px 40px; background: var(--paper, #F4EBDF); box-sizing: border-box; }
 
 /* ---------- приложение */
 .bk-appbody { margin: 0; background: #F4EBDF; color: #22140E; font: 400 16px/1.55 "Golos Text", "Segoe UI", Roboto, Arial, sans-serif; -webkit-font-smoothing: antialiased; }

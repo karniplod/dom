@@ -5,23 +5,23 @@
  * Дни недели 2031 г.: 03.03 Пн, 06.03 Чт, 07.03 Пт, 08.03 Сб, 09.03 Вс, 05.12 Пт, 06.12 Сб, 07.12 Вс.
  */
 return [
-    'будни: 3 суток Русского дома, скидка 5%' => function (BookingTest $t) {
+    'будни: 3 суток Русского дома, на сайте без скидки' => function (BookingTest $t) {
         $t->guest();
         $r = $t->run('booking_quote', ['house' => 'ru', 'date_from' => '2031-03-03', 'date_to' => '2031-03-06', 'guests' => 6]);
         $t->ok($r['success'], 'расчёт успешен');
         $t->eq(54000, $r['data']['subtotal'], 'сумма 3 × 18 000');
-        $t->eq(2700, $r['data']['discount'], 'скидка 5%');
-        $t->eq(51300, $r['data']['total'], 'итог');
+        $t->eq(0, $r['data']['discount'], 'на сайте скидки нет — только через ВКонтакте');
+        $t->eq(54000, $r['data']['total'], 'итог');
         $t->ok(is_int($r['data']['total']), 'итог — целое число рублей');
     },
     'пятница + суббота, 14 гостей (сценарий 1 quickstart)' => function (BookingTest $t) {
         $t->guest();
         $r = $t->run('booking_quote', ['house' => 'ru', 'date_from' => '2031-12-05', 'date_to' => '2031-12-07', 'guests' => 14]);
         $t->eq(22000 + 27000 + 4 * 500, $r['data']['subtotal'], 'Пт 22 000 + Сб 27 000 + 4 гостя × 500');
-        $t->eq((int)round(51000 * 0.05), $r['data']['discount'], 'скидка от всей суммы');
+        $t->eq(51000, $r['data']['total'], 'итог без скидки');
         $labels = implode('|', array_column($r['data']['lines'], 'label'));
         $t->ok(strpos($labels, 'Пятница') !== false && strpos($labels, 'Суббота') !== false, 'строки по типам дней');
-        $t->ok(strpos($labels, 'Скидка 5%') !== false, 'скидка отдельной строкой');
+        $t->ok(strpos($labels, 'Скидка') === false, 'строки скидки нет');
     },
     'воскресенье, Свиязева' => function (BookingTest $t) {
         $t->guest();
@@ -65,6 +65,16 @@ return [
         $t->admin();
         $bad = $t->run('booking_manage_holiday', ['op' => 'save', 'date' => '2031-03-08', 'holiday_type' => 'holiday_before_workday']);
         $t->eq(400, $bad['status'], 'дата праздника уникальна');
+    },
+    'скидка 5% ВКонтакте — в брони администратора по галочке' => function (BookingTest $t) {
+        $t->admin();
+        $m = $t->run('booking_create_manual', ['house' => 'ru', 'date_from' => '2031-12-05', 'date_to' => '2031-12-07', 'guests' => 14,
+            'guest_name' => 'ТЕСТ ВК', 'guest_phone' => '+79000000002', 'apply_discount' => 1]);
+        $t->ok($m['success'], 'бронь создана: ' . $m['message']);
+        $t->eq((int)round(51000 * 0.05), $m['data']['quote_discount'] ?? null, 'скидка 5% от всей суммы');
+        $t->eq(51000 - 2550, $m['data']['total'] ?? null, 'итог со скидкой');
+        $labels = implode('|', array_column($m['data']['lines'] ?? [], 'label'));
+        $t->ok(strpos($labels, 'Скидка 5% при бронировании через ВКонтакте') !== false, 'строка «через ВКонтакте»');
     },
     'проверки входа' => function (BookingTest $t) {
         $t->guest();

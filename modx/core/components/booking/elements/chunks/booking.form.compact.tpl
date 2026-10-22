@@ -24,7 +24,8 @@
   <div class="bk-quote" data-bk-quote aria-live="polite"></div>
   <label class="bk-check"><input type="checkbox" name="agree" value="1" required><span>Согласен на обработку персональных данных по <a class="bk-link" href="#privacy">политике конфиденциальности</a></span>
     <b class="bk-err" data-si-error="agree"></b></label>
-  <p class="bk-note">Скидка [[+discount]]% при брони на сайте уже в расчёте. Администратор может назначить залог 5&nbsp;000–20&nbsp;000&nbsp;₽ — скажет при подтверждении.</p>
+  <p class="bk-note">Скидка [[+discount]]% — при бронировании через нашу группу ВКонтакте. Залог 5&nbsp;000–20&nbsp;000&nbsp;₽ зависит от количества и возраста гостей — администратор назовёт его при подтверждении.</p>
+  <p class="bk-vk"><a class="bk-btn bk-btn--ghost bk-btn--sm" href="[[+vk_url]]" target="_blank" rel="noopener">Получить скидку [[+discount]]% ВКонтакте</a></p>
   <button class="btn bk-btn" type="submit">Отправить заявку</button>
 </form>
 <div class="bk-done" data-bk-done hidden role="status"></div>

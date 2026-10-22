@@ -95,17 +95,17 @@ description: "Задачи реализации компонента брони�
 
 **Independent Test**: quickstart №4–7: подтверждение делает ночи серыми; пересекающееся подтверждение — 409 с номером; параллельные подтверждения — ровно один успех; залог 3 000 — отказ
 
-- [ ] T034 [P] [US2] Процессоры списка и сетки `C/src/Processors/Booking/GetList.php` (`booking_list`: фильтры status, house, from, to, q, страницы) и `C/src/Processors/Booking/Grid.php` (`booking_grid`: строки дом/баня, ячейки по датам — статус, id, имя гостя, отметка отмены)
-- [ ] T035 [P] [US2] Процессор карточки `C/src/Processors/Booking/Get.php` (`booking_get`: все поля + журнал)
-- [ ] T036 [US2] Процессор `booking_confirm` в `C/src/Processors/Booking/Confirm.php`: только new → confirmed; `Availability::assertFree` в транзакции + запись `booking_nights`; необязательный deposit_amount «NULL или 5 000…20 000» → deposit_status pending; 409 с `conflict {booking_id, nights}`; повторное подтверждение не создаёт дублей; журнал
-- [ ] T037 [P] [US2] Процессоры `C/src/Processors/Booking/Cancel.php` (`booking_cancel`: reason обязателен, освобождает `booking_nights`, бронь не удаляется, статус залога сохраняется) и `C/src/Processors/Booking/Complete.php` (`booking_complete`: confirmed → completed)
-- [ ] T038 [P] [US2] Процессор `booking_set_deposit` в `C/src/Processors/Booking/SetDeposit.php`: сумма 5 000–20 000 или NULL; переходы not_set → pending → paid → returned; только confirmed/completed/cancelled-с-залогом; журнал
-- [ ] T039 [US2] Процессор `booking_create_manual` в `C/src/Processors/Booking/CreateManual.php` (решение владельца 22.10.2026: бронь за гостя по телефону) — сразу confirmed через ту же проверку, source=admin
+- [X] T034 [P] [US2] Процессоры списка и сетки `C/src/Processors/Booking/GetList.php` (`booking_list`: фильтры status, house, from, to, q, страницы) и `C/src/Processors/Booking/Grid.php` (`booking_grid`: строки дом/баня, ячейки по датам — статус, id, имя гостя, отметка отмены)
+- [X] T035 [P] [US2] Процессор карточки `C/src/Processors/Booking/Get.php` (`booking_get`: все поля + журнал)
+- [X] T036 [US2] Процессор `booking_confirm` в `C/src/Processors/Booking/Confirm.php`: только new → confirmed; `Availability::assertFree` в транзакции + запись `booking_nights`; необязательный deposit_amount «NULL или 5 000…20 000» → deposit_status pending; 409 с `conflict {booking_id, nights}`; повторное подтверждение не создаёт дублей; журнал
+- [X] T037 [P] [US2] Процессоры `C/src/Processors/Booking/Cancel.php` (`booking_cancel`: reason обязателен, освобождает `booking_nights`, бронь не удаляется, статус залога сохраняется) и `C/src/Processors/Booking/Complete.php` (`booking_complete`: confirmed → completed)
+- [X] T038 [P] [US2] Процессор `booking_set_deposit` в `C/src/Processors/Booking/SetDeposit.php`: сумма 5 000–20 000 или NULL; переходы not_set → pending → paid → returned; только confirmed/completed/cancelled-с-залогом; журнал
+- [X] T039 [US2] Процессор `booking_create_manual` в `C/src/Processors/Booking/CreateManual.php` (решение владельца 22.10.2026: бронь за гостя по телефону) — сразу confirmed через ту же проверку, source=admin
 - [X] T040 [US2] Тест одновременности `C/_build/tests/concurrency_confirm.php`: две пересекающиеся заявки, два отдельных процесса PHP (свои соединения с БД) в одну миллисекунду вызывают `booking_confirm` → ровно один 200 и один 409 (SC-002); 10 раундов. (PHP вместо Python: встроенный сервер PHP на Windows однопоточный, гонку через HTTP не воспроизвести)
-- [ ] T041 [US2] Контроллер CMP `C/controllers/index.class.php` (`BookingIndexManagerController`, право `booking_admin`) и резолвер `C/_build/resolvers/menu.php` (пункт «Пакеты → Бронирование»)
-- [ ] T042 [US2] Режим admin-grid в `A/js/booking.js` (тот же модуль, ст. 7.3): сетка «дома и бани × даты», подсказка при наведении (имя гостя, кратко), карточка по клику с кнопками «Подтвердить» (+ поле залога), «Отменить» (причина), «Завершить», «Залог»; цвета docs/04 (подтверждено — зелёный, запрошена отмена — оранжевый)
-- [ ] T043 [US2] Вкладки CMP «Календарь» и «Заявки» (список с фильтрами, ручная бронь) в `C/controllers/index.class.php` + `A/css/booking.css`
-- [ ] T044 [US2] E2E `C/_build/tests/e2e_us2.py`: quickstart №4–7 в CMP
+- [X] T041 [US2] Контроллер CMP `C/controllers/index.class.php` (`BookingIndexManagerController`, право `booking_admin`) и резолвер `C/_build/resolvers/menu.php` (пункт «Пакеты → Бронирование»)
+- [X] T042 [US2] Режим admin-grid в `A/js/booking.js` (тот же модуль, ст. 7.3): сетка «дома и бани × даты», подсказка при наведении (имя гостя, кратко), карточка по клику с кнопками «Подтвердить» (+ поле залога), «Отменить» (причина), «Завершить», «Залог»; цвета docs/04 (подтверждено — зелёный, запрошена отмена — оранжевый)
+- [X] T043 [US2] Вкладки CMP «Календарь» и «Заявки» (список с фильтрами, ручная бронь) в `C/controllers/index.class.php` + `A/css/booking.css`
+- [X] T044 [US2] E2E `C/_build/tests/e2e_us2.py`: quickstart №4–7 в CMP
 
 **Checkpoint**: US1 + US2 — полный цикл «заявка → подтверждение»
 
@@ -117,11 +117,11 @@ description: "Задачи реализации компонента брони�
 
 **Independent Test**: quickstart №8: запрос отмены ставит отметку, статус и занятость не меняются, админ уведомлён; чужая заявка/неверный телефон — не показывается
 
-- [ ] T045 [P] [US3] Процессор `booking_get_request` в `C/src/Processors/Request/Get.php`: доступ по id+код (сравнение SHA-256), id+телефон или `mine=1` (сессия `booking.last`); отдаёт только гостевые поля (id, дом, даты, гости, питомцы, total, status, cancellation_requested, deposit_amount, deposit_status, link)
-- [ ] T046 [US3] Процессор `booking_request_cancel` в `C/src/Processors/Request/Cancel.php`: cancellation_requested=1, cancellation_requested_by=guest, reason; статус и `booking_nights` не меняются; уведомление админу письмом (`booking.email.cancel`) и в MAX (если MaxNotify3 установлен); журнал
-- [ ] T047 [P] [US3] Чанки `C/elements/chunks/booking.request.tpl` и `C/elements/chunks/booking.email.cancel.tpl`
-- [ ] T048 [US3] Сниппет `booking.request` в `C/elements/snippets/booking.request.php` и ресурс «Моя заявка» в `C/_build/resolvers/resources.php` (id — `booking.request_link_page`); режим «моя заявка» в `A/js/booking.js` (ввод номера и телефона, кнопка «Попросить отменить»)
-- [ ] T049 [US3] E2E `C/_build/tests/e2e_us3.py`: quickstart №8 и проверка чужой заявки
+- [X] T045 [P] [US3] Процессор `booking_get_request` в `C/src/Processors/Request/Get.php`: доступ по id+код (сравнение SHA-256), id+телефон или `mine=1` (сессия `booking.last`); отдаёт только гостевые поля (id, дом, даты, гости, питомцы, total, status, cancellation_requested, deposit_amount, deposit_status, link)
+- [X] T046 [US3] Процессор `booking_request_cancel` в `C/src/Processors/Request/Cancel.php`: cancellation_requested=1, cancellation_requested_by=guest, reason; статус и `booking_nights` не меняются; уведомление админу письмом (`booking.email.cancel`) и в MAX (если MaxNotify3 установлен); журнал
+- [X] T047 [P] [US3] Чанки `C/elements/chunks/booking.request.tpl` и `C/elements/chunks/booking.email.cancel.tpl`
+- [X] T048 [US3] Сниппет `booking.request` в `C/elements/snippets/booking.request.php` и ресурс «Моя заявка» в `C/_build/resolvers/resources.php` (id — `booking.request_link_page`); режим «моя заявка» в `A/js/booking.js` (ввод номера и телефона, кнопка «Попросить отменить»)
+- [X] T049 [US3] E2E `C/_build/tests/e2e_us3.py`: quickstart №8 и проверка чужой заявки
 
 ---
 

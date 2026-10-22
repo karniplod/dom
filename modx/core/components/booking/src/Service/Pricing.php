@@ -99,7 +99,8 @@ class Pricing
 
     /**
      * Расчёт брони дома или бани.
-     * $discount — применять скидку сайта (booking.site_discount, %): да для заявок с сайта, PWA и MAX.
+     * $discount — применять скидку ВКонтакте (booking.vk_discount, %): только в брони администратора по галочке;
+     * заявки с сайта, из приложения и MAX — без скидки (решение владельца 22.10.2026).
      * Ответ: lines [{label, qty, amount}], subtotal, discount, discount_percent, total, nights.
      */
     public function quote(House $house, string $from, string $to, int $guests, int $pets, bool $discount = true,
@@ -144,10 +145,10 @@ class Pricing
             }
         }
         $subtotal = array_sum(array_column($lines, 'amount'));
-        $percent = $discount ? max(0, min(100, (int)$this->booking->modx->getOption('booking.site_discount', null, 5))) : 0;
+        $percent = $discount ? max(0, min(100, (int)$this->booking->modx->getOption('booking.vk_discount', null, 5))) : 0;
         $disc = (int)round($subtotal * $percent / 100);
         if ($disc > 0) {
-            $lines[] = ['label' => 'Скидка ' . $percent . '% при брони на сайте', 'qty' => 1, 'amount' => -$disc];
+            $lines[] = ['label' => 'Скидка ' . $percent . '% при бронировании через ВКонтакте', 'qty' => 1, 'amount' => -$disc];
         }
         return [
             'lines' => $lines,

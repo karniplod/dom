@@ -587,7 +587,9 @@
   Admin.prototype.renderCard = function (d) {
     var self = this, box = qs(this.dialog, '.bk-dialog__body');
     var active = d.status === 'new' || d.status === 'confirmed';
-    var lines = (d.lines || []).map(function (l) { return '<tr><td>' + esc(l.label) + '</td><td>' + money(l.amount) + '</td></tr>'; }).join('');
+    var lines = (d.lines || []).map(function (l) {
+      return '<tr' + (l.amount < 0 ? ' class="bk-quote__disc"' : '') + '><td>' + esc(l.label) + '</td><td>' + (l.amount < 0 ? '−' + money(-l.amount) : money(l.amount)) + '</td></tr>';
+    }).join('');
     var log = (d.log || []).map(function (l) {
       return '<li><time>' + esc(l.created_at) + '</time> ' + esc(l.actor) + ' (' + esc(l.interface) + '): ' + esc(l.action) + '</li>';
     }).join('');
@@ -699,7 +701,7 @@
       + '<label class="bk-field"><span>Гостей</span><input name="guests" type="number" min="1" required></label><label class="bk-field"><span>Питомцев</span><input name="pets" type="number" min="0" value="0"></label>'
       + '<label class="bk-field"><span>Имя гостя</span><input name="guest_name" required></label><label class="bk-field"><span>Телефон</span><input name="guest_phone" type="tel" required></label>'
       + '<label class="bk-field"><span>Залог, ₽ (необязательно)</span><input name="deposit_amount" type="number" min="5000" max="20000" step="500"></label>'
-      + '<label class="bk-check"><input type="checkbox" name="apply_discount"> скидка сайта</label>'
+      + '<label class="bk-check"><input type="checkbox" name="apply_discount"> скидка 5% — гость из группы ВКонтакте</label>'
       + '<label class="bk-field bk-full"><span>Комментарий гостя</span><textarea name="guest_comment" rows="2"></textarea></label>'
       + '<label class="bk-field bk-full"><span>Заметка администратора</span><textarea name="admin_note" rows="2"></textarea></label>'
       + '<div class="bk-full"><button class="bk-btn" type="submit">Создать подтверждённую бронь</button></div></form>';

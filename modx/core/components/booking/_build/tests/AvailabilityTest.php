@@ -98,7 +98,7 @@ return [
         $t->ok($m['success'], 'создана: ' . $m['message']);
         $t->eq('confirmed', $m['data']['status'] ?? null, 'сразу подтверждена');
         $t->eq('admin', $m['data']['source'] ?? null, 'источник — администратор');
-        $t->eq(0, $m['data']['quote_discount'] ?? null, 'скидка сайта не применяется по умолчанию');
+        $t->eq(0, $m['data']['quote_discount'] ?? null, 'скидка ВКонтакте не применяется без галочки');
         $t->eq('+79001112233', $m['data']['guest_phone'] ?? null, 'телефон приведён к +7');
         $m2 = $t->run('booking_create_manual', ['house' => 'en', 'date_from' => '2031-09-02', 'date_to' => '2031-09-04', 'guests' => 2,
             'guest_name' => 'ТЕСТ Телефон 2', 'guest_phone' => '89001112234']);
@@ -121,7 +121,7 @@ return [
 
             $s1 = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-10', 'time_from' => '15:00', 'time_to' => '18:00', 'guests' => 4]);
             $t->ok($s1['success'], 'сеанс 15–18: ' . $s1['message']);
-            $t->eq(3 * 1500 - (int)round(3 * 1500 * 0.05), $s1['data']['total'] ?? null, '3 часа × 1 500 со скидкой');
+            $t->eq(3 * 1500, $s1['data']['total'] ?? null, '3 часа × 1 500');
             $short = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-10', 'time_from' => '20:00', 'time_to' => '21:00']);
             $t->eq('time', $short['data']['field'] ?? null, 'меньше 2 часов — отказ');
             $t->admin();

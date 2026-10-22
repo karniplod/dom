@@ -18,7 +18,7 @@ class Create extends Base
         $bk = $b->bookings();
         $in = $bk->input($this->getProperties(), true);
         $bk->assertFree($in);
-        $quote = $bk->quote($in, true);
+        $quote = $bk->quote($in, false);   // скидка — только через ВКонтакте, не на сайте
         $interface = $b->actor()['interface'];
         $source = in_array($interface, ['pwa', 'max'], true) ? $interface : 'site';
         [$row, $code] = $bk->create($in, $quote, 'new', $source);

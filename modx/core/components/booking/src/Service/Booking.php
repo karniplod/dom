@@ -210,7 +210,8 @@ class Booking
         $page = (int)$this->modx->getOption('booking.request_link_page');
         $params = ['id' => $id, 't' => $code];
         if ($page > 0) {
-            return $this->modx->makeUrl($page, '', $params, 'full');
+            // makeUrl экранирует & как &amp; (xhtml_urls) — для ссылки в письме и JSON нужен обычный &
+            return str_replace('&amp;', '&', $this->modx->makeUrl($page, '', $params, 'full'));
         }
         return rtrim($this->modx->getOption('site_url'), '/') . '/booking/zayavka?' . http_build_query($params);
     }

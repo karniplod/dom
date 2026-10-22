@@ -12,7 +12,7 @@ class Quote extends Base
     {
         $bk = $this->booking->bookings();
         $in = $bk->input($this->getProperties(), false);
-        $q = $bk->quote($in, true);
+        $q = $bk->quote($in, false);   // скидка — только через ВКонтакте (решение владельца 22.10.2026)
         unset($q['nights']);
         return $q;
     }
