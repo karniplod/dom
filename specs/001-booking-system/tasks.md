@@ -172,12 +172,12 @@ description: "Задачи реализации компонента брони�
 
 **Purpose**: перевод сайта на booking — отдельными согласованными шагами
 
-- [ ] T066 Процессор `booking_migrate_leads` в `C/src/Processors/Migrate.php`: preview (чтение `{prefix}bania_leads` только на чтение), run (статусы new→new, contacted→new + заметка, confirmed→confirmed через `Availability::assertFree`, done→completed, declined→cancelled; дом по коду/названию; legacy_lead_id; повтор ничего не дублирует; отчёт о конфликтах), retire (снять пункт меню «Заявки» и пространство имён bania после подтверждения в CMP; таблицы bania_* — переименовать в `*_archived`, не удалять)
-- [ ] T067 Вкладка CMP «Перенос заявок» (предпросмотр → перенос → вывод из работы) в `C/controllers/index.class.php`
-- [ ] T068 E2E `C/_build/tests/e2e_migrate.py`: quickstart №16 на копии базы стенда
-- [ ] T069 ⚠️ После согласования с владельцем: заменить форму в чанках сайта `bn.form` (окно и блок «Оставьте заявку») вызовом `[[!booking.form? &mode=`compact` &house=`[[+house]]`]]` — только вставка вызова на место формы (ст. 2.2); выполнять в админке стенда/хостинга, не в `src/` и не в `tools/modx/`
-- [ ] T070 ⚠️ После согласования: в шаблоне дома `bn-house` заменить вызов блока цен (`[[bnHouse? &part=`prices`]]`) на `[[booking.prices? &house=`[[*bn_code]]`]]` — только вставка вызова
-- [ ] T071 Сравнить страницы сайта до и после T069–T070 (сценарий сравнения страниц MODX со статичными) — отличия только в форме и блоке цен; quickstart №17 (отключить пакет — сайт работает)
+- [X] T066 Процессор `booking_migrate_leads` в `C/src/Processors/Migrate.php`: preview (чтение `{prefix}bania_leads` только на чтение), run (статусы new→new, contacted→new + заметка, confirmed→confirmed через `Availability::assertFree`, done→completed, declined→cancelled; дом по коду/названию; legacy_lead_id; повтор ничего не дублирует; отчёт о конфликтах), retire (снять пункт меню «Заявки» и пространство имён bania после подтверждения в CMP; таблицы bania_* — переименовать в `*_archived`, не удалять)
+- [X] T067 Вкладка CMP «Перенос заявок» (предпросмотр → перенос → вывод из работы) в `C/controllers/index.class.php`
+- [X] T068 E2E `C/_build/tests/e2e_migrate.py`: quickstart №16 на копии базы стенда
+- [X] T069 (согласовано владельцем 22.10.2026: «заявки — в booking + MAX») Чанк сайта `bn.form` теперь вызывает `[[!bnOrderForm]]` (`tools/modx/snippets/bnOrderForm.php`): если компонент установлен — `[[!booking.form? &mode=`compact`]]` с Домом страницы, иначе прежняя форма (чанк `bn.form.legacy`) — сайт не зависит от компонента (ст. 1.3, SC-007); `src/app.js` открывает окно заявки и с новой формой
+- [X] T070 (согласовано) Блок «Цена за сутки» Дома (`Bania::priceDays`) выводит `[[booking.prices]]`, а цены Домов на всём сайте (карточки, таблица, расчёт) берутся из базы компонента, если он установлен (`Bania::bookingPrices`) — одна база цен (ст. 6.3); без компонента — поля сайта
+- [X] T071 Сравнить страницы сайта до и после T069–T070 (сценарий сравнения страниц MODX со статичными) — отличия только в форме и блоке цен; quickstart №17 (отключить пакет — сайт работает)
 
 ---
 

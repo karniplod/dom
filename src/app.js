@@ -1,4 +1,4 @@
-/* Доходные дома Ефремовых — поведение страниц.
+/* Доходные Дома Ефремовых — поведение страниц.
    Данные домов приходят в window.HOUSES (собирается из src/houses.py, в MODX — из TV). */
 (function () {
   var HOUSES = window.HOUSES || {};
@@ -178,7 +178,7 @@
       var a = fIn.value ? new Date(fIn.value + "T12:00") : null, b = fOut.value ? new Date(fOut.value + "T12:00") : null;
       if (h) { fGuests.max = h.max; fGuests.placeholder = "до " + h.max; }
       if (!h || !a || !b || b <= a) {
-        est.innerHTML = '<span>Выберите дом и даты — покажем примерную стоимость.</span>';
+        est.innerHTML = '<span>Выберите Дом и даты — покажем примерную стоимость.</span>';
         return;
       }
       var nights = Math.round((b - a) / 864e5), sum = 0, d = new Date(a);
@@ -222,7 +222,7 @@
       var problems = [];
       if (!q('[name="name"]').value.trim()) problems.push("укажите имя");
       if (phone.value.replace(/\D/g, "").length < 11) problems.push("проверьте телефон: нужно 10 цифр после +7");
-      if (!fHouse.value) problems.push("выберите дом");
+      if (!fHouse.value) problems.push("выберите Дом");
       if (!q('[name="agree"]').checked) problems.push("отметьте согласие на обработку данных");
       if (q('[name="website"]').value) return; // ловушка для ботов
       if (problems.length) { errBox.textContent = "Чтобы отправить заявку, " + problems.join(", ") + "."; errBox.hidden = false; return; }
@@ -258,7 +258,16 @@
   $$("[data-order]").forEach(function (btn) {
     btn.addEventListener("click", function (e) {
       e.preventDefault();
-      if (!mForm) return;
+      // форма компонента бронирования (booking.form) вместо прежней — подставляем Дом и открываем окно
+      if (!mForm) {
+        var bk = modal && modal.querySelector('form[data-bk="guest"]');
+        if (!bk) return;
+        var sel = bk.querySelector('select[name="house"]');
+        if (house && sel && sel.querySelector('option[value="' + house + '"]')) { sel.value = house; sel.dispatchEvent(new Event("change")); }
+        var open = function () { openModal(modal); };
+        if (drawer && drawer.open) closeModal(drawer, open); else open();
+        return;
+      }
       var occ = btn.getAttribute("data-occasion"), house = btn.getAttribute("data-house");
       if (occ) { var r = mForm.form.querySelector('input[name="occasion"][value="' + occ + '"]'); if (r) r.checked = true; }
       if (house && HOUSES[house]) { mForm.house.value = house; mForm.calc(); }

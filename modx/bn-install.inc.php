@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-22 22:03",
+ "version": "2026-10-22 22:18",
  "chunks": [
   {
    "name": "bn.fox",
@@ -154,6 +154,11 @@ $manifest = <<<'JSON'
    "name": "bn.header",
    "category": "Общие",
    "file": "chunks/bn.header.html"
+  },
+  {
+   "name": "bn.form.legacy",
+   "category": "Общие",
+   "file": "chunks/bn.form.legacy.html"
   },
   {
    "name": "bn.form",
@@ -423,6 +428,11 @@ $manifest = <<<'JSON'
    "name": "bnOg",
    "file": "snippets/bnOg.php",
    "description": "картинка для превью ссылки (og:image) с размерами: &tv — поле с картинкой"
+  },
+  {
+   "name": "bnOrderForm",
+   "file": "snippets/bnOrderForm.php",
+   "description": "форма заявки: [[!booking.form? &mode=`compact`]] компонента бронирования, если он установлен; иначе прежняя форма (чанк bn.form.legacy). &p — префикс id полей, &house — код Дома"
   },
   {
    "name": "bnPost",

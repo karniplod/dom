@@ -185,7 +185,9 @@ frm = frm.replace('<form class="form order-form" id="PFXQ-form" novalidate>',
                   '  <input type="hidden" name="bn_token" value="[[!bnToken]]">')
 if 'name="bn_token"' not in frm:
     fail("форма изменилась: не нашёл <form …>")
-CHUNKS["bn.form"] = ("Общие", common(strip_marks(frm.replace("PFXQ", "[[+p]]"))))
+# прежняя форма сайта — запасная, если компонент бронирования не установлен; основная — booking.form (решение владельца 22.10.2026)
+CHUNKS["bn.form.legacy"] = ("Общие", common(strip_marks(frm.replace("PFXQ", "[[+p]]"))))
+CHUNKS["bn.form"] = ("Общие", "[[!bnOrderForm? &p=`[[+p]]` &house=`[[+house]]`]]")
 
 modal = B.order_modal("")
 modal = modal.replace(B.form(""), "[[$bn.form? &p=`f` &house=`[[*bn_code]]`]]")

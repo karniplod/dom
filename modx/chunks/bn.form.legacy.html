@@ -1,0 +1,24 @@
+<form class="form order-form" id="[[+p]]-form" action="[[~[[++bn_lead_id]]]]" method="post" data-house="[[+house]]" novalidate>
+  <input type="hidden" name="bn_token" value="[[!bnToken]]">
+  <div class="field full"><label for="[[+p]]-house">Дом</label><select id="[[+p]]-house" name="house"><option value="">Выберите Дом</option>[[bnHouses? &tpl=`bn.tpl.formOption`]]</select></div>
+  <div class="field"><label for="[[+p]]-in">Заезд</label><input id="[[+p]]-in" name="checkin" type="date"></div>
+  <div class="field"><label for="[[+p]]-out">Выезд</label><input id="[[+p]]-out" name="checkout" type="date"></div>
+  <div class="estimate" aria-live="polite"></div>
+  <div class="field"><label for="[[+p]]-guests">Сколько гостей</label><input id="[[+p]]-guests" name="guests" type="number" min="1" max="20" inputmode="numeric" placeholder="до 20"></div>
+  <div class="field"><label for="[[+p]]-contact">Как с вами связаться</label><select id="[[+p]]-contact" name="contact"><option>Позвонить</option><option>Telegram</option><option>MAX</option><option>WhatsApp</option></select></div>
+  <fieldset class="field full"><legend>Повод</legend><div class="chips">
+    <label><input type="radio" name="occasion" value="birthday"><span>День рождения</span></label>
+    <label><input type="radio" name="occasion" value="corporate"><span>Корпоратив</span></label>
+    <label><input type="radio" name="occasion" value="friends"><span>Отдых с друзьями</span></label>
+    <label><input type="radio" name="occasion" value="family"><span>Семья</span></label>
+    <label><input type="radio" name="occasion" value="other"><span>Другое</span></label>
+  </div></fieldset>
+  <div class="field"><label for="[[+p]]-name">Имя</label><input id="[[+p]]-name" name="name" type="text" autocomplete="name"></div>
+  <div class="field"><label for="[[+p]]-phone">Телефон</label><input id="[[+p]]-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 (___) ___-__-__"></div>
+  <div class="field full"><label for="[[+p]]-comment">Комментарий</label><textarea id="[[+p]]-comment" name="comment" placeholder="Например: приедем с собакой, нужен детский стульчик"></textarea></div>
+  <div class="hp" aria-hidden="true"><label for="[[+p]]-website">Сайт</label><input id="[[+p]]-website" name="website" tabindex="-1" autocomplete="off"></div>
+  <label class="check full"><input type="checkbox" id="[[+p]]-agree" name="agree"><span>Согласен на обработку персональных данных по <a class="link" href="#privacy">политике конфиденциальности</a></span></label>
+  <label class="check full"><input type="checkbox" id="[[+p]]-sms" name="sms"><span>Можно прислать SMS о брони и после отдыха</span></label>
+  <p class="err full" role="alert" hidden></p>
+  <div class="full"><button class="btn" type="submit">Отправить заявку</button></div>
+</form>

@@ -110,6 +110,19 @@ class Bania
         }
         return self::$houses;
     }
+    /** Цены суток из компонента бронирования (одна база цен для сайта и брони, ст. 6.3); нет компонента — null */
+    public static function bookingPrices($code) {
+        if (!self::$modx->services->has('booking') || !class_exists('Booking\\Model\\House')) return null;
+        $h = self::$modx->getObject(\Booking\Model\House::class, ['code' => $code]);
+        if (!$h) return null;
+        $rules = self::$modx->services->get('booking')->pricing()->rules($h->get('id'));
+        $out = [];
+        foreach (['weekday', 'friday', 'saturday', 'sunday'] as $t) {
+            if (!isset($rules[$t])) return null;
+            $out[] = (int)$rules[$t]->get('price');
+        }
+        return $out;
+    }
     public static function houseById($id) {
         foreach (self::houses() as $h) if ((int)$h['id'] === (int)$id) return $h;
         $r = self::$modx->getObject(modResource::class, (int)$id);
@@ -119,7 +132,7 @@ class Bania
         $tv = function ($n, $d = '') use ($r) { $v = $r->getTVValue($n); return ($v === null || $v === '') ? $d : $v; };
         $code = preg_replace('~[^a-z0-9_-]~', '', (string)$tv('bn_code', 'h' . $r->get('id')));
         $name = (string)$r->get('pagetitle');
-        $prices = [(int)$tv('bn_price_wd'), (int)$tv('bn_price_fri'), (int)$tv('bn_price_sat'), (int)$tv('bn_price_sun')];
+        $prices = self::bookingPrices($code) ?: [(int)$tv('bn_price_wd'), (int)$tv('bn_price_fri'), (int)$tv('bn_price_sat'), (int)$tv('bn_price_sun')];
         $gallery = [];
         foreach (self::lines($tv('bn_gallery')) as [$f, $cap]) { $s = self::src($f, $code); if ($s) $gallery[] = ['src' => $s, 'cap' => $cap]; }
         $prepay = self::$modx->getObject(modResource::class, ['parent' => $r->get('id'), 'template' => self::templateId('bn-prepay'), 'published' => 1, 'deleted' => 0]);
@@ -204,6 +217,11 @@ class Bania
         return implode('', array_map(function ($c) { return '<li>' . self::icon($c[0]) . '<div><b>' . $c[1] . '</b><span>' . $c[2] . '</span></div></li>'; }, $h['comfort']));
     }
     public static function priceDays(array $h) {
+        // блок «Цена за сутки» — сниппет компонента бронирования, если он установлен (та же разметка .price-days)
+        if (self::$modx->getCount(\MODX\Revolution\modSnippet::class, ['name' => 'booking.prices'])) {
+            $out = self::$modx->runSnippet('booking.prices', ['house' => $h['code']]);
+            if ($out !== '') return $out;
+        }
         $hot = 0;
         foreach ($h['prices'] as $i => $v) if ($v > $h['prices'][$hot]) $hot = $i;
         $out = '';
