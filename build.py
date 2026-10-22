@@ -13,7 +13,7 @@ from houses import H, SITE, PHONE, PHONE_RAW
 PREVIEW = bool(os.environ.get("SITE_URL"))
 SITE = os.environ.get("SITE_URL", SITE).rstrip("/")
 from blog import POSTS, CATS
-from reviews import REVIEWS, REVIEW_LINKS
+from reviews import REVIEWS, REVIEW_LINKS, REVIEW_PLATFORMS, HOUSE_REVIEW_LINKS, REVIEW_SHOTS
 
 SRC, SITE_DIR, ART = (os.path.join(ROOT, d) for d in ("src", "site", os.path.join("build", "artifact")))
 rd = lambda n: open(os.path.join(SRC, n), encoding="utf8").read()
@@ -33,9 +33,9 @@ def jpeg_size(path):
 def money(n): return f"{n:,}".replace(",", " ") + " ₽"
 def minp(h): return min(h["prices"])
 
-DISCOUNT = 5  # %, при брони на сайте или через группу ВКонтакте
+DISCOUNT = 5  # %, только при бронировании через группу ВКонтакте (решение владельца 22.10.2026)
 VIBER, VIBER_RAW, VK, MAIL = "+7 (919) 707-85-81", "+79197078581", "https://vk.com/russianbath59", "efremova7676@mail.ru"
-BRAND = "Доходные дома Ефремовых"
+BRAND = "Доходные Дома Ефремовых"
 FOX = '<svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg>'
 ICONS = {
  "kitchen": '<path d="M5 3v8a2 2 0 0 0 2 2v8M9 3v8a2 2 0 0 1-2 2M7 3v6"/><path d="M17 21V3c-2.2 1-3.5 3.6-3.5 7.5V13H17"/>',
@@ -82,7 +82,7 @@ def header(active=None):
   <a class="brand" href="index.html" aria-label="{BRAND}, на главную">{FOX}<span><b>{BRAND}</b><small>Дома с баней и бассейном в Перми</small></span></a>
   <nav class="nav" aria-label="Основное меню">
     <div class="nav__drop"><button{in_houses} type="button" aria-expanded="false" aria-controls="nav-houses">Дома{CHEV}</button>
-      <div class="nav__panel" id="nav-houses">{houses}<a class="nav__all" href="index.html#prices">Сравнить дома и цены</a></div></div>
+      <div class="nav__panel" id="nav-houses">{houses}<a class="nav__all" href="index.html#prices">Сравнить Дома и цены</a></div></div>
     <a href="index.html#prices">Цены</a>
     <a href="blog.html"{cur("blog")}>Блог</a>
     <a href="kontakty.html"{cur("contacts")}>Контакты</a>
@@ -111,7 +111,7 @@ def form(house="", p="f"):
     """Форма заявки. p — префикс id: «f» в окне, «o» в блоке внизу страницы."""
     opts = mark("formOptions", "".join(mark(f"item:formOption:{k}", f'<option value="{k}"{" selected" if k == house else ""}>{v["name"]} — до {v["max"]} гостей</option>') for k, v in H.items()))
     return f'''<form class="form order-form" id="{p}-form" novalidate>
-  <div class="field full"><label for="{p}-house">Дом</label><select id="{p}-house" name="house"><option value="">Выберите дом</option>{opts}</select></div>
+  <div class="field full"><label for="{p}-house">Дом</label><select id="{p}-house" name="house"><option value="">Выберите Дом</option>{opts}</select></div>
   <div class="field"><label for="{p}-in">Заезд</label><input id="{p}-in" name="checkin" type="date"></div>
   <div class="field"><label for="{p}-out">Выезд</label><input id="{p}-out" name="checkout" type="date"></div>
   <div class="estimate" aria-live="polite"></div>
@@ -138,7 +138,7 @@ def order_modal(house=""):
     return f'''<dialog class="modal omodal" id="order-modal" aria-labelledby="om-title">
   <div class="omodal__box">
     <button class="x" type="button" data-close aria-label="Закрыть форму">{XICON}</button>
-    <div class="omodal__head"><h2 id="om-title">Оставить заявку</h2><p class="omodal__disc">Скидка {DISCOUNT}% при бронировании на сайте</p><p>Перезвоним, подтвердим даты и назовём сумму предоплаты, это 50% от стоимости. Или позвоните: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
+    <div class="omodal__head"><h2 id="om-title">Оставить заявку</h2><p class="omodal__disc"><a href="{VK}" target="_blank" rel="noopener">Скидка {DISCOUNT}% при бронировании через ВКонтакте</a></p><p>Перезвоним, подтвердим даты и назовём сумму предоплаты, это 50% от стоимости. Или позвоните: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
     {form(house)}
   </div>
 </dialog>'''
@@ -160,15 +160,15 @@ def footer(house=""):
 {order_modal(house)}
 {drawer()}'''
 
-def order_band(house="", photo="en/facade", title="Оставьте заявку", alt="Английский дом, фасад"):
+def order_band(house="", photo="en/facade", title="Оставьте заявку", alt="Английский Дом, фасад"):
     if house:
         h = H[house]
-        extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p><p><a class="link" href="{h["prepay"]}">Внести предоплату</a> — после того, как администратор подтвердил даты</p>'
+        extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p><p><a class="btn" href="{h["prepay"]}">Внести предоплату</a></p><p>После того, как администратор подтвердил даты</p>'
     else:
         extra = f'<p>Viber: <a class="nb tnum" href="viber://chat?number=%2B{VIBER_RAW[1:]}">{VIBER}</a></p><p><a class="link" href="{VK}" target="_blank" rel="noopener">Мы во ВКонтакте</a> · <a class="link" href="kontakty.html">Все контакты</a></p>'
     return f'''<section class="band band--soft on-light" id="order" aria-labelledby="order-title"><div class="wrap order">
   <div class="order__txt">
-    <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты 50%, остальное — при заселении.</p><p class="disc-line">Скидка {DISCOUNT}% при бронировании на сайте или через группу ВКонтакте</p></div>
+    <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты 50%, остальное — при заселении.</p><p class="disc-line"><a href="{VK}" target="_blank" rel="noopener">Скидка {DISCOUNT}% при бронировании через группу ВКонтакте</a></p></div>
     <div class="order__contacts"><a class="big tnum nb" href="tel:{PHONE_RAW}">{PHONE}</a>{extra}</div>
     <div class="order__photo{" order__photo--tall" if photo == "en/facade" else ""}">{img(photo, alt)}</div>
   </div>
@@ -178,12 +178,12 @@ def order_band(house="", photo="en/facade", title="Оставьте заявку
 def faq_block(items, open_first=True):
     return "".join(f'<details{" open" if open_first and i == 0 else ""}><summary>{esc(q)}</summary><div class="faq__a"><p>{esc(a)}</p></div></details>' for i, (q, a) in enumerate(items))
 
-RULES = [("Залог", "5 000 – 20 000 ₽"), ("Предоплата", "50%, после звонка администратора"), ("Музыка и шум на участке", "можно с 9:00 до 22:00"), ("Тишина на участке", "с 22:00 до 9:00"),
-         ("После 22:00 музыка и шум", "только в доме при закрытых окнах"), ("Курение в доме", "нельзя"),
+RULES = [("Залог (зависит от количества и возраста гостей)", "5 000 – 20 000 ₽"), ("Предоплата", "50%, после звонка администратора"), ("Шум, крики и музыка на улице", "нельзя"), ("Громкие разговоры на улице", "нельзя с 22:00 до 8:00"),
+         ("Шуметь в доме", "можно при закрытых окнах и дверях, есть кондиционеры"), ("Курение в доме", "нельзя"),
          ("Фейерверки, салюты, хлопушки", "нельзя"), ("Конфетти и блёстки", "нельзя"), ("Дети", "можно"),
          ("Питомцы", "можно, +1 000 ₽"), ("Баня", "топим без ограничений по времени"), ("Отчётные документы", "оформляем")]
-GUESTS_RULE = ("Гости сверх 10 (на Свиязева сверх 8)", "+500 ₽ за человека")
-SERVICES = "Приготовим из ваших продуктов шашлык (300 ₽ за кг) или плов (2 500 ₽)."
+GUESTS_RULE = ("Гости сверх 10 (в доме на Свиязева сверх 8)", "+500 ₽ за человека")
+SERVICES = "Приготовим из ваших продуктов шашлык (300 ₽ за кг) или плов (2 500 ₽ за казан 10 литров)."
 def house_rules(k):
     h = H[k]
     return [("Заезд / выезд", f'с {h["checkin"]} / до {h["checkout"]}'), ("Ночуют / отдыхают", f'{h["sleep"]} / до {h["max"]} гостей'),
@@ -209,7 +209,7 @@ def ld_house(k):
         "priceRange": f'{minp(h)}–{max(h["prices"])} RUB', "checkinTime": h["checkin"], "checkoutTime": h["checkout"],
         "numberOfRooms": h["rooms"], "petsAllowed": True, "smokingAllowed": False,
         "amenityFeature": [{"@type": "LocationFeatureSpecification", "name": n, "value": True} for _, n, _ in h["comfort"]],
-        "makesOffer": {"@type": "Offer", "priceCurrency": "RUB", "price": minp(h), "description": "Аренда дома на сутки"}}
+        "makesOffer": {"@type": "Offer", "priceCurrency": "RUB", "price": minp(h), "description": "Аренда Дома на сутки"}}
 def ld_faq(items):
     return {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in items]}
 ORG = {"@type": "Organization", "name": BRAND, "url": SITE + "/", "logo": SITE + "/img/fox.svg"}
@@ -219,15 +219,15 @@ def ld_org():
 
 # ---------- главная ----------
 HOME_FAQ = [
- ("Сколько стоит снять дом с баней и бассейном в Перми?", "От 15 000 ₽ за сутки в доме на Свиязева и от 18 000 ₽ в Английском и Русском доме с понедельника по четверг. В пятницу 20 000–22 000 ₽, в субботу 25 000–27 000 ₽."),
- ("Как забронировать дом?", "Оставьте заявку на сайте или позвоните по номеру +7 (342) 277-66-22. Администратор проверит даты и назовёт сумму предоплаты. Бронь подтверждается предоплатой 50%, остальное доплачиваете при заселении."),
- ("Можно ли снять дом на день рождения или корпоратив?", "Да. В Английском и Русском доме ночуют 12 гостей, а отдыхают до 20; в доме на Свиязева ночуют 8, отдыхают до 15. Днём, с 9:00 до 22:00, музыка и шум допустимы и на участке, а после 22:00 — только в доме при закрытых окнах."),
- ("Бассейны работают зимой?", "Да, во всех трёх домах круглый год. В Английском и Русском доме вода 28–30°, глубина 1,5 м. В доме на Свиязева бассейн с функцией джакузи."),
- ("Можно заказать шашлык или плов?", "Да, приготовим из ваших продуктов: шашлык 300 ₽ за кг, плов 2 500 ₽. Скажите об этом администратору при бронировании."),
- ("Есть ли скидки?", "Да, 5% при бронировании на сайте или через нашу группу ВКонтакте. Ещё дешевле приезжать с понедельника по четверг: сутки от 15 000 ₽."),
+ ("Сколько стоит снять Дом с баней и бассейном в Перми?", "От 15 000 ₽ за сутки в доме на Свиязева и от 18 000 ₽ в Английском и Русском доме с понедельника по четверг. В пятницу 20 000–22 000 ₽, в субботу 25 000–27 000 ₽."),
+ ("Как забронировать Дом?", "Оставьте заявку на сайте или позвоните по номеру +7 (342) 277-66-22. Администратор проверит даты и назовёт сумму предоплаты. Бронь подтверждается предоплатой 50%, остальное доплачиваете при заселении."),
+ ("Можно ли снять Дом на день рождения или корпоратив?", "Да. В Английском и Русском доме ночуют 12 гостей, а отдыхают до 20; в доме на Свиязева ночуют 8, отдыхают до 15. На улице нельзя шуметь, кричать и слушать музыку. С 22:00 до 8:00 на улице нельзя громко разговаривать. В доме шуметь можно при закрытых окнах и дверях — установлены кондиционеры."),
+ ("Бассейны работают зимой?", "Да, во всех трёх домах круглый год. В Английском и Русском доме бассейн 3 × 2,5 м, глубина 1,5 м, вода 28–30°. В доме на Свиязева бассейн с функцией джакузи 2,5 × 2 м, глубина 1 м."),
+ ("Можно заказать шашлык или плов?", "Да, приготовим из ваших продуктов: шашлык 300 ₽ за кг, плов 2 500 ₽ за казан 10 литров. Скажите об этом администратору при бронировании."),
+ ("Есть ли скидки?", "Да, 5% при бронировании через нашу группу ВКонтакте. Ещё дешевле приезжать с понедельника по четверг: сутки от 15 000 ₽."),
  ("Можно с собакой или кошкой?", "Да, во всех трёх домах. Доплата за питомца 1 000 ₽."),
- ("Как внести предоплату?", "Предоплата — 50% от стоимости, вносите её только после того, как администратор подтвердил даты: кнопка «Внести предоплату» есть на странице каждого дома, оплата через Систему быстрых платежей. В комментарии укажите имя и дату заезда. При отмене предоплату возвращаем, если на ваши даты находится другой гость."),
- ("Что такое залог?", "Сумма от 5 000 до 20 000 ₽ на случай повреждений в доме. Точную сумму администратор назовёт при подтверждении брони."),
+ ("Как внести предоплату?", "Предоплата — 50% от стоимости, вносите её только после того, как администратор подтвердил даты: кнопка «Внести предоплату» есть на странице каждого Дома, оплата через Систему быстрых платежей. В комментарии укажите имя и дату заезда. При отмене предоплату возвращаем, если на ваши даты находится другой гость."),
+ ("Что такое залог?", "Сумма от 5 000 до 20 000 ₽ на случай повреждений в доме. Точную сумму администратор назовёт при подтверждении брони. Зависит от количества и возраста гостей."),
 ]
 
 def house_card(k):
@@ -236,7 +236,7 @@ def house_card(k):
     total = len(set(ph) | set(caps))
     hint = f'<span class="hcard__zoom"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5M11 8.5v5M8.5 11h5"/></svg>Смотреть все {total} фото</span>'
     media = "".join(f'<a href="img/{k}/{p}.jpg" data-lb="card-{k}" data-cap="{esc(h["name"] + ": " + caps.get(p, ""))}" aria-label="{esc(h["name"])}: открыть фото">{img(k + "/" + p, h["name"] + ": " + caps.get(p, "фото"))}{hint if i == 0 else ""}</a>' for i, p in enumerate(ph))
-    # остальные фото дома — в той же группе, чтобы из карточки листалась вся галерея дома
+    # остальные фото Дома — в той же группе, чтобы из карточки листалась вся галерея Дома
     media += "".join(f'<a href="img/{k}/{p}.jpg" data-lb="card-{k}" data-cap="{esc(h["name"] + ": " + c)}" hidden></a>' for p, c in h["gallery"] if p not in ph)
     feats = h["features"]
     return f'''<article class="hcard h-{k}">
@@ -245,9 +245,9 @@ def house_card(k):
     <p class="hcard__kick">{h["kicker"]}</p>
     <h3><a href="{h["file"]}">{h["name"]}</a></h3>
     <ul>{mark("features", "".join(f"<li>{f}</li>" for f in feats))}</ul>
-    <p class="hcard__price"><b class="tnum">от {money(minp(h))}</b><span>за сутки</span><em class="disc">−{DISCOUNT}% на сайте</em></p>
+    <p class="hcard__price"><b class="tnum">от {money(minp(h))}</b><span>за сутки</span><em class="disc">−{DISCOUNT}% через ВКонтакте</em></p>
     <div class="hcard__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--tour" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}3D-тур</a></div>
-    <p class="hcard__links"><a href="{h["file"]}">Подробнее о доме</a><a href="{h["prepay"]}">{icon("card")}Внести предоплату</a></p>
+    <p class="hcard__links"><a href="{h["file"]}">Подробнее о доме</a><a class="btn btn--sm" href="{h["prepay"]}">{icon("card")}Внести предоплату</a></p>
   </div>
 </article>'''
 
@@ -277,16 +277,36 @@ def review_card_(r):
   <footer class="rev__foot"><b>{esc(r["name"])}</b>{f"<span>{meta}</span>" if meta else ""}{src_html}</footer>
 </article>'''
 
+# Плашки площадок отзывов: простой знак и название (без фирменных картинок)
+PLATFORM_BADGE = {"2ГИС": ("#19AA1E", "2Г"), "Яндекс Карты": ("#FC3F1D", "Я"), "Авито": ("#00AAFF", "A")}
+
+def platform_logo(name, url=""):
+    color, sign = PLATFORM_BADGE[name]
+    inner = f'<span class="plat__mark" style="background:{color}">{esc(sign)}</span><span class="plat__name">{esc(name)}</span>'
+    return f'<a class="plat" href="{esc(url)}" target="_blank" rel="noopener nofollow">{inner}</a>' if url else f'<span class="plat">{inner}</span>'
+
+def house_review_panel(k):
+    """По Дому: площадки отзывов, QR-код «оставить отзыв» и скриншоты отзывов (или заглушки, пока их нет)."""
+    h = H[k]
+    links = HOUSE_REVIEW_LINKS.get(k, {})
+    logos = "".join(platform_logo(n, links.get(n, "")) for n in REVIEW_PLATFORMS)
+    shots = REVIEW_SHOTS.get(k, [])
+    shots_html = "".join(f'<a class="rshot" href="img/reviews/{esc(s)}" data-lb="rev-{k}"><img src="img/reviews/{esc(s)}" alt="Отзыв гостя: {esc(h["name"])}" loading="lazy"></a>' for s in shots) \
+        or "".join(f'<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с {p}</span></div>' for p in ("Яндекс Карт", "2ГИС", "Авито"))
+    qr = f'<figure class="hrev__qr"><img src="img/qr/rev-{k}.svg" alt="QR-код: оставить отзыв, {esc(h["name"])}" width="150" height="150" loading="lazy"><figcaption>Оставить отзыв: наведите камеру телефона</figcaption></figure>'
+    return (f'<div class="hrev h-{k}"><div class="hrev__head"><h3>{h["name"]}</h3><div class="plats">{logos}</div></div>'
+            f'<div class="hrev__body"><div class="rshots">{shots_html}</div>{qr}</div></div>')
+
 def reviews_block(house=None):
-    """Отзывы гостей: карусель с перетаскиванием. Нет отзывов — на главной места для виджетов карт, на странице дома блока нет."""
+    """Отзывы гостей: карусель и по каждому Дому — площадки, QR-код и скриншоты отзывов."""
     items = [r for r in REVIEWS if not house or r.get("house") == house]
     links = "".join(f'<a class="btn btn--ghost btn--sm" href="{esc(u)}" target="_blank" rel="noopener">{esc(n)}</a>' for n, u in REVIEW_LINKS.items() if u)
     cta = f'<div class="rev-cta"><p>Отдыхали у нас? Расскажите, как всё прошло:</p>{links}</div>' if links else ""
+    panels = mark("houseReviewPanels", "".join(house_review_panel(k) for k in ([house] if house else H)))
     if not items:
-        if house: return ""
         return f'''<section class="band band--dark" id="reviews" aria-labelledby="rev-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей</h2><p class="lead">Показываем отзывы с карт как есть, вместе с оценками.</p></div>
-  <div class="reviews"><div class="review-slot"><h3>Яндекс Карты</h3><p>Место для официального виджета рейтинга и отзывов Яндекса.</p></div><div class="review-slot"><h3>2ГИС</h3><p>Место для виджета отзывов 2ГИС.</p></div></div>
+  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей{"" if not house else " об этом Доме"}</h2><p class="lead">Отзывы о каждом Доме — в 2ГИС, Яндекс Картах и на Авито. Показываем их как есть, скриншотами.</p></div>
+  <div class="hrevs">{panels}</div>
   {cta}
 </div></section>'''
     avg = sum(int(r.get("rating", 5)) for r in items) / len(items)
@@ -295,6 +315,7 @@ def reviews_block(house=None):
     return f'''<section class="band band--dark" id="reviews" aria-labelledby="rev-title"><div class="wrap">
   <div class="sec-row"><div class="sec-head"><h2 class="h-sec" id="rev-title">{title}</h2><p class="lead">Отзывы публикуем слово в слово и пишем, где гость их оставил.</p></div>{summary}</div>
   {rail("".join(review_card(r) for r in items), "Отзывы гостей", "rail--dark rail--rev")}
+  <div class="hrevs">{panels}</div>
   {cta}
 </div></section>'''
 
@@ -307,9 +328,9 @@ def rail(items_html, label, cls=""):
   <div class="rail__nav"><button class="rail__btn" type="button" data-step="-1" aria-label="Листать назад"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><button class="rail__btn" type="button" data-step="1" aria-label="Листать вперёд"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div></div>'''
 
 def home():
-    strip = [("ru/hero", "Русский дом вечером"), ("en/pool", "Бассейн, Английский дом"), ("sv/pool", "Всесезонный бассейн, Свиязева"), ("ru/sauna", "Баня, Русский дом"),
-             ("en/billiard-2", "Бильярд, Английский дом"), ("ru/kitchen", "Кухня-гостиная, Русский дом"), ("sv/billiard", "Бильярд, Свиязева"), ("en/fireplace", "Камин, Английский дом"),
-             ("ru/pool", "Бассейн, Русский дом"), ("sv/gazebo", "Беседка с мангалом, Свиязева"), ("en/dining", "Стол, Английский дом"), ("ru/bedroom", "Спальня, Русский дом")]
+    strip = [("ru/hero", "Русский Дом вечером"), ("en/pool", "Бассейн, Английский Дом"), ("sv/pool", "Всесезонный бассейн, Свиязева"), ("ru/sauna", "Баня, Русский Дом"),
+             ("en/billiard-2", "Бильярд, Английский Дом"), ("ru/kitchen", "Кухня-гостиная, Русский Дом"), ("sv/billiard", "Бильярд, Свиязева"), ("en/fireplace", "Камин, Английский Дом"),
+             ("ru/pool", "Бассейн, Русский Дом"), ("sv/gazebo", "Беседка с мангалом, Свиязева"), ("en/dining", "Стол, Английский Дом"), ("ru/bedroom", "Спальня, Русский Дом")]
     strip_html = "".join(f'<a href="img/{p}.jpg" data-lb="strip" data-cap="{esc(c)}">{img(p, c)}<span>{c}</span></a>' for p, c in strip)
     table_rows = [("Дом и участок", lambda h: f'{h["area"]} м², {h["rooms"]} комнат{"ы" if h["rooms"] < 5 else ""}, {h["plot"]}'),
                   ("Ночуют / отдыхают", lambda h: f'{h["sleep"]} / до {h["max"]} гостей'),
@@ -318,25 +339,26 @@ def home():
     rows = "".join(f'<tr><th scope="row">{lab}</th>' + "".join(f"<td>{fn(v)}</td>" for v in H.values()) + "</tr>" for lab, fn in table_rows)
     rows += '<tr><th scope="row">В цене гостей</th>' + "".join(f'<td>до {v["base"]}, далее +{v["extra"]} ₽ за человека</td>' for v in H.values()) + "</tr>"
     rows += '<tr><th scope="row">Для отдыха</th>' + "".join(f"<td>{v['table_extra']}</td>" for v in H.values()) + "</tr>"
-    for i, d in enumerate(["Пн – Чт", "Пятница", "Суббота", "Воскресенье"]):
+    # звёздочка — праздничные дни считаются по правилу (сноска под таблицей)
+    for i, d in enumerate(["Пн – Чт*", "Пятница*", "Суббота", "Воскресенье*"]):
         rows += f'<tr class="money{" money-first" if i == 0 else ""}"><th scope="row">{d}</th>' + "".join(f'<td class="tnum">{money(v["prices"][i])}</td>' for v in H.values()) + "</tr>"
-    rows += '<tr><th scope="row"><span class="sr">Ссылки</span></th>' + "".join(f'<td><a href="{v["file"]}">Подробнее о доме</a><br><a href="{v["prepay"]}">Внести предоплату</a></td>' for v in H.values()) + "</tr>"
+    rows += '<tr><th scope="row"><span class="sr">Ссылки</span></th>' + "".join(f'<td><a href="{v["file"]}">Подробнее о доме</a><br><a class="btn btn--sm" href="{v["prepay"]}">Внести предоплату</a></td>' for v in H.values()) + "</tr>"
     posts = "".join(post_card(p) for p in POSTS[:3])
     body = f'''{header()}
 <main>
 <section class="hero" aria-labelledby="hero-title">
-  {mark("heroImg", img("ru/hero-2", "Русский дом: фасад и беседка во дворе", "hero__img", lazy=False))}
+  {mark("heroImg", img("ru/hero-2", "Русский Дом: фасад и беседка во дворе", "hero__img", lazy=False))}
   <div class="wrap"><div class="hero__in">
     <p class="hero__kicker">{BRAND}</p>
-    <h1 id="hero-title">Снять дом с баней и бассейном в Перми</h1>
-    <p class="hero__sub">Три дома в трёх стилях: Английский, Русский и дом на Свиязева. Баня, бассейн, бильярд и мангал, а на праздник можно позвать до 20 гостей.</p>
-    <div class="hero__cta"><button class="btn" type="button" data-order>Оставить заявку</button><a class="btn btn--ghost" href="#houses">Выбрать дом</a></div>
-    <div class="facts-row"><span class="disc-chip">−{DISCOUNT}% при брони на сайте</span><span>сутки от 15 000 ₽</span><span>до 20 гостей</span><span>в черте города</span><span>можно с питомцами</span></div>
+    <h1 id="hero-title">Снять Дом с баней и бассейном в Перми</h1>
+    <p class="hero__sub">Три Дома в трёх стилях: Английский, Русский и Дом на Свиязева. Баня, бассейн, бильярд и мангал, а на праздник можно позвать до 20 гостей.</p>
+    <div class="hero__cta"><button class="btn" type="button" data-order>Оставить заявку</button><a class="btn btn--ghost" href="#houses">Выбрать Дом</a></div>
+    <div class="facts-row"><a class="disc-chip" href="{VK}" target="_blank" rel="noopener">−{DISCOUNT}% при бронировании через ВКонтакте</a><span>сутки от 15 000 ₽</span><span>до 20 гостей</span><span>в черте города</span><span>можно с питомцами</span></div>
   </div></div>
 </section>
 
 <section class="band on-light" id="houses" aria-labelledby="houses-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="houses-title">Три дома, три характера</h2><p class="lead">В каждом доме баня, бассейн, бильярд, кухня и спальни. Выбирайте по стилю, числу гостей и дню недели.</p></div>
+  <div class="sec-head"><h2 class="h-sec" id="houses-title">Три Дома, три характера</h2><p class="lead">В каждом доме баня, бассейн, бильярд, кухня и спальни. Выбирайте по стилю, числу гостей и дню недели.</p></div>
   <div class="houses">{mark("houseCards", "".join(mark(f"item:houseCard:{k}", house_card(k)) for k in H))}</div>
 </div></section>
 
@@ -347,12 +369,12 @@ def home():
 
 <section class="band band--soft" id="comfort" aria-labelledby="comfort-title"><div class="wrap comfort">
   <div class="collage">
-    <figure>{img("en/kitchen", "Кухня в Английском доме")}<figcaption>Кухня, Английский дом</figcaption></figure>
-    <figure>{img("ru/pool-2", "Бассейн в Русском доме")}<figcaption>Бассейн, Русский дом</figcaption></figure>
+    <figure>{img("en/kitchen", "Кухня в Английском доме")}<figcaption>Кухня, Английский Дом</figcaption></figure>
+    <figure>{img("ru/pool-2", "Бассейн в Русском доме")}<figcaption>Бассейн, Русский Дом</figcaption></figure>
     <figure>{img("sv/sauna", "Баня в доме на Свиязева")}<figcaption>Баня, Свиязева</figcaption></figure>
   </div>
   <div>
-    <div class="sec-head"><h2 class="h-sec" id="comfort-title">Дизайнерские дома, где всё уже готово</h2><p class="lead">Мы позаботились о комфорте гостей. Привозите продукты и хорошую компанию, остальное в доме есть.</p></div>
+    <div class="sec-head"><h2 class="h-sec" id="comfort-title">Дизайнерские Дома, где всё уже готово</h2><p class="lead">Мы позаботились о комфорте гостей. Привозите продукты и хорошую компанию, остальное в доме есть.</p></div>
     <ul class="amen">
       <li>{icon("kitchen")}<div><b>Кухня с посудой</b><span>Холодильник, плита, микроволновка, посуда на всех</span></div></li>
       <li>{icon("steam")}<div><b>Баня и бассейн</b><span>Баню топим без ограничений, бассейны круглый год. На Свиязева бассейн с джакузи</span></div></li>
@@ -371,26 +393,26 @@ def home():
 <section class="band band--dark" aria-labelledby="occ-title"><div class="wrap">
   <div class="sec-head"><h2 class="h-sec" id="occ-title">Для праздника и для отдыха</h2><p class="lead">Дома стоят в городе: гости доезжают на такси, а вечер не нужно сворачивать ради дороги домой.</p></div>
   <div class="occ">
-    <article>{img("mood/occ-birthday", "Праздничный стол с тортом и свечами")}<h3>День рождения</h3><p>Большой стол, музыка, баня и бассейн. После 22:00 музыка — в доме при закрытых окнах, хоть до утра.</p><p class="fit">Русский или Английский дом, до 20 гостей</p><button type="button" data-order data-occasion="birthday">Заявка на день рождения</button></article>
+    <article>{img("mood/occ-birthday", "Праздничный стол с тортом и свечами")}<h3>День рождения</h3><p>Большой стол, музыка, баня и бассейн. Шуметь и слушать музыку — в доме при закрытых окнах и дверях, хоть до утра: есть кондиционеры.</p><p class="fit">Русский или Английский Дом, до 20 гостей</p><button type="button" data-order data-occasion="birthday">Заявка на день рождения</button></article>
     <article>{img("mood/occ-friends", "Друзья отдыхают в бане")}<h3>Баня с друзьями</h3><p>Попариться, поплавать, сыграть в бильярд. С понедельника по четверг сутки дешевле.</p><p class="fit">Свиязева: бассейн-джакузи, от 15 000 ₽</p><button type="button" data-order data-occasion="friends">Заявка для компании</button></article>
-    <article>{img("mood/occ-corporate", "Коллеги празднуют за общим столом")}<h3>Корпоратив</h3><p>Стол на всю команду, бильярд и мангал. Отчётные документы для бухгалтерии оформляем.</p><p class="fit">Английский дом: 200 м², 6 комнат</p><button type="button" data-order data-occasion="corporate">Заявка на корпоратив</button></article>
-    <article>{img("mood/occ-family", "Ужин во дворе дома на закате")}<h3>Семейные выходные</h3><p>Можно с детьми и с питомцами. Отдельные спальни для тех, кто ляжет пораньше.</p><p class="fit">Любой из трёх домов</p><button type="button" data-order data-occasion="family">Заявка для семьи</button></article>
+    <article>{img("mood/occ-corporate", "Коллеги празднуют за общим столом")}<h3>Корпоратив</h3><p>Стол на всю команду, бильярд и мангал. Отчётные документы для бухгалтерии оформляем.</p><p class="fit">Английский Дом: 200 м², 6 комнат</p><button type="button" data-order data-occasion="corporate">Заявка на корпоратив</button></article>
+    <article>{img("mood/occ-family", "Ужин во дворе Дома на закате")}<h3>Семейные выходные</h3><p>Можно с детьми и с питомцами. Отдельные спальни для тех, кто ляжет пораньше.</p><p class="fit">Любой из трёх домов</p><button type="button" data-order data-occasion="family">Заявка для семьи</button></article>
   </div>
 </div></section>
 
 <section class="promo" aria-labelledby="promo-title"><div class="wrap promo__in">
-  <div><h2 id="promo-title">Забронируйте баню прямо сейчас — скидка {DISCOUNT}%</h2><p>Скидка {DISCOUNT}% при бронировании на сайте или через нашу <a href="{VK}" target="_blank" rel="noopener">группу ВКонтакте</a>. А с понедельника по четверг сутки ещё и дешевле: от 15 000 ₽.</p></div>
-  <button class="btn" type="button" data-order>Получить скидку</button>
+  <div><h2 id="promo-title">Забронируйте баню прямо сейчас — скидка {DISCOUNT}%</h2><p>Скидка {DISCOUNT}% при бронировании через нашу <a href="{VK}" target="_blank" rel="noopener">группу ВКонтакте</a>. А с понедельника по четверг сутки ещё и дешевле: от 15 000 ₽.</p></div>
+  <a class="btn" href="{VK}" target="_blank" rel="noopener">Получить скидку</a>
 </div></section>
 
 <section class="band on-light" id="prices" aria-labelledby="prices-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="prices-title">Сравните дома и цены</h2><p class="lead">Цена за сутки зависит от дня недели и рассчитана на компанию до 10 человек, на Свиязева до 8. За каждого следующего гостя 500 ₽, за питомца 1 000 ₽.</p></div>
+  <div class="sec-head"><h2 class="h-sec" id="prices-title">Сравните Дома и цены</h2><p class="lead">Цена за сутки зависит от дня недели и рассчитана на компанию до 10 человек, на Свиязева до 8. За каждого следующего гостя 500 ₽, за питомца 1 000 ₽.</p></div>
   {mark("priceTable", f'<div class="table-wrap"><table class="cmp"><thead><tr><th scope="col"><span class="sr">Параметр</span></th>{th}</tr></thead><tbody>{rows}</tbody></table></div>')}
-  <p class="note">Предпраздничный рабочий день считается как пятница, праздник перед выходным как суббота, праздник перед рабочим днём как воскресенье. Предоплату вносите после того, как администратор подтвердил даты.</p>
+  <p class="note">* Праздничные дни: предпраздничный рабочий день считается как пятница, праздник перед выходным как суббота, праздник перед рабочим днём как воскресенье. Предоплату вносите после того, как администратор подтвердил даты.</p>
 </div></section>
 
 <section class="band band--soft" aria-labelledby="strip-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="strip-title">Посмотрите дома изнутри</h2><p class="lead">Листайте ленту мышью или пальцем, нажмите на фото, чтобы открыть крупно. Для каждого дома есть 3D-тур на его странице.</p></div>
+  <div class="sec-head"><h2 class="h-sec" id="strip-title">Посмотрите Дома изнутри</h2><p class="lead">Листайте ленту мышью или пальцем, нажмите на фото, чтобы открыть крупно. Для каждого Дома есть 3D-тур на его странице.</p></div>
   {mark("strip", rail(strip_html, "Фото домов"))}
 </div></section>
 
@@ -400,11 +422,11 @@ def home():
 </div></section>
 
 <section class="band band--soft" aria-labelledby="seo-title"><div class="wrap seo">
-  <h2 class="h-sec" id="seo-title">Аренда дома с баней и бассейном в Перми посуточно</h2>
+  <h2 class="h-sec" id="seo-title">Аренда Дома с баней и бассейном в Перми посуточно</h2>
   <div class="seo__text">{mark("seo", f'''
-    <p>«{BRAND}» сдают посуточно три дома в Перми: <strong>Английский дом</strong> и <strong>Русский дом</strong> на улице Космонавта Беляева и <strong>дом на Свиязева</strong>. Если вы ищете, где снять дом на сутки с баней и бассейном, не уезжая за город, начните с них: в каждом доме своя баня, бассейн, бильярд, кухня и спальни.</p>
+    <p>«{BRAND}» сдают посуточно три Дома в Перми: <strong>Английский Дом</strong> и <strong>Русский Дом</strong> на улице Космонавта Беляева и <strong>Дом на Свиязева</strong>. Если вы ищете, где снять Дом на сутки с баней и бассейном, не уезжая за город, начните с них: в каждом доме своя баня, бассейн, бильярд, кухня и спальни.</p>
     <h3>Баня с бассейном для компании</h3>
-    <p>В Английском и Русском доме ночуют 12 человек, а на вечер можно позвать до 20 гостей. Бассейны работают круглый год, а в доме на Свиязева бассейн с функцией джакузи. Это удобный вариант, когда нужна баня с бассейном в Перми для дня рождения, девичника, встречи друзей или корпоратива. Если вы искали сауну с бассейном, здесь то же самое, только вместо нескольких часов в зале у вас целый дом на сутки.</p>
+    <p>В Английском и Русском доме ночуют 12 человек, а на вечер можно позвать до 20 гостей. Бассейны работают круглый год, а в доме на Свиязева бассейн с функцией джакузи. Это удобный вариант, когда нужна баня с бассейном в Перми для дня рождения, девичника, встречи друзей или корпоратива. Если вы искали сауну с бассейном, здесь то же самое, только вместо нескольких часов в зале у вас целый Дом на сутки.</p>
     <h3>Сколько стоит снять коттедж посуточно</h3>
     <p>Сутки стоят от 15 000 ₽ в будни и от 25 000 ₽ в субботу. В цену входят постельное бельё, посуда, мангал и шампуры, чай и кофе. Отдельно оплачиваются питомец и гости сверх 10 человек (на Свиязева сверх 8), по 500 ₽ за каждого. Залог от 5 000 до 20 000 ₽ администратор называет при подтверждении брони.</p>
     <h3>Как забронировать</h3>
@@ -422,16 +444,16 @@ def home():
 {mark("orderBand", order_band())}
 
 <section class="band band--dark" id="contacts" aria-labelledby="addr-title"><div class="wrap">
-  <div class="sec-row"><div class="sec-head"><h2 class="h-sec" id="addr-title">Где мы</h2><p class="lead">Все три дома в новом квартале Перми, у каждого свой участок и парковка.</p></div><a class="btn btn--ghost" href="kontakty.html">Контакты и схема проезда</a></div>
+  <div class="sec-row"><div class="sec-head"><h2 class="h-sec" id="addr-title">Где мы</h2><p class="lead">Все три Дома в новом квартале Перми, у каждого свой участок и парковка.</p></div><a class="btn btn--ghost" href="kontakty.html">Контакты и схема проезда</a></div>
   <div class="addr">{mark("addrCards", "".join(mark(f"item:addrCard:{k}", f'<a class="addr__card" href="{v["file"]}">{img(k + "/" + v["card_photos"][0], v["name"] + ", фасад")}<h3>{v["name"]}</h3><p>{v["addr"]}</p><span>Подробнее о доме</span></a>') for k, v in H.items()))}</div>
 </div></section>
 </main>
 {footer()}'''
-    return dict(fn="index.html", title=f"Снять дом с баней и бассейном в Перми посуточно — {BRAND}",
-                desc="Дома с баней и бассейном в Перми посуточно — вместо сауны целый дом на сутки: Английский, Русский и дом на Свиязева. Бильярд, мангал, до 20 гостей. От 15 000 ₽.",
-                body=body, lds=[ld_org(), ld_faq(HOME_FAQ)], og="ru/hero-2", og_alt="Русский дом: фасад и беседка во дворе")
+    return dict(fn="index.html", title=f"Снять Дом с баней и бассейном в Перми посуточно — {BRAND}",
+                desc="Дома с баней и бассейном в Перми посуточно — вместо сауны целый Дом на сутки: Английский, Русский и Дом на Свиязева. Бильярд, мангал, до 20 гостей. От 15 000 ₽.",
+                body=body, lds=[ld_org(), ld_faq(HOME_FAQ)], og="ru/hero-2", og_alt="Русский Дом: фасад и беседка во дворе")
 
-# ---------- страница дома ----------
+# ---------- страница Дома ----------
 def house_page(k):
     h = H[k]
     sizes = {0: "big", 1: "t", 4: "w", 7: "w"}
@@ -461,7 +483,7 @@ def house_page(k):
 </section>
 
 <section class="band on-light" aria-labelledby="g-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="g-title">Фото дома</h2><p class="lead">Нажмите на фото, чтобы открыть крупно и пролистать.</p></div>
+  <div class="sec-head"><h2 class="h-sec" id="g-title">Фото Дома</h2><p class="lead">Нажмите на фото, чтобы открыть крупно и пролистать.</p></div>
   <div class="gal">{mark("gallery", gal)}</div>
   <div class="tourband"><div><h3>3D-тур по дому</h3><p>{mark("v:tour_text", h["tourtxt"])}</p></div><a class="btn" href="{h["tour"]}" target="_blank" rel="noopener">Открыть 3D-тур</a></div>
 </div></section>
@@ -475,14 +497,14 @@ def house_page(k):
 <section class="band on-light" id="price" aria-labelledby="p-title"><div class="wrap">
   <div class="sec-head"><h2 class="h-sec" id="p-title">Цена за сутки</h2><p class="lead">Заезд с {h["checkin"]}, выезд до {h["checkout"]} следующего дня. Цена для компании до {h["base"]} человек, за каждого следующего гостя +{h["extra"]} ₽.</p></div>
   <div class="price-days">{mark("prices", prices)}</div>
-  <p class="note">Праздники считаются как выходные. Залог 5 000 – 20 000 ₽, питомец +1 000 ₽. <b>Скидка {DISCOUNT}% при бронировании на сайте или через группу ВКонтакте.</b></p>
-  <div class="prepay" id="prepay">{icon("card")}<div><h3>Предоплата за {h["name"].replace("Дом", "дом")}</h3><p>{PREPAY_TXT}</p></div><a class="btn" href="{h["prepay"]}">Внести предоплату</a></div>
+  <p class="note">Праздники считаются как выходные. Залог 5 000 – 20 000 ₽, питомец +1 000 ₽. <b>Скидка {DISCOUNT}% при бронировании через <a href="{VK}" target="_blank" rel="noopener">группу ВКонтакте</a>.</b></p>
+  <div class="prepay" id="prepay">{icon("card")}<div><h3>Предоплата за {h["name"]}</h3><p>{PREPAY_TXT}</p></div><a class="btn" href="{h["prepay"]}">Внести предоплату</a></div>
 </div></section>
 
 <section class="band band--soft" aria-labelledby="r-title"><div class="wrap two">
-  <div><div class="sec-head"><h2 class="h-sec" id="r-title">Правила дома</h2></div>{mark("houseRules", rules_list(house_rules(k)))}</div>
+  <div><div class="sec-head"><h2 class="h-sec" id="r-title">Правила Дома</h2></div>{mark("houseRules", rules_list(house_rules(k)))}</div>
   <div class="hinfo">{mark("hinfo", f'''
-    <div><h3>Посмотреть дом</h3><p>Ежедневно {h["view"]}, между заездами гостей. Позвоните заранее: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
+    <div><h3>Посмотреть Дом</h3><p>Ежедневно {h["view"]}, между заездами гостей. Позвоните заранее: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
     {f'<div><h3>Бассейн</h3><p>Работает круглый год: {h["pool"]}.</p></div>' if h["pool"] else '<div><h3>Бассейн-джакузи</h3><p>Бассейн всесезонный, с функцией джакузи. Рядом баня.</p></div>'}
     <div><h3>Повар</h3><p>{SERVICES} Скажите об этом при бронировании.</p></div>''')}
   </div>
@@ -498,7 +520,7 @@ def house_page(k):
 {mark("houseOrder", order_band(k, k + "/" + h["card_photos"][1], "Заявка: " + h["name"], h["name"]))}
 
 <section class="band on-light" aria-labelledby="o-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="o-title">Другие дома</h2></div>
+  <div class="sec-head"><h2 class="h-sec" id="o-title">Другие Дома</h2></div>
   <div class="houses houses--2">{mark("otherHouses", others)}</div>
 </div></section>
 </main>
@@ -515,9 +537,9 @@ def contacts_page():
   <div class="cplace__body">
     <h3><a href="{h["file"]}">{h["name"]}</a></h3>
     <p class="cplace__addr">{icon("pin")}Пермь, {h["addr"]}</p>
-    <p>Заезд с {h["checkin"]}, выезд до {h["checkout"]}. Ночуют {h["sleep"]}, отдыхают до {h["max"]} гостей. Посмотреть дом можно ежедневно {h["view"]}.</p>
+    <p>Заезд с {h["checkin"]}, выезд до {h["checkout"]}. Ночуют {h["sleep"]}, отдыхают до {h["max"]} гостей. Посмотреть Дом можно ежедневно {h["view"]}.</p>
     <p class="cplace__links"><a class="link" href="https://yandex.ru/maps/?rtext=~{q}&amp;rtt=auto" target="_blank" rel="noopener">Маршрут в Яндекс Картах</a><a class="link" href="https://2gis.ru/perm/search/{q}" target="_blank" rel="noopener">Найти в 2ГИС</a></p>
-    <div class="cplace__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--ghost on-light" href="{h["prepay"]}">Внести предоплату</a></div>
+    <div class="cplace__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm" href="{h["prepay"]}">Внести предоплату</a></div>
   </div>
 </article>'''
     body = f'''{header("contacts")}
@@ -539,7 +561,7 @@ def contacts_page():
 </div></section>
 
 <section class="band band--soft" aria-labelledby="where-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="where-title">Адреса домов</h2><p class="lead">Все три дома в черте Перми, в новом жилом квартале. У каждого дома свой участок и одно парковочное место, гостям удобно приезжать на такси.</p></div>
+  <div class="sec-head"><h2 class="h-sec" id="where-title">Адреса домов</h2><p class="lead">Все три Дома в черте Перми, в новом жилом квартале. У каждого Дома свой участок и одно парковочное место, гостям удобно приезжать на такси.</p></div>
   <div class="cplaces">{mark("contactPlaces", "".join(mark(f"item:contactPlace:{k}", house_block(k)) for k in H))}</div>
 </div></section>
 
@@ -599,7 +621,7 @@ def blog_index():
     ld = {"@context": "https://schema.org", "@type": "Blog", "name": f"Блог — {BRAND}", "url": f"{SITE}/blog.html", "inLanguage": "ru", "publisher": ORG,
           "blogPost": [{"@type": "BlogPosting", "headline": p["h1"], "url": f"{SITE}/{post_file(p)}", "datePublished": p["date"]} for p in POSTS]}
     return dict(fn="blog.html", title=f"Блог о отдыхе в домах с баней в Перми — {BRAND}".replace("о отдыхе", "об отдыхе"),
-                desc="Статьи о том, как снять дом с баней и бассейном в Перми: праздники, корпоративы, цены, баня зимой. Советы от Доходных домов Ефремовых.",
+                desc="Статьи о том, как снять Дом с баней и бассейном в Перми: праздники, корпоративы, цены, баня зимой. Советы от Доходных домов Ефремовых.",
                 body=body, lds=[ld, cr_ld], og=POSTS[0]["cover"])
 
 def post_page(p):
@@ -625,7 +647,7 @@ def post_page(p):
   <div class="wrap post__grid">
     <aside class="post__aside">
       <nav class="toc" aria-label="Содержание"><p>Содержание</p><ol>{mark("toc", toc)}</ol></nav>
-      <div class="post__cta"><p>Три дома с баней и бассейном в Перми, сутки от 15 000 ₽.</p><button class="btn btn--sm" type="button" data-order>Подобрать дом</button><a class="link tnum" href="tel:{PHONE_RAW}">{PHONE}</a></div>
+      <div class="post__cta"><p>Три Дома с баней и бассейном в Перми, сутки от 15 000 ₽.</p><button class="btn btn--sm" type="button" data-order>Подобрать Дом</button><a class="link tnum" href="tel:{PHONE_RAW}">{PHONE}</a></div>
     </aside>
     <div class="prose">
       {mark("postBody", secs)}
@@ -659,26 +681,27 @@ def prepay_page(k):
 <main class="h-{k}">
 <section class="phead on-light"><div class="wrap">
   {cr}
-  <h1>Предоплата: {h["name"].replace("Дом", "дом")}</h1>
+  <h1>Предоплата: {h["name"]}</h1>
   <p class="lead">{h["addr"]}. Бронь подтверждается предоплатой 50% от стоимости, остальное доплачиваете при заселении.</p>
 </div></section>
 <section class="band band--tight on-light" aria-label="Как внести предоплату"><div class="wrap paypage">
   <div class="paypage__main">
     <div class="paypage__warn">{icon("card")}<p><b>Вносите предоплату только после того, как администратор записал вас и согласовал сумму.</b> Если ещё не договорились, позвоните: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
     <ol class="paysteps">
-      <li>Нажмите «Оплатить через СБП», откроется страница Системы быстрых платежей.</li>
+      <li>Отметьте согласие с условиями и нажмите «Внести предоплату через СБП» — откроется страница Системы быстрых платежей.</li>
       <li>Выберите свой банк и подтвердите переход в приложение.</li>
       <li>Введите сумму, которую назвал администратор. В комментарии укажите имя и дату заезда.</li>
     </ol>
-    <div class="hero__cta"><a class="btn" href="{h["sbp"]}" target="_blank" rel="noopener">Оплатить через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="{k}">Оставить заявку</button></div>
-    <p class="note">В случае отказа от брони предоплата возвращается, только если на это время запишется другой гость.</p>
+    <div class="payterms"><h2>Условия предоплаты</h2><p>Предоплата — 50% от стоимости брони. В случае отказа от брони предоплата возвращается, только если эту дату снимут другие гости за ту же сумму.</p>
+      <label class="check"><input type="checkbox" data-pay-agree><span>Я прочитал условия предоплаты и согласен с ними</span></label></div>
+    <div class="hero__cta"><a class="btn btn--lg is-off" href="{h["sbp"]}" target="_blank" rel="noopener" data-pay-btn aria-disabled="true">Внести предоплату через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="{k}">Оставить заявку</button></div>
   </div>
   <figure class="paypage__qr"><img src="img/qr/{k}.svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>
 </div></section>
 </main>
 {footer(k)}'''
     n = h["prepay"].strip("/")
-    return dict(fn=f"{n}/index.html", title=f'Предоплата — {h["name"]} — {BRAND}', desc=f'Внести предоплату за {h["name"].replace("Дом", "дом")} через Систему быстрых платежей.',
+    return dict(fn=f"{n}/index.html", title=f'Предоплата — {h["name"]} — {BRAND}', desc=f'Внести предоплату за {h["name"]} через Систему быстрых платежей.',
                 body=body, lds=[cr_ld], og=k + "/facade", noindex=True)
 
 def relink(doc, up):
@@ -689,7 +712,8 @@ def relink(doc, up):
 # ---------- сборка ----------
 FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Prata&display=swap">'
 FAV = 'data:image/svg+xml,' + rd("fox.svg").replace('<path ', '<path fill="%23D8650F" ').replace('"', "'").replace("#", "%23")
-HJS = {"_discount": DISCOUNT} | {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"], base=v["base"], extra=v["extra"]) for k, v in H.items()}
+# скидка только через ВКонтакте (решение владельца 22.10.2026) — в расчёте формы сайта её нет
+HJS = {"_discount": 0} | {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"], base=v["base"], extra=v["extra"]) for k, v in H.items()}
 RSS_LINK = f'<link rel="alternate" type="application/rss+xml" title="Блог — {BRAND}" href="rss.xml">'
 
 def main():

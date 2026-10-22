@@ -1,7 +1,7 @@
 <section class="band band--soft on-light" id="order" aria-labelledby="order-title"><div class="wrap order">
   <div class="order__txt">
-    <div class="sec-head"><h2 class="h-sec" id="order-title">Заявка: [[bnHouse? &part=`name`]]</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты [[++bn_prepay_percent]]%, остальное — при заселении.</p><p class="disc-line">Скидка [[++bn_discount]]% при бронировании на сайте или через группу ВКонтакте</p></div>
-    <div class="order__contacts"><a class="big tnum nb" href="tel:[[++bn_phone_raw]]">[[++bn_phone]]</a><p>[[bnHouse? &part=`addr`]], заезд с [[bnHouse? &part=`checkin`]], выезд до [[bnHouse? &part=`checkout`]]</p><p><a class="link" href="[[bnHouse? &part=`prepay_url`]]">Внести предоплату</a> — после того, как администратор подтвердил даты</p></div>
+    <div class="sec-head"><h2 class="h-sec" id="order-title">Заявка: [[bnHouse? &part=`name`]]</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты [[++bn_prepay_percent]]%, остальное — при заселении.</p><p class="disc-line"><a href="[[++bn_vk_url]]" target="_blank" rel="noopener">Скидка [[++bn_discount]]% при бронировании через группу ВКонтакте</a></p></div>
+    <div class="order__contacts"><a class="big tnum nb" href="tel:[[++bn_phone_raw]]">[[++bn_phone]]</a><p>[[bnHouse? &part=`addr`]], заезд с [[bnHouse? &part=`checkin`]], выезд до [[bnHouse? &part=`checkout`]]</p><p><a class="btn" href="[[bnHouse? &part=`prepay_url`]]">Внести предоплату</a></p><p>После того, как администратор подтвердил даты</p></div>
     <div class="order__photo"><img src="[[bnHouse? &part=`photo2`]]" alt="[[bnHouse? &part=`name`]]" loading="lazy" decoding="async"></div>
   </div>
   [[$bn.form? &p=`o` &house=`[[*bn_code]]`]]

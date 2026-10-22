@@ -9,19 +9,20 @@
 <main class="h-[[bnHouse? &id=`[[*parent]]` &part=`code`]]">
 <section class="phead on-light"><div class="wrap">
   [[bnCrumbs]]
-  <h1>Предоплата: [[bnHouse? &id=`[[*parent]]` &part=`name_lc`]]</h1>
+  <h1>Предоплата: [[bnHouse? &id=`[[*parent]]` &part=`name`]]</h1>
   <p class="lead">[[bnHouse? &id=`[[*parent]]` &part=`addr`]]. Бронь подтверждается предоплатой [[++bn_prepay_percent]]% от стоимости, остальное доплачиваете при заселении.</p>
 </div></section>
 <section class="band band--tight on-light" aria-label="Как внести предоплату"><div class="wrap paypage">
   <div class="paypage__main">
     <div class="paypage__warn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 10h18M7 15h4"/></svg><p><b>Вносите предоплату только после того, как администратор записал вас и согласовал сумму.</b> Если ещё не договорились, позвоните: <a class="nb tnum" href="tel:[[++bn_phone_raw]]">[[++bn_phone]]</a></p></div>
     <ol class="paysteps">
-      <li>Нажмите «Оплатить через СБП», откроется страница Системы быстрых платежей.</li>
+      <li>Отметьте согласие с условиями и нажмите «Внести предоплату через СБП» — откроется страница Системы быстрых платежей.</li>
       <li>Выберите свой банк и подтвердите переход в приложение.</li>
       <li>Введите сумму, которую назвал администратор. В комментарии укажите имя и дату заезда.</li>
     </ol>
-    <div class="hero__cta"><a class="btn" href="[[bnHouse? &id=`[[*parent]]` &part=`sbp`]]" target="_blank" rel="noopener">Оплатить через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="[[bnHouse? &id=`[[*parent]]` &part=`code`]]">Оставить заявку</button></div>
-    <p class="note">В случае отказа от брони предоплата возвращается, только если на это время запишется другой гость.</p>
+    <div class="payterms"><h2>Условия предоплаты</h2><p>Предоплата — 50% от стоимости брони. В случае отказа от брони предоплата возвращается, только если эту дату снимут другие гости за ту же сумму.</p>
+      <label class="check"><input type="checkbox" data-pay-agree><span>Я прочитал условия предоплаты и согласен с ними</span></label></div>
+    <div class="hero__cta"><a class="btn btn--lg is-off" href="[[bnHouse? &id=`[[*parent]]` &part=`sbp`]]" target="_blank" rel="noopener" data-pay-btn aria-disabled="true">Внести предоплату через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="[[bnHouse? &id=`[[*parent]]` &part=`code`]]">Оставить заявку</button></div>
   </div>
   <figure class="paypage__qr"><img src="[[++base_url]]assets/img/qr/[[bnHouse? &id=`[[*parent]]` &part=`code`]].svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>
 </div></section>

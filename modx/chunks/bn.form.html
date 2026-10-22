@@ -1,6 +1,6 @@
 <form class="form order-form" id="[[+p]]-form" action="[[~[[++bn_lead_id]]]]" method="post" data-house="[[+house]]" novalidate>
   <input type="hidden" name="bn_token" value="[[!bnToken]]">
-  <div class="field full"><label for="[[+p]]-house">Дом</label><select id="[[+p]]-house" name="house"><option value="">Выберите дом</option>[[bnHouses? &tpl=`bn.tpl.formOption`]]</select></div>
+  <div class="field full"><label for="[[+p]]-house">Дом</label><select id="[[+p]]-house" name="house"><option value="">Выберите Дом</option>[[bnHouses? &tpl=`bn.tpl.formOption`]]</select></div>
   <div class="field"><label for="[[+p]]-in">Заезд</label><input id="[[+p]]-in" name="checkin" type="date"></div>
   <div class="field"><label for="[[+p]]-out">Выезд</label><input id="[[+p]]-out" name="checkout" type="date"></div>
   <div class="estimate" aria-live="polite"></div>

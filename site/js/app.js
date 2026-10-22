@@ -266,4 +266,14 @@
       if (drawer && drawer.open) closeModal(drawer, go); else go();
     });
   });
+
+  // Страница предоплаты: кнопка оплаты работает только после согласия с условиями возврата
+  $$("[data-pay-agree]").forEach(function (box) {
+    var btn = document.querySelector("[data-pay-btn]");
+    if (!btn) return;
+    var sync = function () { btn.classList.toggle("is-off", !box.checked); btn.setAttribute("aria-disabled", box.checked ? "false" : "true"); };
+    btn.addEventListener("click", function (e) { if (!box.checked) { e.preventDefault(); box.focus(); box.closest("label").classList.add("is-need"); } });
+    box.addEventListener("change", function () { box.closest("label").classList.remove("is-need"); sync(); });
+    sync();
+  });
 })();

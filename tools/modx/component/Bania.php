@@ -21,7 +21,7 @@ class Bania
     private static $tpl = [];
 
     const DAYS = ['Понедельник – четверг', 'Пятница', 'Суббота', 'Воскресенье'];
-    const DAYS_SHORT = ['Пн – Чт', 'Пятница', 'Суббота', 'Воскресенье'];
+    const DAYS_SHORT = ['Пн – Чт*', 'Пятница*', 'Суббота', 'Воскресенье*'];   // * — праздничные дни, сноска под таблицей
     const STATUSES = ['new' => 'Новая', 'contacted' => 'Связались', 'confirmed' => 'Подтверждена', 'done' => 'Выехали', 'declined' => 'Отказ'];
     const ICONS = [
         'kitchen' => '<path d="M5 3v8a2 2 0 0 0 2 2v8M9 3v8a2 2 0 0 1-2 2M7 3v6"/><path d="M17 21V3c-2.2 1-3.5 3.6-3.5 7.5V13H17"/>',
@@ -127,10 +127,10 @@ class Bania
         $street = (string)$tv('bn_street', $tv('bn_addr'));
         $pos = array_filter($prices);
         return [
-            'id' => (int)$r->get('id'), 'url' => self::url($r->get('id')), 'code' => $code, 'name' => $name, 'name_lc' => str_replace('Дом', 'дом', $name),
+            'id' => (int)$r->get('id'), 'url' => self::url($r->get('id')), 'code' => $code, 'name' => $name, 'name_lc' => $name,   // «Дом» с большой буквы везде (решение владельца 22.10.2026)
             'addr' => (string)$tv('bn_addr'), 'street' => $street, 'street_q' => rawurlencode('Пермь, ' . $street),
             'kicker' => (string)$tv('bn_kicker'), 'intro' => (string)$tv('bn_intro'),
-            'area' => (string)$tv('bn_area'), 'floors' => (string)$tv('bn_floors', 'дом, 2 этажа'), 'rooms' => (int)$tv('bn_rooms'), 'plot' => (string)$tv('bn_plot'),
+            'area' => (string)$tv('bn_area'), 'floors' => (string)$tv('bn_floors', 'Дом, 2 этажа'), 'rooms' => (int)$tv('bn_rooms'), 'plot' => (string)$tv('bn_plot'),
             'sleep' => (int)$tv('bn_sleep'), 'max' => (int)$tv('bn_max', 20), 'base' => (int)$tv('bn_base', 10), 'extra' => (int)$tv('bn_extra', 0),
             'checkin' => (string)$tv('bn_checkin'), 'checkout' => (string)$tv('bn_checkout'), 'view' => (string)$tv('bn_view'), 'pool' => (string)$tv('bn_pool'),
             'prices' => $prices, 'min' => $pos ? min($pos) : 0, 'max_price' => $pos ? max($pos) : 0, 'min_price' => $pos ? self::money(min($pos)) : '',
@@ -214,7 +214,7 @@ class Bania
         $phone = self::e(self::opt('bn_phone')); $raw = self::e(self::opt('bn_phone_raw'));
         $pool = $h['pool'] !== '' ? '<div><h3>Бассейн</h3><p>Работает круглый год: ' . $h['pool'] . '.</p></div>'
                                   : '<div><h3>Бассейн-джакузи</h3><p>Бассейн всесезонный, с функцией джакузи. Рядом баня.</p></div>';
-        return '<div><h3>Посмотреть дом</h3><p>Ежедневно ' . $h['view'] . ', между заездами гостей. Позвоните заранее: <a class="nb tnum" href="tel:' . $raw . '">' . $phone . '</a></p></div>'
+        return '<div><h3>Посмотреть Дом</h3><p>Ежедневно ' . $h['view'] . ', между заездами гостей. Позвоните заранее: <a class="nb tnum" href="tel:' . $raw . '">' . $phone . '</a></p></div>'
             . "\n    " . $pool . "\n    " . '<div><h3>Повар</h3><p>' . self::opt('bn_services', '') . ' Скажите об этом при бронировании.</p></div>';
     }
 
@@ -260,7 +260,7 @@ class Bania
             $rows .= '</tr>';
         }
         $rows .= '<tr><th scope="row"><span class="sr">Ссылки</span></th>';
-        foreach ($H as $h) $rows .= '<td><a href="' . $h['url'] . '">Подробнее о доме</a><br><a href="' . $h['prepay_url'] . '">Внести предоплату</a></td>';
+        foreach ($H as $h) $rows .= '<td><a href="' . $h['url'] . '">Подробнее о доме</a><br><a class="btn btn--sm" href="' . $h['prepay_url'] . '">Внести предоплату</a></td>';
         $rows .= '</tr>';
         return '<div class="table-wrap"><table class="cmp"><thead><tr><th scope="col"><span class="sr">Параметр</span></th>' . $th . '</tr></thead><tbody>' . $rows . '</tbody></table></div>';
     }
@@ -278,6 +278,28 @@ class Bania
     }
 
     // ------------------------------------------------------------------ отзывы
+    const REVIEW_PLATFORMS = ['2ГИС' => ['#19AA1E', '2Г', '2gis'], 'Яндекс Карты' => ['#FC3F1D', 'Я', 'yandex'], 'Авито' => ['#00AAFF', 'A', 'avito']];
+
+    /** По Дому: площадки (ссылки — настройки bn_rev_<код>_2gis|yandex|avito), QR «оставить отзыв», заглушки скриншотов */
+    public static function reviewPanels($house = 0) {
+        $out = '';
+        foreach (self::houses() as $h) {
+            if ($house && $h['id'] !== (int)$house) continue;
+            $logos = '';
+            foreach (self::REVIEW_PLATFORMS as $name => [$color, $sign, $key]) {
+                $u = trim((string)self::opt('bn_rev_' . $h['code'] . '_' . $key));
+                $inner = '<span class="plat__mark" style="background:' . $color . '">' . $sign . '</span><span class="plat__name">' . $name . '</span>';
+                $logos .= $u !== '' ? '<a class="plat" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow">' . $inner . '</a>' : '<span class="plat">' . $inner . '</span>';
+            }
+            $shots = '';
+            foreach (['Яндекс Карт', '2ГИС', 'Авито'] as $p) $shots .= '<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с ' . $p . '</span></div>';
+            $qr = '<figure class="hrev__qr"><img src="' . self::$modx->getOption('base_url') . 'assets/img/qr/rev-' . $h['code'] . '.svg" alt="QR-код: оставить отзыв, ' . self::e($h['name']) . '" width="150" height="150" loading="lazy"><figcaption>Оставить отзыв: наведите камеру телефона</figcaption></figure>';
+            $out .= '<div class="hrev h-' . $h['code'] . '"><div class="hrev__head"><h3>' . self::e($h['name']) . '</h3><div class="plats">' . $logos . '</div></div>'
+                . '<div class="hrev__body"><div class="rshots">' . $shots . '</div>' . $qr . '</div></div>';
+        }
+        return $out;
+    }
+
     public static function reviews($house = 0) {
         $tid = self::templateId('bn-review');
         $items = [];
@@ -296,11 +318,11 @@ class Bania
             if ($u !== '') $links .= '<a class="btn btn--ghost btn--sm" href="' . self::e($u) . '" target="_blank" rel="noopener">' . $n . '</a>';
         }
         $cta = $links ? '<div class="rev-cta"><p>Отдыхали у нас? Расскажите, как всё прошло:</p>' . $links . '</div>' : '';
+        $panels = self::reviewPanels($house);
         if (!$items) {
-            if ($house) return '';
             return '<section class="band band--dark" id="reviews" aria-labelledby="rev-title"><div class="wrap">' . "\n"
-                . '  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей</h2><p class="lead">Показываем отзывы с карт как есть, вместе с оценками.</p></div>' . "\n"
-                . '  <div class="reviews"><div class="review-slot"><h3>Яндекс Карты</h3><p>Место для официального виджета рейтинга и отзывов Яндекса.</p></div><div class="review-slot"><h3>2ГИС</h3><p>Место для виджета отзывов 2ГИС.</p></div></div>' . "\n"
+                . '  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей' . ($house ? ' об этом Доме' : '') . '</h2><p class="lead">Отзывы о каждом Доме — в 2ГИС, Яндекс Картах и на Авито. Показываем их как есть, скриншотами.</p></div>' . "\n"
+                . '  <div class="hrevs">' . $panels . '</div>' . "\n"
                 . '  ' . $cta . "\n" . '</div></section>';
         }
         $cards = ''; $sum = 0;
@@ -453,7 +475,7 @@ class Bania
     }
     /** Данные домов для расчёта стоимости в форме (window.HOUSES) */
     public static function housesJs() {
-        $d = ['_discount' => (int)self::opt('bn_discount', 0)];
+        $d = ['_discount' => 0];   // скидка только через ВКонтакте — форма сайта её не считает (решение владельца 22.10.2026)
         foreach (self::houses() as $h) {
             $d[$h['code']] = ['name' => $h['name'], 'prices' => array_combine(['wd', 'fri', 'sat', 'sun'], $h['prices']), 'max' => $h['max'], 'checkin' => $h['checkin'],
                               'checkout' => $h['checkout'], 'prepay' => $h['prepay_url'], 'base' => $h['base'], 'extra' => $h['extra']];
@@ -527,7 +549,7 @@ class Bania
         self::ensureTables();
         $st = $modx->prepare('INSERT INTO ' . self::table('leads') . ' (created_at, status, house_id, house_name, checkin, checkout, nights, guests, estimate, discount, occasion, contact, name, phone, comment, sms_consent, source, ip)
                               VALUES (NOW(), \'new\', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        $ok = $st && $st->execute([$h['id'], $h['name'], $d1, $d2, $nights, $guests, $sum, (int)self::opt('bn_discount', 0),
+        $ok = $st && $st->execute([$h['id'], $h['name'], $d1, $d2, $nights, $guests, $sum, 0,
             $allowed((string)($in['occasion'] ?? ''), ['birthday', 'corporate', 'friends', 'family', 'other']), $allowed((string)($in['contact'] ?? ''), ['Позвонить', 'Telegram', 'MAX', 'WhatsApp']),
             $name, '+' . $phone, mb_substr(strip_tags((string)($in['comment'] ?? '')), 0, 2000), empty($in['sms']) ? 0 : 1, mb_substr((string)($_SERVER['HTTP_REFERER'] ?? ''), 0, 255), $ip]);
         if (!$ok) { $modx->log(modX::LOG_LEVEL_ERROR, '[bania] заявка не сохранилась: ' . print_r($st ? $st->errorInfo() : $modx->errorInfo(), true)); return ['ok' => false, 'code' => 500, 'message' => 'Не получилось сохранить заявку. Позвоните нам, пожалуйста.']; }

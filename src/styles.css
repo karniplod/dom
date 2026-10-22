@@ -277,6 +277,22 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 .seo__text strong { color: var(--bark); font-weight: 600; }
 
 /* отзывы */
+/* отзывы по Домам: площадки, QR, скриншоты */
+.hrevs { display: grid; gap: 18px; margin-top: 8px; }
+.hrev { border: 1px solid var(--line-dark); border-radius: 8px; padding: 20px; display: grid; gap: 16px; background: var(--bark-2); }
+.hrev__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.hrev__head h3 { font-size: 24px; color: var(--cream); }
+.plats { display: flex; flex-wrap: wrap; gap: 8px; }
+.plat { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: #fff; color: var(--bark); font-weight: 600; font-size: 14.5px; text-decoration: none; }
+a.plat:hover { box-shadow: 0 0 0 2px var(--fox); }
+.plat__mark { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 5px; border-radius: 6px; color: #fff; font: 700 12px/1 var(--text); }
+.hrev__body { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 18px; align-items: start; }
+.rshots { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.rshot { display: block; border-radius: 6px; overflow: hidden; }
+.rshot--empty { display: grid; place-items: center; min-height: 140px; padding: 14px; border: 1px dashed var(--line-dark); color: var(--cream-soft); font-size: 14px; text-align: center; }
+.hrev__qr { margin: 0; display: grid; gap: 8px; justify-items: center; text-align: center; font-size: 13px; color: var(--cream-soft); }
+.hrev__qr img { width: 150px; height: 150px; background: #fff; border-radius: 6px; padding: 6px; }
+@media (max-width: 760px) { .hrev__body { grid-template-columns: 1fr; } .hrev__qr { justify-items: start; text-align: left; } }
 .reviews { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .review-slot { border: 1px dashed var(--line-dark); border-radius: 6px; padding: 28px; display: grid; gap: 10px; color: var(--cream-soft); min-height: 180px; align-content: center; }
 .review-slot h3 { font-size: 24px; color: var(--cream); }
@@ -613,6 +629,16 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .paypage { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: clamp(28px, 5vw, 72px); align-items: start; }
 @media (max-width: 860px) { .paypage { grid-template-columns: 1fr; } .paypage__qr { display: none; } }
 .paypage__main { display: grid; gap: 22px; max-width: 680px; }
+.payterms { display: grid; gap: 12px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+.payterms h2 { font-size: 22px; }
+.btn--lg { min-height: 60px; padding-inline: 32px; font-size: 19px; }
+.check.is-need { color: #9B2C10; }
+.check.is-need input { outline: 2px solid #9B2C10; outline-offset: 2px; }
+.btn.is-off { opacity: .5; cursor: not-allowed; box-shadow: none; }
+.btn.is-off:hover { transform: none; background: var(--fox-btn); }
+.hcard__links a.btn, .cmp a.btn { color: var(--cream); text-decoration: none; }
+.cmp a.btn { margin-top: 8px; }
+.hcard__links a.btn:hover { color: var(--cream); }
 .paypage__warn { display: grid; grid-template-columns: 30px 1fr; gap: 14px; padding: 18px 20px; border-radius: 6px; background: #F7E3CF; border-left: 4px solid var(--fox-btn); }
 .paypage__warn svg { width: 28px; height: 28px; fill: none; stroke: var(--fox-deep); stroke-width: 1.5; }
 .paypage__warn a { font-weight: 600; }
