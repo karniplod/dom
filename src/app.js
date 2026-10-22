@@ -285,4 +285,18 @@
     box.addEventListener("change", function () { box.closest("label").classList.remove("is-need"); sync(); });
     sync();
   });
+
+  // Кнопка «Наверх»: появляется, когда пролистали больше экрана
+  var top = document.createElement("button");
+  top.type = "button"; top.className = "totop"; top.hidden = true; top.setAttribute("aria-label", "Наверх");
+  top.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+  document.body.appendChild(top);
+  var syncTop = function () { top.hidden = window.scrollY < window.innerHeight; };
+  window.addEventListener("scroll", syncTop, { passive: true });
+  syncTop();
+  top.addEventListener("click", function () {
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    var first = document.querySelector("a, button"); if (first) first.focus({ preventScroll: true });
+  });
 })();

@@ -393,6 +393,15 @@ fieldset.field { border: 0; margin: 0; padding: 0; }
 .foot p + p { margin-top: 6px; }
 .foot nav { display: grid; gap: 6px; }
 @media (max-width: 760px) { .foot__in { grid-template-columns: 1fr; } .foot { padding-bottom: 110px; } }
+/* кнопка «Наверх» (src/app.js): внизу справа; на телефоне — над нижней панелью и над баннером cookie */
+.totop { position: fixed; right: max(20px, env(safe-area-inset-right, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--fox-btn); color: var(--cream); box-shadow: 0 10px 24px -10px rgba(20,11,7,.8); transition: background .2s, transform .2s; }
+.totop[hidden] { display: none; }
+.totop:hover { background: var(--fox-btn-hi); transform: translateY(-2px); }
+.totop svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 640px) { .totop { right: 14px; bottom: calc(82px + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px; } }
+@media (max-width: 760px) { .ck-on .totop { bottom: calc(var(--ck-h, 0px) + 92px); } }
 .mbar { display: none; }
 @media (max-width: 640px) {
   .mbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
