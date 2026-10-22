@@ -62,6 +62,12 @@ if (!$bookingAssets) {
             'powDifficulty' => (int)$p['powDifficulty']]) . ');</script>', true);
 }
 
+// документы сайта по 152-ФЗ (страницы politika и soglasie); нет страницы — ссылка на главную
+$doc = function ($alias) use ($modx) {
+    $r = $modx->getObject(\MODX\Revolution\modResource::class, ['alias' => $alias, 'published' => 1, 'deleted' => 0]);
+    return $r ? $modx->makeUrl($r->get('id')) : $modx->makeUrl((int)$modx->getOption('site_start'));
+};
+
 static $n = 0;
 $n++;
 return $modx->getChunk($tpl, [
@@ -75,4 +81,6 @@ return $modx->getChunk($tpl, [
     'vk_url' => htmlspecialchars((string)$modx->getOption('booking.vk_url', null, 'https://vk.com/russianbath59')),
     'today' => $booking->today(),
     'client' => htmlspecialchars((string)($scriptProperties['client'] ?? 'site')),
+    'politika_url' => $doc('politika'),
+    'soglasie_url' => $doc('soglasie'),
 ]);

@@ -13,6 +13,7 @@ from houses import H, SITE, PHONE, PHONE_RAW
 PREVIEW = bool(os.environ.get("SITE_URL"))
 SITE = os.environ.get("SITE_URL", SITE).rstrip("/")
 from blog import POSTS, CATS
+from legal import DOCS, DATE as LEGAL_DATE, COOKIE_VERSION, OPERATOR
 from reviews import REVIEWS, REVIEW_LINKS, REVIEW_PLATFORMS, HOUSE_REVIEW_LINKS, REVIEW_SHOTS
 
 SRC, SITE_DIR, ART = (os.path.join(ROOT, d) for d in ("src", "site", os.path.join("build", "artifact")))
@@ -128,7 +129,7 @@ def form(house="", p="f"):
   <div class="field"><label for="{p}-phone">Телефон</label><input id="{p}-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 (___) ___-__-__"></div>
   <div class="field full"><label for="{p}-comment">Комментарий</label><textarea id="{p}-comment" name="comment" placeholder="Например: приедем с собакой, нужен детский стульчик"></textarea></div>
   <div class="hp" aria-hidden="true"><label for="{p}-website">Сайт</label><input id="{p}-website" name="website" tabindex="-1" autocomplete="off"></div>
-  <label class="check full"><input type="checkbox" id="{p}-agree" name="agree"><span>Согласен на обработку персональных данных по <a class="link" href="#privacy">политике конфиденциальности</a></span></label>
+  <label class="check full"><input type="checkbox" id="{p}-agree" name="agree"><span>Даю <a class="link" href="soglasie.html" target="_blank">согласие на обработку персональных данных</a> и принимаю <a class="link" href="politika.html" target="_blank">Политику обработки персональных данных</a></span></label>
   <label class="check full"><input type="checkbox" id="{p}-sms" name="sms"><span>Можно прислать SMS о брони и после отдыха</span></label>
   <p class="err full" role="alert" hidden></p>
   <div class="full"><button class="btn" type="submit">Отправить заявку</button></div>
@@ -145,13 +146,13 @@ def order_modal(house=""):
 
 def footer(house=""):
     links = mark("footHouses", "".join(mark(f"item:footHouse:{k}", f'<a href="{v["file"]}">{v["name"]}, {v["addr"]}</a>') for k, v in H.items()))
-    return f'''<footer class="foot" id="privacy"><div class="wrap foot__in">
+    return f'''<footer class="foot"><div class="wrap foot__in">
   {FOX}
   <div>
     <p><a href="index.html">{BRAND}</a>, аренда домов с баней и бассейном в Перми посуточно</p>
     <p>ИП Ефремова Ольга Анатольевна, ИНН 590301252919, ОГРНИП 325595800149589</p>
     <p>Бронирование: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a>, <a href="mailto:{MAIL}">{MAIL}</a></p>
-    <p><a href="#privacy">Политика обработки персональных данных</a></p>
+    <p class="foot__docs"><a href="politika.html">Политика обработки персональных данных</a> · <a href="soglasie.html">Согласие на обработку персональных данных</a> · <a href="cookie.html">Политика cookie</a> · <button type="button" data-cookie-settings>Настройки cookie</button></p>
   </div>
   <nav aria-label="Дома">{links}</nav>
   <nav aria-label="Разделы"><a href="index.html#prices">Цены</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></nav>
@@ -192,6 +193,29 @@ def rules_list(extra=(GUESTS_RULE,)):
     return '<ul class="rules">' + "".join(f'<li><span>{a}</span><span class="tnum">{b}</span></li>' for a, b in list(extra) + RULES) + "</ul>"
 
 PREPAY_TXT = "Бронь подтверждается предоплатой 50% от стоимости, остальное доплачиваете при заселении. Вносите её только после того, как администратор подтвердил даты. Оплата по Системе быстрых платежей: сумму вводите сами, в комментарии укажите имя и дату заезда. При отмене предоплату возвращаем, если на ваши даты находится другой гость."
+
+def legal_html(slug):
+    """Текст документа: дата редакции и разделы, реквизиты оператора подставлены"""
+    html = DOCS[slug]["html"]
+    for k, v in (("{OPERATOR}", OPERATOR), ("{MAIL}", MAIL), ("{PHONE_RAW}", PHONE_RAW), ("{PHONE}", PHONE)):
+        html = html.replace(k, v)
+    return f'<p class="doc-date">Редакция от {LEGAL_DATE}</p>\n' + html.strip()
+
+def legal_page(slug):
+    d = DOCS[slug]
+    cr, cr_ld = crumbs([("Главная", "index.html"), (d["title"], None)])
+    body = f'''{header()}
+<main>
+<section class="phead on-light"><div class="wrap">
+  {cr}
+  <h1>{d["title"]}</h1>
+</div></section>
+<section class="band band--tight on-light"><div class="wrap"><div class="prose">
+{legal_html(slug)}
+</div></div></section>
+</main>
+{footer()}'''
+    return dict(fn=slug + ".html", title=f'{d["title"]} — {BRAND}', desc=d["desc"], body=body, lds=[cr_ld], og="ru/hero-2")
 
 def crumbs(items):
     """items: [(название, ссылка или None)] — хлебные крошки и их разметка."""
@@ -484,7 +508,7 @@ def house_page(k):
     <p class="intro">{mark("v:intro", h["intro"])}</p>
     <div class="dfacts">{mark("facts", facts)}</div>
     <p class="dprice">от {money(minp(h))} <small>за сутки, {h["addr"]}</small></p>
-    <div class="hero__cta"><button class="btn" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--ghost btn--ico" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}Открыть 3D-тур</a></div>
+    <div class="hero__cta"><button class="btn" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--ghost btn--ico" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}Открыть 3D-тур</a><a class="btn btn--ghost btn--ico" href="{h["prepay"]}">{icon("card")}Внести предоплату</a></div>
   </div></div>
 </section>
 
@@ -716,7 +740,8 @@ def relink(doc, up):
     return doc.replace('"prepay": "', '"prepay": "' + up)
 
 # ---------- сборка ----------
-FONTS = '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Prata&display=swap">'
+# шрифты — со своего сервера (tools/fetch_fonts.py): IP посетителей не уходит в Google
+FONTS = '<link rel="stylesheet" href="fonts/fonts.css">'
 FAV = 'data:image/svg+xml,' + rd("fox.svg").replace('<path ', '<path fill="%23D8650F" ').replace('"', "'").replace("#", "%23")
 # скидка только через ВКонтакте (решение владельца 22.10.2026) — в расчёте формы сайта её нет
 HJS = {"_discount": 0} | {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"], base=v["base"], extra=v["extra"]) for k, v in H.items()}
@@ -730,8 +755,9 @@ def main():
         os.makedirs(d, exist_ok=True)
     open(f"{SITE_DIR}/css/styles.css", "w", encoding="utf8", newline="\n").write(css)
     open(f"{SITE_DIR}/js/app.js", "w", encoding="utf8", newline="\n").write(js)
+    open(f"{SITE_DIR}/js/cookies.js", "w", encoding="utf8", newline="\n").write(rd("cookies.js"))
     open(f"{SITE_DIR}/img/fox.svg", "w", encoding="utf8", newline="\n").write(rd("fox.svg").replace("<path ", '<path fill="#D8650F" '))
-    pages = [home()] + [house_page(k) for k in H] + [contacts_page(), blog_index()] + [post_page(p) for p in POSTS] + [prepay_page(k) for k in H]
+    pages = [home()] + [house_page(k) for k in H] + [contacts_page(), blog_index()] + [post_page(p) for p in POSTS] + [prepay_page(k) for k in H] + [legal_page(s) for s in DOCS]
     def og_image(pg):
         u = f'{SITE}/img/{pg["og"]}.jpg'
         wh = jpeg_size(f'{SITE_DIR}/img/{pg["og"]}.jpg')
@@ -748,7 +774,7 @@ def main():
                 f'<title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><link rel="canonical" href="{url}">'
                 f'<meta property="og:type" content="{pg.get("ogtype", "website")}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="{BRAND}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{url}">{og_image(pg)}{pg.get("extra", "")}{'<meta name="robots" content="noindex, nofollow">' if PREVIEW or pg.get("noindex") else ""}'
                 f'<meta name="theme-color" content="#22140E"><link rel="icon" href="{FAV}">{RSS_LINK}{FONTS}{ld}')
-        doc = f'<!doctype html>\n<html lang="ru">\n<head>{head}<link rel="stylesheet" href="css/styles.css"></head>\n<body>\n{body}\n<script>{data_js}</script>\n<script src="js/app.js"></script>\n</body>\n</html>\n'
+        doc = f'<!doctype html>\n<html lang="ru">\n<head>{head}<link rel="stylesheet" href="css/styles.css"></head>\n<body>\n{body}\n<script>{data_js}</script>\n<script src="js/app.js"></script>\n<script src="js/cookies.js" defer data-bn-cookies data-policy="cookie.html" data-version="{COOKIE_VERSION}" data-ym=""></script>\n</body>\n</html>\n'
         art = f'<!doctype html>\n<html lang="ru">\n<head>{head}<style>\n{css}\n</style></head>\n<body>\n{body}\n<script>{data_js}\n{js}</script>\n</body>\n</html>\n'
         depth = fn.count("/")
         if depth:

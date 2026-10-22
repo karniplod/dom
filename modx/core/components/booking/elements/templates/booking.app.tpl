@@ -11,8 +11,8 @@
 <link rel="manifest" href="[[++assets_url]]components/booking/app/manifest.webmanifest">
 <link rel="icon" href="[[++assets_url]]components/booking/app/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="[[++assets_url]]components/booking/app/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Prata&display=swap">
+<!-- шрифты со своего сервера: IP посетителей не уходит в Google (152-ФЗ) -->
+<link rel="stylesheet" href="[[++assets_url]]components/booking/fonts/fonts.css">
 </head>
 <body class="bk-appbody">
 <div class="bk-app" data-bk="app" data-bk-api="[[++assets_url]]components/booking/api.php">

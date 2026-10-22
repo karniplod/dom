@@ -89,6 +89,8 @@ def assets(s):
 def links(s):
     s = s.replace('href="index.html#prices"', 'href="[[~[[++site_start]]]]#prices"').replace('href="index.html"', 'href="[[~[[++site_start]]]]"')
     s = s.replace('href="blog.html"', 'href="[[~[[++bn_blog_id]]]]"').replace('href="kontakty.html"', 'href="[[~[[++bn_contacts_id]]]]"')
+    for doc in ("politika", "soglasie", "cookie"):   # документы 152-ФЗ
+        s = s.replace('href="%s.html"' % doc, 'href="[[~[[++bn_%s_id]]]]"' % doc)
     for k, h in H.items():
         s = s.replace('href="%s"' % h["file"], 'href="[[~[[++bn_house_%s_id]]]]"' % k)
     return s
@@ -221,12 +223,13 @@ CHUNKS["bn.head"] = ("Общие", """<meta charset="utf-8"><meta name="viewport
 [[++bn_yandex_verification:notempty=`<meta name="yandex-verification" content="[[++bn_yandex_verification]]">`]]
 <meta name="theme-color" content="#22140E"><link rel="icon" href="[[++base_url]]assets/img/fox.svg" type="image/svg+xml">
 <link rel="alternate" type="application/rss+xml" title="Блог — [[++site_name:htmlent]]" href="[[~[[++bn_rss_id]]]]">
-""" + B.FONTS + """
+""" + B.FONTS.replace('href="fonts/', 'href="[[++base_url]]assets/fonts/') + """
 <link rel="stylesheet" href="[[++base_url]]assets/css/styles.css?v=""" + VER + """">
 [[bnLd]]""")
+# Яндекс Метрика — только после согласия на cookie (152-ФЗ): счётчик подключает cookies.js, номер — из «Конфигурации»
 CHUNKS["bn.scripts"] = ("Общие", """[[bnHousesJs]]
 <script src="[[++base_url]]assets/js/app.js?v=""" + VER + """"></script>
-[[++bn_ym_id:notempty=`<script>window.BN_YM=[[++bn_ym_id]];(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r)return;}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");ym([[++bn_ym_id]],"init",{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true});</script>`]]""")
+<script src="[[++base_url]]assets/js/cookies.js?v=""" + VER + """" defer data-bn-cookies data-policy="[[~[[++bn_cookie_id]]]]" data-version=\"""" + B.COOKIE_VERSION + """" data-ym="[[++bn_ym_id]]"></script>""")
 
 # ---------------------------------------------------------------- образцы для чанков-списков (дом k0, статья, отзыв)
 home = B.home()["body"]
@@ -454,7 +457,7 @@ SETTINGS = [
     {"key": "bn_blog_cats", "value": "\n".join("%s | %s" % kv for kv in CATS.items()), "name": "Рубрики блога", "cc": "", "help": "По рубрике в строке: «адрес | название»"},
     {"key": "bn_og_default", "value": "assets/img/ru/hero-2.jpg", "name": "Картинка для превью ссылок", "cc": "", "help": "Если у страницы нет своей"},
 ]
-ID_SETTINGS = {"bn_blog_id": "blog", "bn_contacts_id": "kontakty", "bn_lead_id": "api-zayavka", "bn_reviews_id": "otzyvy", "bn_rss_id": "rss"}
+ID_SETTINGS = {"bn_politika_id": "politika", "bn_soglasie_id": "soglasie", "bn_cookie_id": "cookie", "bn_blog_id": "blog", "bn_contacts_id": "kontakty", "bn_lead_id": "api-zayavka", "bn_reviews_id": "otzyvy", "bn_rss_id": "rss"}
 for k, h in H.items():
     ID_SETTINGS["bn_house_%s_id" % k] = h["file"][:-5]
 for key in ID_SETTINGS:
@@ -490,6 +493,10 @@ for i, (k, h) in enumerate(H.items()):
     pg = B.prepay_page(k)
     RES.append({"alias": "predoplata-" + num[-1], "uri": num + "/", "parent": h["file"][:-5], "template": "bn-prepay", "hidemenu": 1, "searchable": 0,
                 "fields": {"pagetitle": "Предоплата: " + h["name"], "longtitle": pg["title"], "description": pg["desc"]}, "tvs": {}})
+for slug, d in B.DOCS.items():   # документы 152-ФЗ — текстовые страницы
+    RES.append({"alias": slug, "parent": "", "template": "bn-text", "hidemenu": 1, "richtext": 0,
+                "fields": {"pagetitle": d["title"], "longtitle": d["title"] + " — " + BRAND, "description": d["desc"],
+                           "content": settings(links(B.legal_html(slug)))}, "tvs": {}})
 cp = B.contacts_page()
 RES.append({"alias": "kontakty", "parent": "", "template": "bn-contacts", "fields": {"pagetitle": "Контакты", "longtitle": cp["title"], "description": cp["desc"]}, "tvs": {}})
 bi = B.blog_index()
@@ -582,7 +589,7 @@ with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
             for f in files:
                 full = os.path.join(base, f)
                 z.write(full, PKG + "/" + os.path.relpath(full, OUT).replace("\\", "/"))
-    for d in ("css", "js", "img", "vtour"):
+    for d in ("css", "js", "img", "vtour", "fonts"):
         for base, _, files in os.walk(os.path.join(ROOT, "site", d)):
             for f in files:
                 full = os.path.join(base, f)

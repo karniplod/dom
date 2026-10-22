@@ -42,7 +42,7 @@
     <label class="bk-field"><span>Телефон</span><input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 (___) ___-__-__" required>
       <b class="bk-err" data-si-error="phone"></b></label>
     <label class="bk-field bk-full"><span>Комментарий</span><textarea name="comment" rows="3" maxlength="2000" placeholder="Например: день рождения, нужен детский стульчик"></textarea></label>
-    <label class="bk-check bk-full"><input type="checkbox" name="agree" value="1" required><span>Согласен на обработку персональных данных по <a class="bk-link" href="#privacy">политике конфиденциальности</a></span>
+    <label class="bk-check bk-full"><input type="checkbox" name="agree" value="1" required><span>Даю <a class="bk-link" href="[[+soglasie_url]]" target="_blank">согласие на обработку персональных данных</a> и принимаю <a class="bk-link" href="[[+politika_url]]" target="_blank">Политику обработки персональных данных</a></span>
       <b class="bk-err" data-si-error="agree"></b></label>
   </div>
   <p class="bk-note">Скидка [[+discount]]% — при бронировании через нашу группу ВКонтакте. Залог 5&nbsp;000–20&nbsp;000&nbsp;₽ зависит от количества и возраста гостей — администратор назовёт его при подтверждении.</p>

@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-22 23:03",
+ "version": "2026-10-22 23:15",
  "chunks": [
   {
    "name": "bn.fox",
@@ -1201,6 +1201,27 @@ $manifest = <<<'JSON'
    "help": "Если у страницы нет своей"
   },
   {
+   "key": "bn_politika_id",
+   "value": "",
+   "name": "ID страницы",
+   "cc": "",
+   "help": "Заполняет установщик"
+  },
+  {
+   "key": "bn_soglasie_id",
+   "value": "",
+   "name": "ID страницы",
+   "cc": "",
+   "help": "Заполняет установщик"
+  },
+  {
+   "key": "bn_cookie_id",
+   "value": "",
+   "name": "ID страницы",
+   "cc": "",
+   "help": "Заполняет установщик"
+  },
+  {
    "key": "bn_blog_id",
    "value": "",
    "name": "ID страницы",
@@ -1265,6 +1286,9 @@ $manifest = <<<'JSON'
   "Аналитика": "Яндекс Метрика и Вебмастер"
  },
  "id_settings": {
+  "bn_politika_id": "politika",
+  "bn_soglasie_id": "soglasie",
+  "bn_cookie_id": "cookie",
   "bn_blog_id": "blog",
   "bn_contacts_id": "kontakty",
   "bn_lead_id": "api-zayavka",
