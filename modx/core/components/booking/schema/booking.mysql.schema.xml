@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Компонент booking: дома, бани, цены, праздники, брони, занятые ночи, закрытые даты, токены, журнал.
+     Деньги — целые рубли. Полей предоплаты нет (конституция ст. 2.1, 7.2). -->
+<model package="Booking\Model" baseClass="xPDO\Om\xPDOObject" platform="mysql" defaultEngine="InnoDB" version="3.0">
+
+    <object class="House" table="booking_houses" extends="xPDO\Om\xPDOSimpleObject">
+        <field key="code" dbtype="varchar" precision="20" phptype="string" null="false" default=""/>
+        <field key="name" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
+        <field key="slug" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
+        <field key="description" dbtype="text" phptype="string" null="true"/>
+        <field key="address" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
+        <field key="resource_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true"/>
+        <field key="capacity_sleep" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="1"/>
+        <field key="capacity_party" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="1"/>
+        <field key="checkin_time" dbtype="time" phptype="string" null="false" default="15:00:00"/>
+        <field key="checkout_time" dbtype="time" phptype="string" null="false" default="12:00:00"/>
+        <field key="addon_bookable_separately" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="0"/>
+        <field key="active" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="1"/>
+        <field key="sort" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="0"/>
+
+        <index alias="code" name="code" primary="false" unique="true" type="BTREE">
+            <column key="code" length="" collation="A" null="false"/>
+        </index>
+        <index alias="slug" name="slug" primary="false" unique="true" type="BTREE">
+            <column key="slug" length="" collation="A" null="false"/>
+        </index>
+        <composite alias="Addons" class="Booking\Model\Addon" local="id" foreign="house_id" cardinality="many" owner="local"/>
+        <composite alias="PriceRules" class="Booking\Model\PriceRule" local="id" foreign="house_id" cardinality="many" owner="local"/>
+    </object>
+
+    <object class="Addon" table="booking_addons" extends="xPDO\Om\xPDOSimpleObject">
+        <field key="house_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false"/>
+        <field key="name" dbtype="varchar" precision="100" phptype="string" null="false" default="Баня"/>
+        <field key="price_per_hour" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true"/>
+        <field key="min_hours" dbtype="tinyint" precision="3" attributes="unsigned" phptype="integer" null="false" default="2"/>
+        <field key="buffer_minutes" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="30"/>
+        <field key="active" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="1"/>
+
+        <index alias="house_id" name="house_id" primary="false" unique="false" type="BTREE">
+            <column key="house_id" length="" collation="A" null="false"/>
+        </index>
+        <aggregate alias="House" class="Booking\Model\House" local="house_id" foreign="id" cardinality="one" owner="foreign"/>
+    </object>
+
+    <object class="PriceRule" table="booking_price_rules" extends="xPDO\Om\xPDOSimpleObject">
+        <field key="house_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false"/>
+        <field key="day_type" dbtype="enum" precision="'weekday','friday','saturday','sunday'" phptype="string" null="false" default="weekday"/>
+        <field key="price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="extra_guest_price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="500"/>
+        <field key="extra_guest_limit" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="10"/>
+        <field key="pet_price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="1000"/>
+
+        <index alias="house_day" name="house_day" primary="false" unique="true" type="BTREE">
+            <column key="house_id" length="" collation="A" null="false"/>
+            <column key="day_type" length="" collation="A" null="false"/>
+        </index>
+        <aggregate alias="House" class="Booking\Model\House" local="house_id" foreign="id" cardinality="one" owner="foreign"/>
+    </object>
+
+    <object class="Holiday" table="booking_holidays" extends="xPDO\Om\xPDOSimpleObject">
+        <field key="date" dbtype="date" phptype="string" null="false"/>
+        <field key="holiday_type" dbtype="enum" precision="'pre_holiday_workday','holiday_before_dayoff','holiday_before_workday'" phptype="string" null="false" default="holiday_before_dayoff"/>
+        <field key="comment" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
+
+        <index alias="date" name="date" primary="false" unique="true" type="BTREE">
+            <column key="date" length="" collation="A" null="false"/>
+        </index>
+        <composite alias="Prices" class="Booking\Model\HolidayPrice" local="id" foreign="holiday_id" cardinality="many" owner="local"/>
+    </object>
+
+    <object class="HolidayPrice" table="booking_holiday_prices" extends="xPDO\Om\xPDOObject">
+        <field key="holiday_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" index="pk"/>
+        <field key="house_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" index="pk"/>
+        <field key="price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0"/>
+
+        <index alias="PRIMARY" name="PRIMARY" primary="true" unique="true" type="BTREE">
+            <column key="holiday_id" length="" collation="A" null="false"/>
+            <column key="house_id" length="" collation="A" null="false"/>
+        </index>
+        <aggregate alias="Holiday" class="Booking\Model\Holiday" local="holiday_id" foreign="id" cardinality="one" owner="foreign"/>
+    </object>
+
+    <object class="Booking" table="booking_bookings" extends="xPDO\Om\xPDOSimpleObject">
+        <field key="house_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false"/>
+        <field key="addon_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true"/>
+        <field key="date_from" dbtype="date" phptype="string" null="false"/>
+        <field key="date_to" dbtype="date" phptype="string" null="false"/>
+        <field key="time_from" dbtype="time" phptype="string" null="true"/>
+        <field key="time_to" dbtype="time" phptype="string" null="true"/>
+        <field key="guests_count" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="1"/>
+        <field key="pets_count" dbtype="tinyint" precision="3" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="guest_name" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
+        <field key="guest_phone" dbtype="varchar" precision="20" phptype="string" null="false" default=""/>
+        <field key="guest_comment" dbtype="text" phptype="string" null="true"/>
+        <field key="quote_total" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="quote_discount" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="quote_lines" dbtype="text" phptype="json" null="true"/>
+        <field key="status" dbtype="enum" precision="'new','confirmed','cancelled','completed'" phptype="string" null="false" default="new"/>
+        <field key="cancellation_requested" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="0"/>
+        <field key="cancellation_requested_by" dbtype="enum" precision="'guest','admin'" phptype="string" null="true"/>
+        <field key="cancellation_reason" dbtype="text" phptype="string" null="true"/>
+        <field key="deposit_amount" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true"/>
+        <field key="deposit_status" dbtype="enum" precision="'not_set','pending','paid','returned'" phptype="string" null="false" default="not_set"/>
+        <field key="source" dbtype="enum" precision="'site','pwa','max','admin','migrated'" phptype="string" null="false" default="site"/>
+        <field key="legacy_lead_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true"/>
+        <field key="guest_token_hash" dbtype="char" precision="64" phptype="string" null="false" default=""/>
+        <field key="admin_note" dbtype="text" phptype="string" null="true"/>
+        <field key="created_at" dbtype="datetime" phptype="datetime" null="true"/>
+        <field key="updated_at" dbtype="datetime" phptype="datetime" null="true"/>
+        <field key="updated_by" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
+
+        <index alias="house_status_from" name="house_status_from" primary="false" unique="false" type="BTREE">
+            <column key="house_id" length="" collation="A" null="false"/>
+            <column key="status" length="" collation="A" null="false"/>
+            <column key="date_from" length="" collation="A" null="false"/>
+        </index>
+        <index alias="status" name="status" primary="false" unique="false" type="BTREE">
+            <column key="status" length="" collation="A" null="false"/>
+        </index>
+        <index alias="guest_phone" name="guest_phone" primary="false" unique="false" type="BTREE">
+            <column key="guest_phone" length="" collation="A" null="false"/>
+        </index>
+        <index alias="legacy_lead_id" name="legacy_lead_id" primary="false" unique="true" type="BTREE">
+            <column key="legacy_lead_id" length="" collation="A" null="true"/>
+        </index>
+        <aggregate alias="House" class="Booking\Model\House" local="house_id" foreign="id" cardinality="one" owner="foreign"/>
+        <aggregate alias="Addon" class="Booking\Model\Addon" local="addon_id" foreign="id" cardinality="one" owner="foreign"/>
+    </object>
+
+    <!-- Занятые ночи подтверждённых броней дома: первичный ключ не даст занять ночь дважды (ст. 5.1) -->
+    <object class="Night" table="booking_nights" extends="xPDO\Om\xPDOObject">
+        <field key="house_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" index="pk"/>
+        <field key="night" dbtype="date" phptype="string" null="false" index="pk"/>
+        <field key="booking_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false"/>
+
+        <index alias="PRIMARY" name="PRIMARY" primary="true" unique="true" type="BTREE">
+            <column key="house_id" length="" collation="A" null="false"/>
+            <column key="night" length="" collation="A" null="false"/>
+        </index>
+        <index alias="booking_id" name="booking_id" primary="false" unique="false" type="BTREE">
+            <column key="booking_id" length="" collation="A" null="false"/>
+        </index>
+    </object>
+
+    <object class="BlockedSlot" table="booking_blocked_slots" extends="xPDO\Om\xPDOSimpleObject">
+        <field key="house_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false"/>
+        <field key="addon_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true"/>
+        <field key="date_from" dbtype="date" phptype="string" null="false"/>
+        <field key="date_to" dbtype="date" phptype="string" null="false"/>
+        <field key="time_from" dbtype="time" phptype="string" null="true"/>
+        <field key="time_to" dbtype="time" phptype="string" null="true"/>
+        <field key="reason" dbtype="varchar" precision="255" phptype="string" null="false" default=""/>
+        <field key="created_by" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
+        <field key="created_at" dbtype="datetime" phptype="datetime" null="true"/>
+
+        <index alias="house_from" name="house_from" primary="false" unique="false" type="BTREE">
+            <column key="house_id" length="" collation="A" null="false"/>
+            <column key="date_from" length="" collation="A" null="false"/>
+        </index>
+    </object>
+
+    <object class="AdminToken" table="booking_admin_tokens" extends="xPDO\Om\xPDOSimpleObject">
+        <field key="user_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="label" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
+        <field key="token_hash" dbtype="char" precision="64" phptype="string" null="false" default=""/>
+        <field key="created_at" dbtype="datetime" phptype="datetime" null="true"/>
+        <field key="last_used_at" dbtype="datetime" phptype="datetime" null="true"/>
+        <field key="revoked_at" dbtype="datetime" phptype="datetime" null="true"/>
+
+        <index alias="token_hash" name="token_hash" primary="false" unique="true" type="BTREE">
+            <column key="token_hash" length="" collation="A" null="false"/>
+        </index>
+    </object>
+
+    <object class="LogEntry" table="booking_log" extends="xPDO\Om\xPDOSimpleObject">
+        <field key="created_at" dbtype="datetime" phptype="datetime" null="true"/>
+        <field key="entity" dbtype="varchar" precision="20" phptype="string" null="false" default=""/>
+        <field key="entity_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="action" dbtype="varchar" precision="40" phptype="string" null="false" default=""/>
+        <field key="old_value" dbtype="text" phptype="json" null="true"/>
+        <field key="new_value" dbtype="text" phptype="json" null="true"/>
+        <field key="actor" dbtype="varchar" precision="100" phptype="string" null="false" default=""/>
+        <field key="interface" dbtype="enum" precision="'cmp','api','pwa','max','site','cli'" phptype="string" null="false" default="cli"/>
+
+        <index alias="entity" name="entity" primary="false" unique="false" type="BTREE">
+            <column key="entity" length="" collation="A" null="false"/>
+            <column key="entity_id" length="" collation="A" null="false"/>
+        </index>
+    </object>
+</model>

@@ -1,0 +1,14 @@
+{
+    "name": "efremov/booking",
+    "description": "Бронирование домов и бань для MODX 3 (Доходные дома Ефремовых)",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Booking\\": "src/"
+        }
+    }
+}
