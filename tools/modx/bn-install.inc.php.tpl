@@ -409,6 +409,17 @@ try {
             if (!saved($o, "поле {$t['name']}")) continue;
             say($isNew ? 'new' : 'skip', ($isNew ? 'создано' : 'обновлено') . " поле (TV) «{$t['caption']}» {$t['name']} → " . implode(', ', $t['templates']));
             if ($dry) continue;
+            // поля «картинка» и «файл» — с источником файлов по умолчанию (как при сохранении в админке);
+            // без него MODX при выводе поля пишет в журнал предупреждение «Undefined array key class_key»
+            if (in_array($t['type'], ['image', 'file'], true)) {
+                $srcId = (int)$modx->getOption('default_media_source', null, 1) ?: 1;
+                $el = ['source' => $srcId, 'object_class' => modTemplateVar::class, 'object' => $o->get('id'), 'context_key' => 'web'];
+                if (!$modx->getObject(\MODX\Revolution\Sources\modMediaSourceElement::class, ['object_class' => modTemplateVar::class, 'object' => $o->get('id'), 'context_key' => 'web'])) {
+                    $se = $modx->newObject(\MODX\Revolution\Sources\modMediaSourceElement::class);
+                    $se->fromArray($el, '', true, true);
+                    saved($se, "источник файлов поля {$t['name']}");
+                }
+            }
             foreach ($t['templates'] as $tn) {
                 if (empty($tplIds[$tn])) { say('error', "поле {$t['name']}: шаблон $tn не создан — не привязано"); continue; }
                 $link = ['tmplvarid' => $o->get('id'), 'templateid' => $tplIds[$tn]];
