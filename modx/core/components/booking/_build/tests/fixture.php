@@ -33,10 +33,26 @@ switch ($cmd) {
         $out($b->runAction('booking_issue_token', ['op' => 'issue', 'label' => $argv[2] ?? 'ТЕСТ e2e']));
         break;
     case 'addon':
+        // «addon <дом> <цена>» — включить баню для теста (уборка 30 мин, как ждут проверки), прежние настройки — в кэш;
+        // «addon <дом> off» — вернуть настройки, какие были до теста (а не выключать: стенд мог быть настроен владельцем)
         $b->setActor(['role' => 'admin', 'name' => 'тест', 'user_id' => 1, 'interface' => 'cli']);
-        $off = ($argv[3] ?? 'off') === 'off';
-        $out($b->runAction('booking_manage_addon', ['op' => 'save', 'house' => $argv[2], 'bookable_separately' => $off ? 0 : 1,
-            'price_per_hour' => $off ? '' : (int)$argv[3], 'min_hours' => 2, 'buffer_minutes' => 30]));
+        $key = 'booking_e2e_addon_' . preg_replace('~\W~', '', $argv[2]);
+        if (($argv[3] ?? 'off') === 'off') {
+            $was = $modx->cacheManager->get($key);
+            // нечего возвращать (тест не включал баню) — ничего не меняем
+            $out($was ? $b->runAction('booking_manage_addon', $was) : ['status' => 200, 'message' => 'нечего возвращать', 'data' => []]);
+            $modx->cacheManager->delete($key);
+            break;
+        }
+        foreach (json_decode(json_encode($b->runAction('booking_manage_house', ['op' => 'list'])['data']), true)['items'] as $h) {
+            if ($h['code'] === $argv[2] && !$modx->cacheManager->get($key)) {
+                $was = ['op' => 'save', 'house' => $h['code'], 'bookable_separately' => $h['addon_bookable_separately'] ? 1 : 0,
+                    'price_per_hour' => $h['addon']['price_per_hour'] ?? '', 'min_hours' => $h['addon']['min_hours'] ?? 2, 'buffer_minutes' => $h['addon']['buffer_minutes'] ?? 60];
+                $modx->cacheManager->set($key, $was, 86400);
+            }
+        }
+        $out($b->runAction('booking_manage_addon', ['op' => 'save', 'house' => $argv[2], 'bookable_separately' => 1,
+            'price_per_hour' => (int)$argv[3], 'min_hours' => 2, 'buffer_minutes' => 30]));
         break;
     case 'cleanup':
         $ids = [];

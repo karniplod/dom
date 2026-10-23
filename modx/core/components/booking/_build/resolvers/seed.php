@@ -44,7 +44,7 @@ foreach ($houses as $h) {
         $r->save();
     }
     $a = $modx->newObject('Booking\\Model\\Addon');
-    $a->fromArray(['house_id' => $house->get('id'), 'name' => 'Баня', 'price_per_hour' => null, 'min_hours' => 2, 'buffer_minutes' => 30, 'active' => 1]);
+    $a->fromArray(['house_id' => $house->get('id'), 'name' => 'Баня', 'price_per_hour' => null, 'min_hours' => 2, 'buffer_minutes' => 60, 'active' => 1]);
     $a->save();
 }
 $modx->log(\xPDO\xPDO::LOG_LEVEL_INFO, 'booking: стартовые Дома и цены записаны');

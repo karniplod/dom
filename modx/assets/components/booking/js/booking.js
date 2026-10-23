@@ -795,7 +795,7 @@
           + '<label class="bk-check bk-full"><input type="checkbox" name="bookable_separately"' + (h.addon_bookable_separately ? ' checked' : '') + '> баню можно бронировать отдельно (по часам)</label>'
           + '<label class="bk-field"><span>Цена бани за час, ₽</span><input name="price_per_hour" type="number" min="1" value="' + (a.price_per_hour || '') + '"></label>'
           + '<label class="bk-field"><span>Минимум часов</span><input name="min_hours" type="number" min="1" max="24" value="' + (a.min_hours || 2) + '"></label>'
-          + '<label class="bk-field"><span>Перерыв между сеансами, мин</span><input name="buffer_minutes" type="number" min="0" max="240" value="' + (a.buffer_minutes != null ? a.buffer_minutes : 30) + '"></label>'
+          + '<label class="bk-field"><span>Перерыв между сеансами, мин</span><input name="buffer_minutes" type="number" min="0" max="240" value="' + (a.buffer_minutes != null ? a.buffer_minutes : 60) + '"></label>'
           + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Сохранить баню</button></div></form></section>';
       }).join('');
       qsa(self.pane, 'form[data-house]').forEach(function (f) {
