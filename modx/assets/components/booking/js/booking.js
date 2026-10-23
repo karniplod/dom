@@ -19,6 +19,7 @@
   }
   function money(n) { return String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₽'; }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function toMin(t) { return +String(t).slice(0, 2) * 60 + +String(t).slice(3, 5); }
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function parse(s) { var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
   function addDays(s, n) { var d = parse(s); d.setDate(d.getDate() + n); return iso(d); }
@@ -209,6 +210,7 @@
     this.el.house.addEventListener('change', function () { self.onHouse(); });
     [this.el.guests, this.el.pets, this.el.tf, this.el.tt].forEach(function (i) { if (i) i.addEventListener('change', function () { self.quote(); }); });
     this.el.addon.forEach(function (r) { r.addEventListener('change', function () { self.onKind(); }); });
+    if (this.el.tf) this.el.tf.addEventListener('change', function () { self.fitTimes(); self.quote(); });   // «До» — по новому «С»
     if (this.el.phone) this.el.phone.addEventListener('input', function () { maskPhone(self.el.phone); });
     // перед отправкой SendIt: даты выбраны?
     document.addEventListener('si:send:before', function (e) {
@@ -273,6 +275,38 @@
     this.el.tt.innerHTML = opts2;
     this.el.tf.value = '15:00';
     this.el.tt.value = pad(15 + h.addon.min_hours) + ':00';
+    this.busySlots = []; this.buf = 0;
+  };
+  /* сеанс [a, b) в минутах задевает занятый интервал с перерывом на уборку? (сервер проверяет так же) */
+  GuestForm.prototype.clash = function (a, b) {
+    var buf = this.buf || 0;
+    return (this.busySlots || []).some(function (s) { return a < toMin(s.to) + buf && b > toMin(s.from) - buf; });
+  };
+  /* занятые часы недоступны в «С» и «До»; выбранное время, если оно занято, — на первое свободное */
+  GuestForm.prototype.fitTimes = function () {
+    var self = this, h = this.house(), tf = this.el.tf, tt = this.el.tt;
+    if (!h || !h.addon || !tf || !tt) return;
+    var min = h.addon.min_hours * 60, last = 23 * 60;
+    [].forEach.call(tf.options, function (o) { var m = toMin(o.value); o.disabled = m + min > last || self.clash(m, m + min); });
+    var cur = tf.options[tf.selectedIndex];
+    if (!cur || cur.disabled) {   // ближайшее свободное к выбранному (при равенстве — позже)
+      var want = cur ? toMin(cur.value) : 15 * 60, best = null;
+      [].forEach.call(tf.options, function (o) {
+        if (o.disabled) return;
+        var d = toMin(o.value) - want, k = Math.abs(d) - (d > 0 ? 0.5 : 0);
+        if (!best || k < best.k) best = { v: o.value, k: k };
+      });
+      if (best) tf.value = best.v;
+    }
+    var from = toMin(tf.value), anyFree = [].some.call(tf.options, function (o) { return !o.disabled; });
+    [].forEach.call(tt.options, function (o) { var m = toMin(o.value); o.disabled = !anyFree || m < from + min || self.clash(from, m); });
+    var end = tt.options[tt.selectedIndex];
+    if (!end || end.disabled) {
+      var ok = [].filter.call(tt.options, function (o) { return !o.disabled; })[0];
+      if (ok) tt.value = ok.value;
+    }
+    var err = qs(this.form, '[data-si-error="time"]');
+    if (err) err.textContent = anyFree ? '' : 'На этот день свободного времени нет — выберите другой день';
   };
   GuestForm.prototype.loadBusy = function () {
     var self = this, h = this.house();
@@ -315,6 +349,8 @@
     this.api.call('booking_get_availability', { house: h.code, addon: 1, date: date }, 'GET').then(function (res) {
       if (!res.success) { self.el.slots.textContent = res.message; return; }
       var d = res.data;
+      self.busySlots = d.day_busy ? [{ from: '00:00', to: '24:00' }] : d.slots_busy; self.buf = d.buffer_minutes || 0;
+      self.fitTimes(); self.quote();
       if (d.day_busy) { self.el.slots.innerHTML = '<span class="bk-warn">В этот день Дом забронирован — баня занята</span>'; return; }
       self.el.slots.innerHTML = (d.slots_busy.length
         ? 'Занято: ' + d.slots_busy.map(function (s) { return esc(s.from + '–' + s.to); }).join(', ') + '. Между сеансами ' + d.buffer_minutes + ' мин на уборку.'
