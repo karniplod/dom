@@ -17,6 +17,6 @@ switch ($part) {
     case 'faq': return Bania::faqHtml($h['faq']);
     case 'reviews': return Bania::reviews($h['id']);
     case 'others': return Bania::listHouses('bn.tpl.houseCard', (string)$h['id']);
-    case 'hero_img': return Bania::img($h['hero'], $h['name'] . ', ' . ($h['hero_alt'] ?? 'фото'), 'dhero__img', false);
+    case 'hero_img': return Bania::img($h['hero'], $h['name'] . ', ' . ($h['hero_alt'] ?? 'фото'), 'dhero__img', false, '100vw');
 }
 return isset($h[$part]) && !is_array($h[$part]) ? (string)$h[$part] : '';

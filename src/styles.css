@@ -5,6 +5,8 @@
    русский — тёмное дерево + мёд, Свиязева — бревно + вода бассейна. */
 /* Запасные шрифты на время загрузки: Arial и Georgia подогнаны под Golos Text и Prata по ширине и высоте строки,
    чтобы при подмене шрифта текст не переносился иначе и страница не прыгала. Цифры сняты в Chrome по русскому тексту. */
+/* <picture> вокруг фото не участвует в вёрстке: фото ведёт себя как прямой потомок ссылки или блока */
+picture { display: contents; }
 @font-face { font-family: "Golos Fallback"; src: local("Arial"), local("ArialMT"); size-adjust: 105.76%; ascent-override: 92.66%; descent-override: 20.8%; line-gap-override: 0%; }
 @font-face { font-family: "Prata Fallback"; src: local("Georgia"); size-adjust: 106.95%; ascent-override: 92.56%; descent-override: 33.66%; line-gap-override: 0%; }
 :root {
@@ -319,7 +321,8 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 .ck__l { min-height: 44px; padding: 0 6px; border: 0; background: none; cursor: pointer; font: 500 14.5px/1.2 var(--text); color: var(--fox-hi); text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 760px) {
   .ck { left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: auto; }
-  .ck-on .mbar { bottom: calc(var(--ck-h, 0px) + 10px); }
+  /* над баннером cookie — через transform: смена bottom засчитывается как сдвиг страницы (CLS) */
+  .ck-on .mbar { transform: translateY(calc(-1 * var(--ck-h, 0px) - 10px)); }
 }
 .hrevs { display: grid; gap: 18px; margin-top: 8px; }
 .hrev { border: 1px solid var(--line-dark); border-radius: 8px; padding: 20px; display: grid; gap: 16px; background: var(--bark-2); }
@@ -426,7 +429,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; }
 .totop:hover { background: var(--fox-btn-hi); transform: translateY(-2px); }
 .totop svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 640px) { .totop { right: 14px; bottom: calc(82px + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px; } }
-@media (max-width: 760px) { .ck-on .totop { bottom: calc(var(--ck-h, 0px) + 92px); } }
+@media (max-width: 760px) { .ck-on .totop { transform: translateY(calc(-1 * var(--ck-h, 0px) - 10px)); } }
 .mbar { display: none; }
 @media (max-width: 640px) {
   .mbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;

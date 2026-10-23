@@ -4,7 +4,7 @@ src/   — исходники: данные домов (houses.py), статьи
 site/  — готовые страницы, robots.txt, sitemap.xml, rss.xml, llms.txt (не править руками)
 build/ — служебная сборка для превью в Claude (в git не попадает)
 """
-import os, sys, json, re, html, math
+import os, sys, json, re, html, math, glob
 from urllib.parse import quote
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "src"))
@@ -72,8 +72,19 @@ def max_link(html):
 def icon(n): return f'<svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[n]}</svg>'
 CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'
 XICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>'
-def img(path, alt, cls="", lazy=True):
-    return f'<img src="img/{path}.jpg" alt="{esc(alt)}"{f" class={chr(34)}{cls}{chr(34)}" if cls else ""}{" loading=" + chr(34) + "lazy" + chr(34) if lazy else ""} decoding="async">'
+WEBP_W = (480, 800, 1200, 1600)   # ширины копий — как в tools/make_webp.py
+
+def img(path, alt, cls="", lazy=True, sizes="(max-width: 760px) 100vw, 50vw"):
+    """Фото: <picture> с WebP нужной ширины (копии — tools/make_webp.py), JPEG — запасной. Не lazy — первый экран: грузится первым"""
+    tag = (f'<img src="img/{path}.jpg" alt="{esc(alt)}"{f" class={chr(34)}{cls}{chr(34)}" if cls else ""}'
+           f'{" loading=" + chr(34) + "lazy" + chr(34) if lazy else " fetchpriority=" + chr(34) + "high" + chr(34)} decoding="async">')
+    name = os.path.basename(path)   # только «имя-ширина.webp»: шаблон «имя-*» цепляет и копии «имя-2-…»
+    ws = sorted(int(m.group(1)) for f in glob.glob(os.path.join(SITE_DIR, "img", glob.escape(path) + "-*.webp"))
+                if (m := re.fullmatch(re.escape(name) + r"-(\d+)\.webp", os.path.basename(f))))
+    if not ws:
+        return tag
+    srcset = ", ".join(f"img/{path}-{w}.webp {w}w" for w in ws)
+    return f'<picture><source type="image/webp" srcset="{srcset}" sizes="{sizes}">{tag}</picture>'
 
 DAYS = ["Понедельник – четверг", "Пятница", "Суббота", "Воскресенье"]
 MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
@@ -87,7 +98,7 @@ def header(active=None):
     cur = lambda key: ' aria-current="page"' if key == active else ""
     in_houses = ' class="nav__btn is-current"' if active in H else ' class="nav__btn"'
     return f'''<header class="top"><div class="wrap top__in">
-  <a class="brand" href="index.html" aria-label="{BRAND}, на главную">{FOX}<span><b>{BRAND}</b><small>Дома с баней и бассейном в Перми</small></span></a>
+  <a class="brand" href="index.html">{FOX}<span><b>{BRAND}</b><small>Дома с баней и бассейном в Перми</small></span></a>
   <nav class="nav" aria-label="Основное меню">{mark("menu:nav", f"""
     <a href="index.html"{cur("home")}>Главная</a>
     <div class="nav__drop"><button{in_houses} type="button" aria-expanded="false" aria-controls="nav-houses">Дома{CHEV}</button>
@@ -297,7 +308,7 @@ def house_card(k):
     caps = dict(h["gallery"])
     total = len(set(ph) | set(caps))
     hint = f'<span class="hcard__zoom"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5M11 8.5v5M8.5 11h5"/></svg>Смотреть все {total} фото</span>'
-    media = "".join(f'<a href="img/{k}/{p}.jpg" data-lb="card-{k}" data-cap="{esc(h["name"] + ": " + caps.get(p, ""))}" aria-label="{esc(h["name"])}: открыть фото">{img(k + "/" + p, h["name"] + ": " + caps.get(p, "фото"))}{hint if i == 0 else ""}</a>' for i, p in enumerate(ph))
+    media = "".join(f'<a href="img/{k}/{p}.jpg" data-lb="card-{k}" data-cap="{esc(h["name"] + ": " + caps.get(p, ""))}">{img(k + "/" + p, h["name"] + ": " + caps.get(p, "фото"))}{hint if i == 0 else ""}</a>' for i, p in enumerate(ph))
     # остальные фото Дома — в той же группе, чтобы из карточки листалась вся галерея Дома
     media += "".join(f'<a href="img/{k}/{p}.jpg" data-lb="card-{k}" data-cap="{esc(h["name"] + ": " + c)}" hidden></a>' for p, c in h["gallery"] if p not in ph)
     feats = h["features"]
@@ -340,7 +351,7 @@ def review_card_(r):
 </article>'''
 
 # Плашки площадок отзывов: простой знак и название (без фирменных картинок)
-PLATFORM_BADGE = {"2ГИС": ("#19AA1E", "2Г"), "Яндекс Карты": ("#FC3F1D", "Я"), "Авито": ("#00AAFF", "A")}
+PLATFORM_BADGE = {"2ГИС": ("#137A18", "2Г"), "Яндекс Карты": ("#C8290B", "Я"), "Авито": ("#006FB3", "A")}   # темнее фирменных: белые буквы читаются (контраст ≥ 4,5:1)
 
 def review_qr(k, name, url):
     """Колонка площадки: значок с названием, под ним QR. Вся колонка — ссылка (на телефоне код не сканируют, а нажимают)"""
@@ -396,7 +407,7 @@ def home():
     strip = [("ru/hero", "Русский Дом вечером"), ("en/pool", "Бассейн, Английский Дом"), ("sv/pool", "Всесезонный бассейн, Свиязева"), ("ru/sauna", "Баня, Русский Дом"),
              ("en/billiard-2", "Бильярд, Английский Дом"), ("ru/kitchen", "Кухня-гостиная, Русский Дом"), ("sv/billiard", "Бильярд, Свиязева"), ("en/fireplace", "Камин, Английский Дом"),
              ("ru/pool", "Бассейн, Русский Дом"), ("sv/gazebo", "Беседка с мангалом, Свиязева"), ("en/dining", "Стол, Английский Дом"), ("ru/bedroom", "Спальня, Русский Дом")]
-    strip_html = "".join(f'<a href="img/{p}.jpg" data-lb="strip" data-cap="{esc(c)}">{img(p, c)}<span>{c}</span></a>' for p, c in strip)
+    strip_html = "".join(f'<a href="img/{p}.jpg" data-lb="strip" data-cap="{esc(c)}">{img(p, "")}<span>{c}</span></a>' for p, c in strip)
     table_rows = [("Дом и участок", lambda h: f'{h["area"]} м², {h["rooms"]} комнат{"ы" if h["rooms"] < 5 else ""}, {h["plot"]}'),
                   ("Ночуют / отдыхают", lambda h: f'{h["sleep"]} / до {h["max"]} гостей'),
                   ("Заезд / выезд", lambda h: f'с {h["checkin"]} / до {h["checkout"]}')]
@@ -412,7 +423,7 @@ def home():
     body = f'''{header("home")}
 <main>
 <section class="hero" aria-labelledby="hero-title">
-  {mark("heroImg", img("ru/hero-2", "Русский Дом: фасад и беседка во дворе", "hero__img", lazy=False))}
+  {mark("heroImg", img("ru/hero-2", "Русский Дом: фасад и беседка во дворе", "hero__img", lazy=False, sizes="100vw"))}
   <div class="wrap"><div class="hero__in">
     <p class="hero__kicker">{BRAND}</p>
     <h1 id="hero-title">Снять Дом с баней и бассейном в Перми</h1>
@@ -535,7 +546,7 @@ def house_page(k):
     body = f'''{header(k)}
 <main class="h-{k}">
 <section class="dhero" aria-labelledby="d-title">
-  {mark("houseHero", img(k + "/hero", h["name"] + ", " + dict(h["gallery"]).get("hero", "фото"), "dhero__img", lazy=False))}
+  {mark("houseHero", img(k + "/hero", h["name"] + ", " + dict(h["gallery"]).get("hero", "фото"), "dhero__img", lazy=False, sizes="100vw"))}
   <div class="wrap"><div class="dhero__in">
     {cr}
     <p class="dhero__kicker">{h["kicker"]}</p>
@@ -772,6 +783,7 @@ def prepay_page(k):
 def relink(doc, up):
     """Страница во вложенной папке: относительные ссылки на файлы сайта получают префикс ../"""
     doc = re.sub(r'(\b(?:href|src)=")(?!https?:|#|tel:|mailto:|viber:|data:|/|\.\./)([^"]+")', lambda m: m.group(1) + up + m.group(2), doc)
+    doc = re.sub(r'(\bsrcset=")([^"]+)"', lambda m: m.group(1) + re.sub(r'(^|,\s*)(?!https?:|/|\.\./)', lambda n: n.group(1) + up, m.group(2)) + '"', doc)
     return doc.replace('"prepay": "', '"prepay": "' + up)
 
 # ---------- сборка ----------
@@ -787,6 +799,7 @@ RSS_LINK = f'<link rel="alternate" type="application/rss+xml" title="Блог �
 def main():
     global css, js, data_js
     css, js = rd("styles.css"), rd("app.js")
+    sys.path.insert(0, os.path.join(ROOT, "tools")); import make_webp; make_webp.run(quiet=True)   # WebP-копии новых фото — до разметки: img() смотрит, какие копии есть
     data_js = "window.HOUSES = " + json.dumps(HJS, ensure_ascii=False) + ";"
     for d in (SITE_DIR + "/css", SITE_DIR + "/js", ART):
         os.makedirs(d, exist_ok=True)

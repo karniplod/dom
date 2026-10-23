@@ -102,7 +102,8 @@ BRAND = B.BRAND
 
 def assets(s):
     """Файлы сайта в MODX лежат в assets/: img/… → /assets/img/…"""
-    return re.sub(r'((?:src|href)=")(?:\.\./)?img/', r"\1[[++base_url]]assets/img/", s)
+    s = re.sub(r'((?:src|href)=")(?:\.\./)?img/', r"\1[[++base_url]]assets/img/", s)
+    return re.sub(r'(srcset=")([^"]+)"', lambda m: m.group(1) + re.sub(r'(^|,\s*)(?:\.\./)?img/', r"\1[[++base_url]]assets/img/", m.group(2)) + '"', s)
 
 
 def links(s):
@@ -162,6 +163,8 @@ def house_values(k):
 def templatize(s, k, P):
     """Значения дома k → P(ключ): плейсхолдер [[+ключ]] в чанке или вызов сниппета на странице"""
     h, vals, ctx = house_values(k)
+    # фото образца-дома в <picture>: WebP-копии — файлы этого дома, в общий шаблон не годятся; остаётся <img> (его src — из поля дома)
+    s = re.sub(r'<picture><source[^>]*img/%s/[^>]*>(<img[^>]*>)</picture>' % re.escape(k), r"\1", s)
     for a, key in vals:
         s = s.replace(a, P(key))
     for a, b in ctx:
@@ -288,7 +291,7 @@ CHUNKS["bn.tpl.postCard"] = ("Шаблоны списков", strip_marks(pc))
 
 # ---------------------------------------------------------------- главная
 _, mattrs, main, _ = page_parts(home)
-main = unmark(main, "heroImg", '<img src="[[++base_url]][[*bn_hero]]" alt="[[*bn_hero_alt]]" class="hero__img" decoding="async">')
+main = unmark(main, "heroImg", '[[bnImg? &src=`[[*bn_hero]]` &alt=`[[*bn_hero_alt]]` &cls=`hero__img` &lazy=`0` &sizes=`100vw`]]')   # WebP и высокий приоритет, как на статичном
 main = unmark(main, "houseCards", "[[bnHouses? &tpl=`bn.tpl.houseCard`]]")
 main = unmark(main, "tourTiles", "[[bnHouses? &tpl=`bn.tpl.tourTile`]]")
 main = unmark(main, "priceTable", "[[bnPriceTable]]")
@@ -498,7 +501,7 @@ RES = [{
     "alias": "index", "parent": "", "home": True, "template": "bn-home", "richtext": 1,
     "fields": {"pagetitle": "Главная", "longtitle": B.home()["title"], "description": B.home()["desc"], "menutitle": "Главная",
                "content": settings(strip_marks(seo_html)).strip()},
-    "tvs": {"bn_hero": "assets/img/ru/hero-2.jpg", "bn_hero_alt": "Русский дом: фасад и беседка во дворе",
+    "tvs": {"bn_hero": "assets/img/ru/hero-2.jpg", "bn_hero_alt": "Русский Дом: фасад и беседка во дворе",
             "bn_faq": settings(lines(B.HOME_FAQ)), "bn_rules": lines([B.GUESTS_RULE] + B.RULES),
             "bn_strip": lines([("assets/img/%s.jpg" % p, c) for p, c in re.findall(r'<a href="img/([\w/-]+)\.jpg" data-lb="strip" data-cap="([^"]*)"', B.home()["body"])])},
 }]
@@ -569,12 +572,24 @@ for name in OWN:
         shutil.rmtree(p)
     elif os.path.exists(p):
         os.remove(p)
+PIC = re.compile(r'<picture><source[^>]*>(<img[^>]*\bsrc="([^"]*)"[^>]*>)</picture>')
+
+
+def unpicture(text):
+    """Фото, путь к которому подставляет MODX (поле, плейсхолдер), — без <picture>: WebP-копии в образце — файлы образца
+    (обложка первой статьи, фото образца-дома), для других страниц они чужие. WebP таким фото даёт Bania::img / bnImg"""
+    # «[[++base_url]]» в начале пути — просто адрес сайта; поле или плейсхолдер — тег MODX дальше в пути
+    return PIC.sub(lambda m: m.group(1) if "[[" in m.group(2).replace("[[++base_url]]", "", 1) else m.group(0), text)
+
+
 chunk_list = []
 for n, (cat, text) in CHUNKS.items():
+    text = unpicture(text)
     write("chunks/%s.html" % n, text)
     chunk_list.append({"name": n, "category": cat, "file": "chunks/%s.html" % n})
 templates = []
 for n, (desc, text) in TEMPLATES.items():
+    text = unpicture(text)
     write("templates/%s.html" % n, text)
     templates.append({"name": n, "file": "templates/%s.html" % n, "description": desc})
 

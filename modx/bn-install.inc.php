@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-23 14:13",
+ "version": "2026-10-23 14:26",
  "chunks": [
   {
    "name": "bn.fox",
@@ -413,6 +413,11 @@ $manifest = <<<'JSON'
    "name": "bnHousesJs",
    "file": "snippets/bnHousesJs.php",
    "description": "данные домов для расчёта стоимости в форме (window.HOUSES)"
+  },
+  {
+   "name": "bnImg",
+   "file": "snippets/bnImg.php",
+   "description": "фото с WebP-копиями (<picture>), как на статичном сайте: &src (путь из поля, например assets/img/ru/hero-2.jpg), &alt, &cls, &lazy=`0` для первого экрана, &sizes"
   },
   {
    "name": "bnLd",

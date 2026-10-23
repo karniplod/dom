@@ -84,8 +84,21 @@ class Bania
         if (strpos($v, '/') === false && $code !== '') return self::opt('base_url', '/') . 'assets/img/' . $code . '/' . $v;
         return self::opt('base_url', '/') . ltrim($v, '/');
     }
-    public static function img($src, $alt, $cls = '', $lazy = true) {
-        return '<img src="' . self::e($src) . '" alt="' . self::e($alt) . '"' . ($cls ? ' class="' . $cls . '"' : '') . ($lazy ? ' loading="lazy"' : '') . ' decoding="async">';
+    /** Фото: <picture> с WebP-копиями (<имя>-<ширина>.webp рядом с JPEG, их готовит tools/make_webp.py); копий нет — просто <img> */
+    public static function img($src, $alt, $cls = '', $lazy = true, $sizes = '(max-width: 760px) 100vw, 50vw') {
+        $tag = '<img src="' . self::e($src) . '" alt="' . self::e($alt) . '"' . ($cls ? ' class="' . $cls . '"' : '') . ($lazy ? ' loading="lazy"' : ' fetchpriority="high"') . ' decoding="async">';
+        $base = (string)self::opt('base_url', '/');
+        if (!preg_match('~\.jpe?g$~i', $src) || strpos($src, $base) !== 0) return $tag;
+        $stem = preg_replace('~\.jpe?g$~i', '', $src);
+        $file = MODX_BASE_PATH . substr($stem, strlen($base));
+        $ws = [];
+        $name = preg_quote(basename($file), '~');
+        foreach (glob($file . '-*.webp') ?: [] as $f) {   // только «имя-ширина.webp»: шаблон «имя-*» цепляет и копии «имя-2-…»
+            if (preg_match('~^' . $name . '-(\d+)\.webp$~', basename($f), $m)) $ws[] = (int)$m[1];
+        }
+        sort($ws);
+        $set = array_map(function ($w) use ($stem) { return $stem . '-' . $w . '.webp ' . $w . 'w'; }, $ws);
+        return $set ? '<picture><source type="image/webp" srcset="' . self::e(implode(', ', $set)) . '" sizes="' . $sizes . '">' . $tag . '</picture>' : $tag;
     }
     public static function chunk($name, array $ph) { return self::$modx->getChunk($name, $ph); }
     public static function url($id, $scheme = '') { return $id ? self::$modx->makeUrl((int)$id, '', '', $scheme ?: 'abs') : ''; }
@@ -198,7 +211,7 @@ class Bania
         $out = '';
         foreach ($g as $i => $p) {
             $cap = self::e($h['name'] . ': ' . $p['cap']);
-            if ($i < 3) $out .= '<a href="' . self::e($p['src']) . '" data-lb="card-' . $h['code'] . '" data-cap="' . $cap . '" aria-label="' . self::e($h['name']) . ': открыть фото">'
+            if ($i < 3) $out .= '<a href="' . self::e($p['src']) . '" data-lb="card-' . $h['code'] . '" data-cap="' . $cap . '">'
                 . self::img($p['src'], $h['name'] . ': ' . ($p['cap'] !== '' ? $p['cap'] : 'фото')) . ($i === 0 ? $hint : '') . '</a>';
             else $out .= '<a href="' . self::e($p['src']) . '" data-lb="card-' . $h['code'] . '" data-cap="' . $cap . '" hidden></a>';
         }
@@ -320,13 +333,13 @@ class Bania
         $items = '';
         foreach (self::lines(self::homeTv('bn_strip')) as [$f, $c]) {
             $s = self::src($f);
-            $items .= '<a href="' . self::e($s) . '" data-lb="strip" data-cap="' . self::e($c) . '">' . self::img($s, $c) . '<span>' . self::e($c) . '</span></a>';
+            $items .= '<a href="' . self::e($s) . '" data-lb="strip" data-cap="' . self::e($c) . '">' . self::img($s, '') . '<span>' . self::e($c) . '</span></a>';   // подпись рядом — alt пустой
         }
         return self::rail($items, 'Фото домов');
     }
 
     // ------------------------------------------------------------------ отзывы
-    const REVIEW_PLATFORMS = ['2ГИС' => ['#19AA1E', '2Г', '2gis'], 'Яндекс Карты' => ['#FC3F1D', 'Я', 'yandex'], 'Авито' => ['#00AAFF', 'A', 'avito']];
+    const REVIEW_PLATFORMS = ['2ГИС' => ['#137A18', '2Г', '2gis'], 'Яндекс Карты' => ['#C8290B', 'Я', 'yandex'], 'Авито' => ['#006FB3', 'A', 'avito']];   // как PLATFORM_BADGE в build.py
 
     /** По Дому: площадки (ссылки — настройки bn_rev_<код>_2gis|yandex|avito), QR «оставить отзыв», заглушки скриншотов */
     public static function reviewPanels($house = 0) {
