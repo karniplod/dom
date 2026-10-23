@@ -5,4 +5,4 @@ Bania::init($modx);
 $src = Bania::src($modx->getOption('src', $scriptProperties, ''));
 if ($src === '') return '';
 return Bania::img($src, (string)$modx->getOption('alt', $scriptProperties, ''), (string)$modx->getOption('cls', $scriptProperties, ''),
-    (bool)$modx->getOption('lazy', $scriptProperties, 1), (string)$modx->getOption('sizes', $scriptProperties, '(max-width: 760px) 100vw, 50vw'));
+    (bool)$modx->getOption('lazy', $scriptProperties, 1), (string)$modx->getOption('sizes', $scriptProperties, '(max-width: 760px) 100vw, 420px'));

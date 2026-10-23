@@ -85,7 +85,7 @@ class Bania
         return self::opt('base_url', '/') . ltrim($v, '/');
     }
     /** Фото: <picture> с WebP-копиями (<имя>-<ширина>.webp рядом с JPEG, их готовит tools/make_webp.py); копий нет — просто <img> */
-    public static function img($src, $alt, $cls = '', $lazy = true, $sizes = '(max-width: 760px) 100vw, 50vw') {
+    public static function img($src, $alt, $cls = '', $lazy = true, $sizes = '(max-width: 760px) 100vw, 420px') {   // 420px — как img() в build.py
         $tag = '<img src="' . self::e($src) . '" alt="' . self::e($alt) . '"' . ($cls ? ' class="' . $cls . '"' : '') . ($lazy ? ' loading="lazy"' : ' fetchpriority="high"') . ' decoding="async">';
         $base = (string)self::opt('base_url', '/');
         if (!preg_match('~\.jpe?g$~i', $src) || strpos($src, $base) !== 0) return $tag;
@@ -352,7 +352,7 @@ class Bania
                 // QR площадки — когда есть ссылка и готов файл кода (tools/make_qr.py); на телефоне код — просто ссылка
                 $qrFile = 'assets/img/qr/rev-' . $h['code'] . '-' . $key . '.svg';
                 if ($u !== '' && is_file(MODX_BASE_PATH . $qrFile)) {
-                    $qrs .= '<a class="hrev__qr" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow" aria-label="Оставить отзыв о Доме «' . self::e($h['name']) . '» в ' . $name . '">'
+                    $qrs .= '<a class="hrev__qr" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow" aria-label="' . $name . ': оставить отзыв о Доме «' . self::e($h['name']) . '»">'
                         . '<span class="plat"><span class="plat__mark" style="background:' . $color . '">' . $sign . '</span><span class="plat__name">' . $name . '</span></span>'
                         . '<span class="hrev__qrimg"><img src="' . self::$modx->getOption('base_url') . $qrFile . '" alt="" width="140" height="140" loading="lazy"></span></a>';
                 }

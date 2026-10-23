@@ -74,7 +74,7 @@ CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6
 XICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>'
 WEBP_W = (480, 800, 1200, 1600)   # ширины копий — как в tools/make_webp.py
 
-def img(path, alt, cls="", lazy=True, sizes="(max-width: 760px) 100vw, 50vw"):
+def img(path, alt, cls="", lazy=True, sizes="(max-width: 760px) 100vw, 420px"):   # 420px — карточки, лента, блоки главной
     """Фото: <picture> с WebP нужной ширины (копии — tools/make_webp.py), JPEG — запасной. Не lazy — первый экран: грузится первым"""
     tag = (f'<img src="img/{path}.jpg" alt="{esc(alt)}"{f" class={chr(34)}{cls}{chr(34)}" if cls else ""}'
            f'{" loading=" + chr(34) + "lazy" + chr(34) if lazy else " fetchpriority=" + chr(34) + "high" + chr(34)} decoding="async">')
@@ -94,7 +94,7 @@ def read_min(p): return max(2, math.ceil(len(re.sub(r"<[^>]+>", " ", p["lead"] +
 
 # ---------- общие куски ----------
 def header(active=None):
-    houses = mark("navHouses", "".join(mark(f"item:navHouse:{k}", f'''<a class="nav__house h-{k}" href="{v["file"]}"{' aria-current="page"' if k == active else ""}>{img(k + "/" + v["card_photos"][0], v["name"])}<span><b>{v["name"]}</b><small>{v["addr"]}</small><em class="tnum">от {money(minp(v))} за сутки</em></span></a>''') for k, v in H.items()))
+    houses = mark("navHouses", "".join(mark(f"item:navHouse:{k}", f'''<a class="nav__house h-{k}" href="{v["file"]}"{' aria-current="page"' if k == active else ""}>{img(k + "/" + v["card_photos"][0], v["name"], sizes="96px")}<span><b>{v["name"]}</b><small>{v["addr"]}</small><em class="tnum">от {money(minp(v))} за сутки</em></span></a>''') for k, v in H.items()))
     cur = lambda key: ' aria-current="page"' if key == active else ""
     in_houses = ' class="nav__btn is-current"' if active in H else ' class="nav__btn"'
     return f'''<header class="top"><div class="wrap top__in">
@@ -190,7 +190,7 @@ def order_band(house="", photo="en/facade", title="Оставьте заявку
   <div class="order__txt">
     <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты 50%, остальное — при заселении.</p><p class="disc-line"><a href="{VK}" target="_blank" rel="noopener">Скидка {DISCOUNT}% при бронировании через группу ВКонтакте</a></p></div>
     <div class="order__contacts"><a class="big tnum nb" href="tel:{PHONE_RAW}">{PHONE}</a>{extra}</div>
-    <div class="order__photo{" order__photo--tall" if photo == "en/facade" else ""}">{img(photo, alt)}</div>
+    <div class="order__photo{" order__photo--tall" if photo == "en/facade" else ""}">{img(photo, alt, sizes="(max-width: 760px) 100vw, 560px")}</div>
   </div>
   {form(house, "o")}
 </div></section>'''
@@ -356,7 +356,7 @@ PLATFORM_BADGE = {"2ГИС": ("#137A18", "2Г"), "Яндекс Карты": ("#C
 def review_qr(k, name, url):
     """Колонка площадки: значок с названием, под ним QR. Вся колонка — ссылка (на телефоне код не сканируют, а нажимают)"""
     color, sign = PLATFORM_BADGE[name]
-    return (f'<a class="hrev__qr" href="{esc(url)}" target="_blank" rel="noopener nofollow" aria-label="Оставить отзыв о Доме «{esc(H[k]["name"])}» в {esc(name)}">'
+    return (f'<a class="hrev__qr" href="{esc(url)}" target="_blank" rel="noopener nofollow" aria-label="{esc(name)}: оставить отзыв о Доме «{esc(H[k]["name"])}»">'
             f'<span class="plat"><span class="plat__mark" style="background:{color}">{esc(sign)}</span><span class="plat__name">{esc(name)}</span></span>'
             f'<span class="hrev__qrimg"><img src="img/qr/rev-{k}-{PLATFORM_KEY[name]}.svg" alt="" width="140" height="140" loading="lazy"></span></a>')
 
@@ -535,7 +535,7 @@ def house_page(k):
     sizes = {0: "big", 1: "t", 4: "w", 7: "w"}
     n = len(h["gallery"]); cells = n + 3 + 1 + 1 + 1; rem = cells % 4
     for j in range((4 - rem) % 4): sizes.setdefault(n - 1 - j, "w")
-    gal = "".join(f'<a class="{sizes.get(i, "")}" href="img/{k}/{p}.jpg" data-lb="g-{k}" data-cap="{esc(c)}">{img(k + "/" + p, h["name"] + ": " + c)}<span>{c}</span></a>' for i, (p, c) in enumerate(h["gallery"]))
+    gal = "".join(f'<a class="{sizes.get(i, "")}" href="img/{k}/{p}.jpg" data-lb="g-{k}" data-cap="{esc(c)}">{img(k + "/" + p, h["name"] + ": " + c, sizes="(max-width: 760px) 100vw, 640px" if sizes.get(i, "") in ("big", "w") else "(max-width: 760px) 50vw, 320px")}<span>{c}</span></a>' for i, (p, c) in enumerate(h["gallery"]))
     amen = "".join(f'<li>{icon(i)}<div><b>{b}</b><span>{d}</span></div></li>' for i, b, d in h["comfort"])
     hot = max(range(4), key=lambda i: h["prices"][i])
     prices = "".join(f'<div{" class=" + chr(34) + "hot" + chr(34) if i == hot else ""}><span>{DAYS[i]}</span><b class="tnum">{money(v)}</b></div>' for i, v in enumerate(h["prices"]))
@@ -719,7 +719,7 @@ def post_page(p):
     <h1>{mark("v:post_title", p["h1"])}</h1>
     <p class="post__lead">{mark("v:post_lead", p["lead"])}</p>
   </div></header>
-  <div class="wrap">{mark("postCover", f'<figure class="post__cover">{img(p["cover"], p["cover_alt"], lazy=False)}<figcaption>{p["cover_alt"]}</figcaption></figure>')}</div>
+  <div class="wrap">{mark("postCover", f'<figure class="post__cover">{img(p["cover"], p["cover_alt"], lazy=False, sizes="(max-width: 760px) 100vw, 900px")}<figcaption>{p["cover_alt"]}</figcaption></figure>')}</div>
   <div class="wrap post__grid">
     <aside class="post__aside">
       <nav class="toc" aria-label="Содержание"><p>Содержание</p><ol>{mark("toc", toc)}</ol></nav>

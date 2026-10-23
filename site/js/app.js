@@ -107,8 +107,22 @@
     $$("[data-step]", box).forEach(function (b) {
       b.addEventListener("click", function () { cancelAnimationFrame(raf); rail.scrollBy({ left: Number(b.getAttribute("data-step")) * rail.clientWidth * 0.8, behavior: calm ? "auto" : "smooth" }); });
     });
-    function edges() { var max = rail.scrollWidth - rail.clientWidth - 2; box.classList.toggle("at-start", rail.scrollLeft <= 2); box.classList.toggle("at-end", rail.scrollLeft >= max); }
-    rail.addEventListener("scroll", edges, { passive: true }); edges();
+    // крайние положения (бледные стрелки): видна ли первая и последняя карточка — без замеров ширины,
+    // иначе каждая лента при загрузке заставляет браузер пересчитывать раскладку всей страницы
+    var first = rail.firstElementChild, last = rail.lastElementChild;
+    if (first && "IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          var seen = e.intersectionRatio > 0.95;
+          if (e.target === first) box.classList.toggle("at-start", seen);
+          if (e.target === last) box.classList.toggle("at-end", seen);
+        });
+      }, { root: rail, threshold: [0, 0.95, 1] });
+      io.observe(first); if (last !== first) io.observe(last);
+    } else {
+      var edges = function () { var max = rail.scrollWidth - rail.clientWidth - 2; box.classList.toggle("at-start", rail.scrollLeft <= 2); box.classList.toggle("at-end", rail.scrollLeft >= max); };
+      rail.addEventListener("scroll", edges, { passive: true }); edges();
+    }
   });
 
   // Отзывы: длинный текст обрезан, кнопка «Читать полностью» раскрывает.
