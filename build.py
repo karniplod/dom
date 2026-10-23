@@ -92,7 +92,6 @@ def header(active=None):
     <a href="index.html"{cur("home")}>Главная</a>
     <div class="nav__drop"><button{in_houses} type="button" aria-expanded="false" aria-controls="nav-houses">Дома{CHEV}</button>
       <div class="nav__panel" id="nav-houses">{houses}<a class="nav__all" href="index.html#prices">Сравнить Дома и цены</a></div></div>
-    <a href="index.html#prices">Цены</a>
     <a href="index.html#order">Бронирование</a>
     <a href="blog.html"{cur("blog")}>Блог</a>
     <a href="kontakty.html"{cur("contacts")}>Контакты</a>
@@ -108,7 +107,7 @@ def drawer():
   <div class="drawer__head"><a class="brand" href="index.html">{FOX}<span><b>{BRAND}</b></span></a><button class="x" type="button" data-close aria-label="Закрыть меню">{XICON}</button></div>
   <nav class="drawer__nav" aria-label="Меню">
     <p class="drawer__lab">Дома</p>{houses}
-    <div class="drawer__links"><a href="index.html">Главная</a><a href="index.html#prices">Цены</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></div>
+    <div class="drawer__links"><a href="index.html">Главная</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></div>
   </nav>
   <div class="drawer__foot">
     <a class="drawer__phone tnum" href="tel:{PHONE_RAW}">{PHONE}</a>
@@ -164,7 +163,7 @@ def footer(house=""):
     <p class="foot__docs"><a href="politika.html">Политика обработки персональных данных</a> · <a href="soglasie.html">Согласие на обработку персональных данных</a> · <a href="cookie.html">Политика cookie</a> · <button type="button" data-cookie-settings>Настройки cookie</button></p>
   </div>
   <nav aria-label="Дома">{links}</nav>
-  <nav aria-label="Разделы"><a href="index.html">Главная</a><a href="index.html#prices">Цены</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></nav>
+  <nav aria-label="Разделы"><a href="index.html">Главная</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></nav>
 </div></footer>
 <div class="mbar"><a class="btn btn--ghost" href="tel:{PHONE_RAW}">Позвонить</a><button class="btn" type="button" data-order>Заявка</button></div>
 {order_modal(house)}
@@ -775,7 +774,9 @@ def relink(doc, up):
 
 # ---------- сборка ----------
 # шрифты — со своего сервера (tools/fetch_fonts.py): IP посетителей не уходит в Google
-FONTS = '<link rel="stylesheet" href="fonts/fonts.css">'
+FONTS = ('<link rel="preload" href="fonts/golos-text-cyrillic-1.woff2" as="font" type="font/woff2" crossorigin>'
+         '<link rel="preload" href="fonts/prata-cyrillic-5.woff2" as="font" type="font/woff2" crossorigin>'
+         '<link rel="stylesheet" href="fonts/fonts.css">')
 FAV = 'data:image/svg+xml,' + rd("fox.svg").replace('<path ', '<path fill="%23D8650F" ').replace('"', "'").replace("#", "%23")
 # скидка только через ВКонтакте (решение владельца 22.10.2026) — в расчёте формы сайта её нет
 HJS = {"_discount": 0} | {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"], base=v["base"], extra=v["extra"]) for k, v in H.items()}
