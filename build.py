@@ -14,7 +14,7 @@ PREVIEW = bool(os.environ.get("SITE_URL"))
 SITE = os.environ.get("SITE_URL", SITE).rstrip("/")
 from blog import POSTS, CATS
 from legal import DOCS, DATE as LEGAL_DATE, COOKIE_VERSION, OPERATOR
-from reviews import REVIEWS, REVIEW_LINKS, REVIEW_PLATFORMS, HOUSE_REVIEW_LINKS, REVIEW_SHOTS
+from reviews import PLATFORM_KEY, REVIEWS, REVIEW_LINKS, REVIEW_PLATFORMS, HOUSE_REVIEW_LINKS, REVIEW_SHOTS
 
 SRC, SITE_DIR, ART = (os.path.join(ROOT, d) for d in ("src", "site", os.path.join("build", "artifact")))
 rd = lambda n: open(os.path.join(SRC, n), encoding="utf8").read()
@@ -346,6 +346,12 @@ def platform_logo(name, url=""):
     inner = f'<span class="plat__mark" style="background:{color}">{esc(sign)}</span><span class="plat__name">{esc(name)}</span>'
     return f'<a class="plat" href="{esc(url)}" target="_blank" rel="noopener nofollow">{inner}</a>' if url else f'<span class="plat">{inner}</span>'
 
+def review_qr(k, name, url):
+    color, sign = PLATFORM_BADGE[name]
+    return (f'<a class="hrev__qr" href="{esc(url)}" target="_blank" rel="noopener nofollow">'
+            f'<span class="hrev__qrname"><span class="plat__mark" style="background:{color}">{esc(sign)}</span>{esc(name)}</span>'
+            f'<img src="img/qr/rev-{k}-{PLATFORM_KEY[name]}.svg" alt="QR-код: отзыв о Доме «{esc(H[k]["name"])}» в {esc(name)}" width="140" height="140" loading="lazy"></a>')
+
 def house_review_panel(k):
     """По Дому: площадки отзывов, QR-код «оставить отзыв» и скриншоты отзывов (или заглушки, пока их нет)."""
     h = H[k]
@@ -354,8 +360,9 @@ def house_review_panel(k):
     shots = REVIEW_SHOTS.get(k, [])
     shots_html = "".join(f'<a class="rshot" href="img/reviews/{esc(s)}" data-lb="rev-{k}"><img src="img/reviews/{esc(s)}" alt="Отзыв гостя: {esc(h["name"])}" loading="lazy"></a>' for s in shots) \
         or "".join(f'<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с {p}</span></div>' for p in ("Яндекс Карт", "2ГИС", "Авито"))
-    # QR «оставить отзыв» — только на настоящую площадку (tools/make_qr.py); пока ссылок нет, кода не показываем
-    qr = "" if not any(links.get(n) for n in REVIEW_PLATFORMS) else f'<figure class="hrev__qr"><img src="img/qr/rev-{k}.svg" alt="QR-код: оставить отзыв, {esc(h["name"])}" width="150" height="150" loading="lazy"><figcaption>Оставить отзыв: наведите камеру телефона</figcaption></figure>'
+    # QR «оставить отзыв» — по коду на каждую площадку со ссылкой (tools/make_qr.py); на телефоне код — просто ссылка
+    qrs = "".join(review_qr(k, n, links[n]) for n in REVIEW_PLATFORMS if links.get(n))
+    qr = (f'<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код площадки или нажмите на него</p><div class="hrev__qrrow">{qrs}</div></div>') if qrs else ""
     return (f'<div class="hrev h-{k}"><div class="hrev__head"><h3>{h["name"]}</h3><div class="plats">{logos}</div></div>'
             f'<div class="hrev__body"><div class="rshots">{shots_html}</div>{qr}</div></div>')
 

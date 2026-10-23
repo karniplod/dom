@@ -325,13 +325,19 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 .plat { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: #fff; color: var(--bark); font-weight: 600; font-size: 14.5px; text-decoration: none; }
 a.plat:hover { box-shadow: 0 0 0 2px var(--fox); }
 .plat__mark { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 5px; border-radius: 6px; color: #fff; font: 700 12px/1 var(--text); }
-.hrev__body { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 18px; align-items: start; }
+.hrev__body { display: grid; gap: 18px; }
 .rshots { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 .rshot { display: block; border-radius: 6px; overflow: hidden; }
 .rshot--empty { display: grid; place-items: center; min-height: 140px; padding: 14px; border: 1px dashed var(--line-dark); color: var(--cream-soft); font-size: 14px; text-align: center; }
-.hrev__qr { margin: 0; display: grid; gap: 8px; justify-items: center; text-align: center; font-size: 13px; color: var(--cream-soft); }
-.hrev__qr img { width: 150px; height: 150px; background: #fff; border-radius: 6px; padding: 6px; }
-@media (max-width: 760px) { .hrev__body { grid-template-columns: 1fr; } .hrev__qr { justify-items: start; text-align: left; } }
+/* QR «оставить отзыв»: по коду на площадку, над кодом — её значок и название */
+.hrev__qrs { display: grid; gap: 10px; }
+.hrev__qrlab { font-size: 14.5px; color: var(--cream-soft); }
+.hrev__qrrow { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 170px)); gap: 12px; }
+.hrev__qr { display: grid; gap: 8px; justify-items: center; align-content: space-between; text-align: center; padding: 10px 10px 12px; border-radius: 8px; background: #fff; color: var(--bark); text-decoration: none; transition: box-shadow .2s; }
+.hrev__qr:hover { box-shadow: 0 0 0 2px var(--fox); }
+.hrev__qrname { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14.5px; }
+.hrev__qr img { width: 100%; max-width: 140px; height: auto; aspect-ratio: 1; }
+@media (max-width: 520px) { .hrev__qrrow { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .hrev__qr { padding: 8px 6px 10px; } .hrev__qrname { font-size: 12.5px; gap: 5px; } .hrev__qrname .plat__mark { min-width: 22px; height: 22px; font-size: 11px; } }
 .reviews { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .review-slot { border: 1px dashed var(--line-dark); border-radius: 6px; padding: 28px; display: grid; gap: 10px; color: var(--cream-soft); min-height: 180px; align-content: center; }
 .review-slot h3 { font-size: 24px; color: var(--cream); }
