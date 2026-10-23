@@ -62,10 +62,11 @@ if (!$bookingAssets) {
             'powDifficulty' => (int)$p['powDifficulty']]) . ');</script>', true);
 }
 
-// документы сайта по 152-ФЗ (страницы politika и soglasie); нет страницы — ссылка на главную
+// документы сайта по 152-ФЗ (страницы politika и soglasie); нет страницы — ссылка на главную.
+// Ссылки от корня сайта ('abs'): относительные с вложенных страниц (/blog/…, /booking/zayavka) вели бы в 404
 $doc = function ($alias) use ($modx) {
     $r = $modx->getObject(\MODX\Revolution\modResource::class, ['alias' => $alias, 'published' => 1, 'deleted' => 0]);
-    return $r ? $modx->makeUrl($r->get('id')) : $modx->makeUrl((int)$modx->getOption('site_start'));
+    return $r ? $modx->makeUrl($r->get('id'), '', '', 'abs') : $modx->makeUrl((int)$modx->getOption('site_start'), '', '', 'abs');
 };
 
 static $n = 0;

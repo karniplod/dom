@@ -208,9 +208,14 @@ class Bania
         $ex = array_filter(array_map('trim', preg_split('~\|\||,~', (string)$exclude)));
         $on = array_filter(array_map('trim', preg_split('~\|\||,~', (string)$only)));
         $out = ''; $i = 0;
-        foreach (self::houses() as $h) {
+        $list = self::houses();
+        if ($on) {   // список задан (например, «Дома из статьи») — в его порядке, а не в порядке меню
+            $pos = function ($h) use ($on) { $k = array_search((string)$h['id'], $on, true); return $k !== false ? $k : array_search($h['code'], $on, true); };
+            $list = array_filter($list, function ($h) use ($pos) { return $pos($h) !== false; });
+            uasort($list, function ($a, $b) use ($pos) { return $pos($a) <=> $pos($b); });
+        }
+        foreach ($list as $h) {
             if ($ex && (in_array((string)$h['id'], $ex, true) || in_array($h['code'], $ex, true))) continue;
-            if ($on && !in_array((string)$h['id'], $on, true) && !in_array($h['code'], $on, true)) continue;
             $out .= self::chunk($tpl, self::housePh($h, $i++));
         }
         return $out;

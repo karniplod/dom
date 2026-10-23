@@ -48,6 +48,7 @@ $formPage = (int)$modx->getOption('booking.form_page');
 if (!$exists($formPage)) {
     $page = $modx->getObject(modResource::class, ['alias' => 'booking', 'parent' => 0, 'deleted' => 0]) ?: $make([
         'pagetitle' => 'Бронирование', 'longtitle' => 'Забронировать Дом с баней', 'alias' => 'booking', 'parent' => 0,
+        'hidemenu' => 0, 'menuindex' => 20,   // пункт меню сайта (сниппет bnMenu)
         'isfolder' => 1, 'template' => $tplId, 'cacheable' => 0,
         'description' => 'Выберите Дом и даты: календарь занятости, расчёт стоимости и заявка онлайн. Администратор перезвонит и подтвердит бронь.',
         'content' => '[[!booking.form? &mode=`full`]]',

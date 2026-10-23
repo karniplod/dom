@@ -569,7 +569,7 @@ try {
             $data = $r['fields'] + [
                 'parent' => $parentId, 'template' => $r['template'] ? (int)($tplIds[$r['template']] ?? 0) : 0,
                 'published' => $r['published'] ?? 1, 'hidemenu' => $r['hidemenu'] ?? 0, 'searchable' => $r['searchable'] ?? 1,
-                'isfolder' => $r['isfolder'] ?? 0, 'menuindex' => $menu[$parentId], 'context_key' => 'web',
+                'isfolder' => $r['isfolder'] ?? 0, 'menuindex' => $r['menuindex'] ?? $menu[$parentId], 'context_key' => 'web',
                 'richtext' => $r['richtext'] ?? 0, 'class_key' => modDocument::class, 'cacheable' => $r['cacheable'] ?? 1,
             ];
             if (!$home || $isNew) $data['alias'] = $r['alias'];
@@ -592,6 +592,20 @@ try {
         if (empty($ids[$alias])) continue;
         if ($r = setting($key, $ids[$alias])) say($r, "настройка $key = ID страницы /$alias");
         $modx->setOption($key, $ids[$alias]);
+    }
+    // SendIt подключает свои скрипт и стили путём «assets/…» без «/» в начале (рассчитан на <base href>, а его в шаблонах нет —
+    // он ломает якоря «#…»): на вложенных страницах (/blog/…, /booking/zayavka, /Предоплата1/) скрипт формы не загружался. Путь — от корня сайта
+    foreach (['si_frontend_js' => 'components/sendit/js/web/index.js', 'si_frontend_css' => 'components/sendit/css/web/index.css'] as $k => $file) {
+        $cur = (string)$modx->getOption($k);
+        if ($cur !== '' && strpos($cur, '[[+assetsUrl]]') !== 0) continue;   // своё значение владельца не трогаем
+        if (!$dry && ($r = setting($k, MODX_ASSETS_URL . $file, 'SendIt'))) say($r, "настройка {$k}: путь от корня сайта (" . MODX_ASSETS_URL . "…)");
+        $modx->setOption($k, MODX_ASSETS_URL . $file);
+    }
+    // страница бронирования компонента booking — в меню сайта между Домами и Блогом (один раз: потом решает владелец)
+    if (($bk = (int)$modx->getOption('booking.form_page')) && ($o = $modx->getObject(modResource::class, $bk))
+        && (int)$o->get('hidemenu') === 1 && (int)$o->get('menuindex') === 0) {
+        say('upd', 'страница «' . $o->get('pagetitle') . '» — в меню сайта (позиция 20)');
+        if (!$dry) { $o->set('hidemenu', 0); $o->set('menuindex', 20); saved($o, 'страницу бронирования'); }
     }
     // ссылки [[~id]] — от корня сайта («/kontakty»): в разметке нет <base>, и относительные ссылки со статей блога вели бы в /blog/…
     if (!$dry && ($r = setting('link_tag_scheme', 'abs'))) say($r, 'настройка link_tag_scheme = abs (ссылки от корня сайта)');

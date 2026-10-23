@@ -88,14 +88,14 @@ def header(active=None):
     in_houses = ' class="nav__btn is-current"' if active in H else ' class="nav__btn"'
     return f'''<header class="top"><div class="wrap top__in">
   <a class="brand" href="index.html" aria-label="{BRAND}, на главную">{FOX}<span><b>{BRAND}</b><small>Дома с баней и бассейном в Перми</small></span></a>
-  <nav class="nav" aria-label="Основное меню">
+  <nav class="nav" aria-label="Основное меню">{mark("menu:nav", f"""
     <a href="index.html"{cur("home")}>Главная</a>
     <div class="nav__drop"><button{in_houses} type="button" aria-expanded="false" aria-controls="nav-houses">Дома{CHEV}</button>
       <div class="nav__panel" id="nav-houses">{houses}<a class="nav__all" href="index.html#prices">Сравнить Дома и цены</a></div></div>
     <a href="index.html#order">Бронирование</a>
     <a href="blog.html"{cur("blog")}>Блог</a>
     <a href="kontakty.html"{cur("contacts")}>Контакты</a>
-  </nav>
+  """)}</nav>
   <a class="top__phone tnum" href="tel:{PHONE_RAW}">{PHONE}</a>
   <button class="btn btn--sm top__cta" type="button" data-order>Оставить заявку</button>
   <button class="burger" type="button" data-drawer aria-label="Открыть меню" aria-controls="drawer"><span></span><span></span><span></span></button>
@@ -107,7 +107,7 @@ def drawer():
   <div class="drawer__head"><a class="brand" href="index.html">{FOX}<span><b>{BRAND}</b></span></a><button class="x" type="button" data-close aria-label="Закрыть меню">{XICON}</button></div>
   <nav class="drawer__nav" aria-label="Меню">
     <p class="drawer__lab">Дома</p>{houses}
-    <div class="drawer__links"><a href="index.html">Главная</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></div>
+    <div class="drawer__links">{mark("menu:drawer", '<a href="index.html">Главная</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a>')}</div>
   </nav>
   <div class="drawer__foot">
     <a class="drawer__phone tnum" href="tel:{PHONE_RAW}">{PHONE}</a>
@@ -163,7 +163,7 @@ def footer(house=""):
     <p class="foot__docs"><a href="politika.html">Политика обработки персональных данных</a> · <a href="soglasie.html">Согласие на обработку персональных данных</a> · <a href="cookie.html">Политика cookie</a> · <button type="button" data-cookie-settings>Настройки cookie</button></p>
   </div>
   <nav aria-label="Дома">{links}</nav>
-  <nav aria-label="Разделы"><a href="index.html">Главная</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></nav>
+  <nav aria-label="Разделы">{mark("menu:foot", '<a href="index.html">Главная</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a>')}</nav>
 </div></footer>
 <div class="mbar"><a class="btn btn--ghost" href="tel:{PHONE_RAW}">Позвонить</a><button class="btn" type="button" data-order>Заявка</button></div>
 {order_modal(house)}
@@ -235,9 +235,11 @@ def notfound_html():
 <p>Забронировать или спросить — по телефону <a class="link" href="tel:{PHONE_RAW}">{PHONE}</a>.</p>'''
 
 def notfound_page():
+    cr, _ = crumbs([("Главная", "index.html"), ("Страница не найдена", None)])   # как в MODX: шаблон текстовой страницы с крошками
     body = f'''{header()}
 <main>
 <section class="phead on-light"><div class="wrap">
+  {cr}
   <h1>Страница не найдена</h1>
 </div></section>
 <section class="band band--tight on-light"><div class="wrap"><div class="prose">

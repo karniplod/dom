@@ -23,5 +23,5 @@ return $modx->getChunk($scriptProperties['tpl'] ?? 'booking.request.tpl', [
     'api' => $booking->config['apiUrl'],
     'id' => $id ?: '',
     't' => $t,
-    'form_url' => (int)$modx->getOption('booking.form_page') ? $modx->makeUrl((int)$modx->getOption('booking.form_page')) : '',
+    'form_url' => (int)$modx->getOption('booking.form_page') ? $modx->makeUrl((int)$modx->getOption('booking.form_page'), '', '', 'abs') : '',   // от корня: страница заявки вложена в /booking/
 ]);

@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-23 12:06",
+ "version": "2026-10-23 12:30",
  "chunks": [
   {
    "name": "bn.fox",
@@ -425,6 +425,11 @@ $manifest = <<<'JSON'
    "description": "llms.txt: краткое описание сайта для нейросетевых поисковиков"
   },
   {
+   "name": "bnMenu",
+   "file": "snippets/bnMenu.php",
+   "description": "меню сайта из страниц: верхний уровень, опубликованные, с галочкой «Показывать в меню», по «Позиции в меню». &place=`nav` (шапка; Дома — выпадающим списком), `drawer` (выдвижное меню), `foot` (подвал); Дома в drawer и foot выводятся отдельными списками"
+  },
+  {
    "name": "bnMinPrice",
    "file": "snippets/bnMinPrice.php",
    "description": "самая низкая цена за сутки среди домов, например «15 000 ₽»"
@@ -625,7 +630,7 @@ $manifest = <<<'JSON'
    "name": "bn_sleep",
    "caption": "Ночуют",
    "type": "number",
-   "description": "Сколько гостей ночует (спальных мест)",
+   "description": "Сколько гостей ночует (спальных мест). Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Дома и бани» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -637,7 +642,7 @@ $manifest = <<<'JSON'
    "name": "bn_max",
    "caption": "Отдыхают до",
    "type": "number",
-   "description": "Сколько гостей можно позвать на праздник",
+   "description": "Сколько гостей можно позвать на праздник. Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Дома и бани» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -649,7 +654,7 @@ $manifest = <<<'JSON'
    "name": "bn_base",
    "caption": "Гостей в цене",
    "type": "number",
-   "description": "На сколько человек рассчитана цена за сутки",
+   "description": "На сколько человек рассчитана цена за сутки. Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Дома и бани» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -661,7 +666,7 @@ $manifest = <<<'JSON'
    "name": "bn_extra",
    "caption": "Доплата за гостя сверх, ₽",
    "type": "number",
-   "description": "За каждого гостя сверх «Гостей в цене», за всё время отдыха",
+   "description": "За каждого гостя сверх «Гостей в цене», за всё время отдыха. Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Дома и бани» — меняйте там",
    "default": "500",
    "elements": "",
    "templates": [
@@ -673,7 +678,7 @@ $manifest = <<<'JSON'
    "name": "bn_checkin",
    "caption": "Заезд с",
    "type": "text",
-   "description": "Например «15:00»",
+   "description": "Например «15:00». Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Дома и бани» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -685,7 +690,7 @@ $manifest = <<<'JSON'
    "name": "bn_checkout",
    "caption": "Выезд до",
    "type": "text",
-   "description": "Например «12:00»",
+   "description": "Например «12:00». Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Дома и бани» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -733,7 +738,7 @@ $manifest = <<<'JSON'
    "name": "bn_price_wd",
    "caption": "Цена Пн–Чт, ₽",
    "type": "number",
-   "description": "Сутки с заездом с понедельника по четверг",
+   "description": "Сутки с заездом с понедельника по четверг. Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Цены» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -745,7 +750,7 @@ $manifest = <<<'JSON'
    "name": "bn_price_fri",
    "caption": "Цена Пт, ₽",
    "type": "number",
-   "description": "Сутки с заездом в пятницу (и в предпраздничный рабочий день)",
+   "description": "Сутки с заездом в пятницу (и в предпраздничный рабочий день). Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Цены» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -757,7 +762,7 @@ $manifest = <<<'JSON'
    "name": "bn_price_sat",
    "caption": "Цена Сб, ₽",
    "type": "number",
-   "description": "Сутки с заездом в субботу (и в праздник перед выходным)",
+   "description": "Сутки с заездом в субботу (и в праздник перед выходным). Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Цены» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -769,7 +774,7 @@ $manifest = <<<'JSON'
    "name": "bn_price_sun",
    "caption": "Цена Вс, ₽",
    "type": "number",
-   "description": "Сутки с заездом в воскресенье (и в праздник перед рабочим днём)",
+   "description": "Сутки с заездом в воскресенье (и в праздник перед рабочим днём). Если установлено «Бронирование», на сайте берётся оттуда: «Пакеты → Бронирование → Цены» — меняйте там",
    "default": "",
    "elements": "",
    "templates": [
@@ -1791,7 +1796,7 @@ try {
             $data = $r['fields'] + [
                 'parent' => $parentId, 'template' => $r['template'] ? (int)($tplIds[$r['template']] ?? 0) : 0,
                 'published' => $r['published'] ?? 1, 'hidemenu' => $r['hidemenu'] ?? 0, 'searchable' => $r['searchable'] ?? 1,
-                'isfolder' => $r['isfolder'] ?? 0, 'menuindex' => $menu[$parentId], 'context_key' => 'web',
+                'isfolder' => $r['isfolder'] ?? 0, 'menuindex' => $r['menuindex'] ?? $menu[$parentId], 'context_key' => 'web',
                 'richtext' => $r['richtext'] ?? 0, 'class_key' => modDocument::class, 'cacheable' => $r['cacheable'] ?? 1,
             ];
             if (!$home || $isNew) $data['alias'] = $r['alias'];
@@ -1814,6 +1819,20 @@ try {
         if (empty($ids[$alias])) continue;
         if ($r = setting($key, $ids[$alias])) say($r, "настройка $key = ID страницы /$alias");
         $modx->setOption($key, $ids[$alias]);
+    }
+    // SendIt подключает свои скрипт и стили путём «assets/…» без «/» в начале (рассчитан на <base href>, а его в шаблонах нет —
+    // он ломает якоря «#…»): на вложенных страницах (/blog/…, /booking/zayavka, /Предоплата1/) скрипт формы не загружался. Путь — от корня сайта
+    foreach (['si_frontend_js' => 'components/sendit/js/web/index.js', 'si_frontend_css' => 'components/sendit/css/web/index.css'] as $k => $file) {
+        $cur = (string)$modx->getOption($k);
+        if ($cur !== '' && strpos($cur, '[[+assetsUrl]]') !== 0) continue;   // своё значение владельца не трогаем
+        if (!$dry && ($r = setting($k, MODX_ASSETS_URL . $file, 'SendIt'))) say($r, "настройка {$k}: путь от корня сайта (" . MODX_ASSETS_URL . "…)");
+        $modx->setOption($k, MODX_ASSETS_URL . $file);
+    }
+    // страница бронирования компонента booking — в меню сайта между Домами и Блогом (один раз: потом решает владелец)
+    if (($bk = (int)$modx->getOption('booking.form_page')) && ($o = $modx->getObject(modResource::class, $bk))
+        && (int)$o->get('hidemenu') === 1 && (int)$o->get('menuindex') === 0) {
+        say('upd', 'страница «' . $o->get('pagetitle') . '» — в меню сайта (позиция 20)');
+        if (!$dry) { $o->set('hidemenu', 0); $o->set('menuindex', 20); saved($o, 'страницу бронирования'); }
     }
     // ссылки [[~id]] — от корня сайта («/kontakty»): в разметке нет <base>, и относительные ссылки со статей блога вели бы в /blog/…
     if (!$dry && ($r = setting('link_tag_scheme', 'abs'))) say($r, 'настройка link_tag_scheme = abs (ссылки от корня сайта)');

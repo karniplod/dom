@@ -273,6 +273,7 @@
   "alias": "kontakty",
   "parent": "",
   "template": "bn-contacts",
+  "menuindex": 40,
   "fields": {
    "pagetitle": "Контакты",
    "longtitle": "Контакты и адреса домов — Доходные Дома Ефремовых",
@@ -285,6 +286,7 @@
   "parent": "",
   "template": "bn-blog",
   "isfolder": 1,
+  "menuindex": 30,
   "fields": {
    "pagetitle": "Блог",
    "longtitle": "Блог об отдыхе в домах с баней в Перми — Доходные Дома Ефремовых",
