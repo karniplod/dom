@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-23 11:41",
+ "version": "2026-10-23 11:50",
  "chunks": [
   {
    "name": "bn.fox",
@@ -1207,7 +1207,7 @@ $manifest = <<<'JSON'
   },
   {
    "key": "bn_rev_en_yandex",
-   "value": "",
+   "value": "https://yandex.ru/maps/org/dokhodnyye_doma_yefremovykh/42977660708/?add-review=true",
    "name": "Английский Дом: Яндекс Карты",
    "cc": "Отзывы",
    "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
@@ -1228,7 +1228,7 @@ $manifest = <<<'JSON'
   },
   {
    "key": "bn_rev_ru_yandex",
-   "value": "",
+   "value": "https://yandex.ru/maps/org/dokhodnyye_doma_yefremovykh/168448318531/?add-review=true",
    "name": "Русский Дом: Яндекс Карты",
    "cc": "Отзывы",
    "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
@@ -1249,7 +1249,7 @@ $manifest = <<<'JSON'
   },
   {
    "key": "bn_rev_sv_yandex",
-   "value": "https://yandex.ru/maps/org/26303212403/reviews/",
+   "value": "https://yandex.ru/maps/org/yefremovskiye_bani/26303212403/?add-review=true",
    "name": "Дом на Свиязева: Яндекс Карты",
    "cc": "Отзывы",
    "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
