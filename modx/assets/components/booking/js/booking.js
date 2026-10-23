@@ -935,8 +935,60 @@
     window.addEventListener('online', function () { self.net(); });
     window.addEventListener('offline', function () { self.net(); });
     this.net();
-    this.tab(location.hash === '#admin' ? 'admin' : (location.hash === '#request' ? 'request' : 'book'));
+    // кнопка «?» — инструкция; «Вернуться» — на вкладку, с которой пришли
+    var help = qs(root, '[data-app-help]');
+    if (help) help.addEventListener('click', function () { self.tab(self.current === 'help' ? (self.prev || 'book') : 'help'); window.scrollTo(0, 0); });
+    var back = qs(root, '[data-app-back]');
+    if (back) back.addEventListener('click', function () { self.tab(self.prev || 'book'); window.scrollTo(0, 0); });
+    qsa(root, '[data-help-jump]').forEach(function (a) {
+      a.addEventListener('click', function (e) { e.preventDefault(); var t = document.querySelector(a.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth' }); });
+    });
+    this.install();
+    var h = location.hash.replace('#', '');
+    this.tab(['admin', 'request', 'help'].indexOf(h) >= 0 ? h : 'book');
   }
+  /* Установка на телефон: Android/Chrome — системное окно (beforeinstallprompt), iPhone — подсказка «На экран „Домой“».
+     Уже установлено (окно без адресной строки) — не показываем; полоску сверху можно скрыть крестиком. */
+  App.prototype.install = function () {
+    var self = this, root = this.root, bar = qs(root, '[data-app-install]'), txt = qs(root, '[data-app-install-text]');
+    if (!bar) return;
+    var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    var ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    var hidden = false;
+    try { hidden = localStorage.getItem('bk-install-hide') === '1'; } catch (e) { /* хранилище недоступно */ }
+    var btns = qsa(root, '[data-app-install-btn]');
+    var hideAll = function () { bar.hidden = true; btns.forEach(function (b) { b.hidden = true; }); };
+    var show = function (iosHint) {
+      if (standalone) return;
+      if (!hidden) bar.hidden = false;
+      btns.forEach(function (b) { b.hidden = false; });
+      if (iosHint) {
+        txt.textContent = 'На iPhone: «Поделиться» внизу экрана → «На экран „Домой“».';
+        btns.forEach(function (b) { b.textContent = 'Как установить'; });
+      }
+    };
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var p = window.bkInstallPrompt;
+        if (p) {
+          p.prompt();
+          p.userChoice.then(function () { window.bkInstallPrompt = null; hideAll(); });
+          return;
+        }
+        if (self.current !== 'help') self.tab('help');
+        var t = document.getElementById('help-install');
+        if (t) t.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+    qs(root, '[data-app-install-close]').addEventListener('click', function () {
+      bar.hidden = true;
+      try { localStorage.setItem('bk-install-hide', '1'); } catch (e) { /* хранилище недоступно */ }
+    });
+    if (window.bkInstallPrompt) show(false);
+    document.addEventListener('bk:installable', function () { show(false); });
+    window.addEventListener('appinstalled', hideAll);
+    if (ios) show(true);
+  };
   App.prototype.token = function () { try { return localStorage.getItem('bk-admin-token') || ''; } catch (e) { return ''; } };
   App.prototype.setToken = function (t) { try { if (t) localStorage.setItem('bk-admin-token', t); else localStorage.removeItem('bk-admin-token'); } catch (e) { /* хранилище недоступно */ } };
   App.prototype.net = function () {
@@ -944,6 +996,9 @@
     if (w) w.hidden = navigator.onLine !== false;
   };
   App.prototype.tab = function (name) {
+    if (name !== this.current) { this.prev = this.current; this.current = name; }
+    var fab = qs(this.root, '[data-app-help]');
+    if (fab) { fab.textContent = name === 'help' ? '×' : '?'; fab.setAttribute('aria-label', name === 'help' ? 'Закрыть инструкцию' : 'Как пользоваться'); }
     qsa(this.root, '[data-app-tab]').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-app-tab') === name ? 'true' : 'false'); });
     qsa(this.root, '[data-app-pane]').forEach(function (p) { p.hidden = p.getAttribute('data-app-pane') !== name; });
     if (name === 'admin') this.admin();
