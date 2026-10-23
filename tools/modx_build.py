@@ -64,8 +64,17 @@ def item(html, kind, key):
     return m.group(1)
 
 
+MAX_RE = re.compile(r"<!--bn:max-->(.*?)<!--/bn:max-->", re.S)
+
+
+def max_cond(html):
+    """Ссылка на MAX — только если в «Конфигурации» заполнено bn_max_url"""
+    return MAX_RE.sub(lambda m: "[[++bn_max_url:notempty=`%s`]]" % m.group(1), html)
+
+
 def strip_marks(html):
     """Убрать оставшиеся метки (содержимое остаётся). Метки значений v:* уже должны быть заменены."""
+    html = max_cond(html)
     left = sorted(set(n for n in re.findall(r"<!--bn:([^>]+?)-->", html) if n.startswith("v:")))
     if left:
         fail("не заменены метки значений: " + ", ".join(left))
@@ -87,6 +96,7 @@ def assets(s):
 
 
 def links(s):
+    s = s.replace('href="index.html#order"', 'href="[[bnBookingUrl]]"')   # «Бронирование»: /booking или форма на главной
     s = s.replace('href="index.html#prices"', 'href="[[~[[++site_start]]]]#prices"').replace('href="index.html"', 'href="[[~[[++site_start]]]]"')
     s = s.replace('href="blog.html"', 'href="[[~[[++bn_blog_id]]]]"').replace('href="kontakty.html"', 'href="[[~[[++bn_contacts_id]]]]"')
     for doc in ("politika", "soglasie", "cookie"):   # документы 152-ФЗ
@@ -97,9 +107,9 @@ def links(s):
 
 
 def settings(s):
+    s = max_cond(s)
     pairs = [
         ("tel:" + B.PHONE_RAW, "tel:[[++bn_phone_raw]]"), (B.PHONE, "[[++bn_phone]]"),
-        ("viber://chat?number=%2B" + B.VIBER_RAW[1:], "viber://chat?number=%2B[[++bn_viber_raw]]"), (B.VIBER, "[[++bn_viber]]"),
         ("<b>vk.com/russianbath59</b>", "<b>[[++bn_vk_url:replace=`https://==`]]</b>"), (B.VK, "[[++bn_vk_url]]"),
         ("mailto:" + B.MAIL, "mailto:[[++bn_email]]"), (B.MAIL, "[[++bn_email]]"),
         ("ИП Ефремова Ольга Анатольевна", "[[++bn_legal_name]]"), ("590301252919", "[[++bn_inn]]"), ("325595800149589", "[[++bn_ogrnip]]"),
@@ -435,8 +445,7 @@ for name, cap, typ, desc, default, el in REVIEW_TVS:
 SETTINGS = [
     {"key": "bn_phone", "value": B.PHONE, "name": "Телефон бронирования", "cc": "Контакты", "help": "Как показывать: +7 (342) 277-66-22"},
     {"key": "bn_phone_raw", "value": B.PHONE_RAW, "name": "Телефон для ссылки", "cc": "Контакты", "help": "Только + и цифры: +73422776622"},
-    {"key": "bn_viber", "value": B.VIBER, "name": "Viber", "cc": "Контакты", "help": "Как показывать: +7 (919) 707-85-81"},
-    {"key": "bn_viber_raw", "value": B.VIBER_RAW[1:], "name": "Viber для ссылки", "cc": "Контакты", "help": "Только цифры, без +: 79197078581"},
+    {"key": "bn_max_url", "value": B.MAX, "name": "MAX: ссылка на чат", "cc": "Контакты", "help": "Полная ссылка https://max.ru/…; пусто — ссылки MAX на сайте нет"},
     {"key": "bn_vk_url", "value": B.VK, "name": "Группа ВКонтакте", "cc": "Контакты", "help": "Полная ссылка https://vk.com/…"},
     {"key": "bn_email", "value": B.MAIL, "name": "Почта на сайте", "cc": "Контакты", "help": "Показывается в подвале и на странице контактов"},
     {"key": "bn_lead_email", "value": B.MAIL, "name": "Почта для заявок", "cc": "Контакты", "help": "Сюда приходят заявки с сайта. Несколько адресов — через запятую"},
@@ -475,7 +484,7 @@ RES = [{
     "fields": {"pagetitle": "Главная", "longtitle": B.home()["title"], "description": B.home()["desc"], "menutitle": "Главная",
                "content": settings(strip_marks(seo_html)).strip()},
     "tvs": {"bn_hero": "assets/img/ru/hero-2.jpg", "bn_hero_alt": "Русский дом: фасад и беседка во дворе",
-            "bn_faq": lines(B.HOME_FAQ), "bn_rules": lines([B.GUESTS_RULE] + B.RULES),
+            "bn_faq": settings(lines(B.HOME_FAQ)), "bn_rules": lines([B.GUESTS_RULE] + B.RULES),
             "bn_strip": lines([("assets/img/%s.jpg" % p, c) for p, c in re.findall(r'<a href="img/([\w/-]+)\.jpg" data-lb="strip" data-cap="([^"]*)"', B.home()["body"])])},
 }]
 for i, (k, h) in enumerate(H.items()):
@@ -503,7 +512,7 @@ RES.append({"alias": "404", "parent": "", "template": "bn-text", "hidemenu": 1, 
             "fields": {"pagetitle": "Страница не найдена", "longtitle": B.notfound_page()["title"], "description": B.notfound_page()["desc"],
                        "content": settings(links(B.notfound_html()))}, "tvs": {}})
 cp = B.contacts_page()
-RES.append({"alias": "kontakty", "parent": "", "template": "bn-contacts", "fields": {"pagetitle": "Контакты", "longtitle": cp["title"], "description": cp["desc"]}, "tvs": {}})
+RES.append({"alias": "kontakty", "parent": "", "template": "bn-contacts", "fields": {"pagetitle": "Контакты", "longtitle": cp["title"], "description": settings(cp["desc"])}, "tvs": {}})
 bi = B.blog_index()
 RES.append({"alias": "blog", "parent": "", "template": "bn-blog", "isfolder": 1, "fields": {"pagetitle": "Блог", "longtitle": bi["title"], "description": bi["desc"]}, "tvs": {}})
 for p in POSTS:

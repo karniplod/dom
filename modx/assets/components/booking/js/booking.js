@@ -329,6 +329,15 @@
     });
   };
   GuestForm.prototype.qreq = 0;
+  /* Цель Яндекс Метрики по месту заявки (счётчик подключает cookies.js сайта после согласия на cookie):
+     lead — любая заявка; lead_booking — страница /booking, lead_house — страница Дома, lead_home — главная, lead_other — прочие */
+  GuestForm.prototype.goal = function () {
+    if (!window.ym || !window.BN_YM) return;
+    var place = this.form.getAttribute('data-bk-mode') === 'full' ? 'booking'
+      : (document.getElementById('d-title') ? 'house' : (document.getElementById('prices') ? 'home' : 'other'));
+    window.ym(window.BN_YM, 'reachGoal', 'lead', { place: place });
+    window.ym(window.BN_YM, 'reachGoal', 'lead_' + place);
+  };
   /* Ответ SendIt: при успехе показываем номер и ссылку. При ошибке проверяем — вдруг заявка сохранилась,
      а не ушло только письмо (FR-029): тогда это тоже успех для гостя. */
   GuestForm.prototype.sent = function (isError) {
@@ -344,6 +353,7 @@
   /* заявка создана этой отправкой: новая и не старше двух минут (хук пишет время в сессию) */
   GuestForm.prototype.fresh = function (d) { return d.status === 'new' && d.age != null && d.age < 120; };
   GuestForm.prototype.showDone = function (d) {
+    this.goal();
     var box = this.el.done;
     if (!box) return;
     box.innerHTML = '<h3>Заявка №' + esc(d.id) + ' отправлена</h3>'

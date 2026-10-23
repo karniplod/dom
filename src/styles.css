@@ -548,9 +548,11 @@ dialog.lb { background: rgba(10,6,4,.9); }
 .sec-row .sec-head { margin-bottom: 0; }
 
 /* контакты */
-.cgrid { display: grid; grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
-@media (max-width: 1000px) { .cgrid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 520px) { .cgrid { grid-template-columns: 1fr; } }
+/* карточки контактов тянутся на всю ширину: их 3 или 4 (MAX — если в «Конфигурации» есть ссылка) */
+.cgrid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+.cgrid > * { flex: 1 1 250px; min-width: 0; }
+.cgrid > .ccard--main { flex: 1.4 1 340px; }
+.ccard--main b { white-space: nowrap; }
 .ccard { display: grid; gap: 4px; align-content: start; padding: 22px; border-radius: 6px; background: var(--card); box-shadow: 0 1px 0 var(--line); text-decoration: none; transition: transform .2s, box-shadow .2s; min-width: 0; }
 .ccard:hover { transform: translateY(-2px); box-shadow: 0 1px 0 var(--line), 0 18px 34px -24px rgba(34,20,14,.5); }
 .ccard svg { width: 26px; height: 26px; fill: none; stroke: var(--fox-deep); stroke-width: 1.5; margin-bottom: 8px; }

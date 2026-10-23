@@ -468,6 +468,19 @@ try {
         if (saved($o, "настройку {$s['key']}")) say('new', "настройка {$s['key']} = «{$s['value']}»");
         $modx->setOption($s['key'], $s['value']);
     }
+    // поля, которые сайт больше не выводит (Viber убран 23.10.2026 по просьбе владельца) — убрать из «Конфигурации» и настроек
+    foreach (['bn_viber', 'bn_viber_raw'] as $old) {
+        try {
+            if ($cc && ($o = $modx->getObject('cgSetting', ['key' => $old]))) {
+                say('upd', "ClientConfig: поле {$old} больше не нужно — удаляю");
+                if (!$dry) { backup('settings', 'cc:' . $old, $o->toArray()); $o->remove(); }
+            }
+            if ($o = $modx->getObject(modSystemSetting::class, $old)) {
+                say('upd', "настройка {$old} больше не нужна — удаляю");
+                if (!$dry) { backup('settings', $old, $o->toArray()); $o->remove(); }
+            }
+        } catch (Throwable $e) { say('error', "удаление {$old}: " . $e->getMessage()); }
+    }
     // ClientConfig держит свой кэш значений: без сброса новые поля не видны на сайте, пока не очистить кэш вручную
     if ($cc && !$dry) { try { $modx->cacheManager->delete('system_settings', [xPDO::OPT_CACHE_KEY => 'clientconfig']); } catch (Throwable $e) {} }
     // значения из ClientConfig — сразу в этот запуск (их ждут сниппеты ниже)
@@ -580,6 +593,9 @@ try {
         if ($r = setting($key, $ids[$alias])) say($r, "настройка $key = ID страницы /$alias");
         $modx->setOption($key, $ids[$alias]);
     }
+    // ссылки [[~id]] — от корня сайта («/kontakty»): в разметке нет <base>, и относительные ссылки со статей блога вели бы в /blog/…
+    if (!$dry && ($r = setting('link_tag_scheme', 'abs'))) say($r, 'настройка link_tag_scheme = abs (ссылки от корня сайта)');
+    $modx->setOption('link_tag_scheme', 'abs');
 
     // --- 13. библиотека сайта: core/components/bania/ (Bania.php, страница «Заявки»)
     $comp = MODX_CORE_PATH . 'components/bania/';

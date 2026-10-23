@@ -2,11 +2,11 @@
   <div class="drawer__head"><a class="brand" href="[[~[[++site_start]]]]"><svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg><span><b>[[++site_name]]</b></span></a><button class="x" type="button" data-close aria-label="Закрыть меню"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <nav class="drawer__nav" aria-label="Меню">
     <p class="drawer__lab">Дома</p>[[bnHouses? &tpl=`bn.tpl.drawerHouse`]]
-    <div class="drawer__links"><a href="[[~[[++site_start]]]]#prices">Цены</a><a href="[[~[[++bn_blog_id]]]]">Блог</a><a href="[[~[[++bn_contacts_id]]]]">Контакты</a></div>
+    <div class="drawer__links"><a href="[[~[[++site_start]]]]">Главная</a><a href="[[~[[++site_start]]]]#prices">Цены</a><a href="[[bnBookingUrl]]">Бронирование</a><a href="[[~[[++bn_blog_id]]]]">Блог</a><a href="[[~[[++bn_contacts_id]]]]">Контакты</a></div>
   </nav>
   <div class="drawer__foot">
     <a class="drawer__phone tnum" href="tel:[[++bn_phone_raw]]">[[++bn_phone]]</a>
-    <p>Viber <a class="tnum" href="viber://chat?number=%2B[[++bn_viber_raw]]">[[++bn_viber]]</a> · <a href="[[++bn_vk_url]]" target="_blank" rel="noopener">ВКонтакте</a></p>
+    <p>[[++bn_max_url:notempty=`<a href="[[++bn_max_url]]" target="_blank" rel="noopener">MAX</a> · `]]<a href="[[++bn_vk_url]]" target="_blank" rel="noopener">ВКонтакте</a></p>
     <button class="btn" type="button" data-order>Оставить заявку</button>
   </div>
 </dialog>

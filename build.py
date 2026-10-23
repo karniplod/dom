@@ -35,7 +35,8 @@ def money(n): return f"{n:,}".replace(",", " ") + " ₽"
 def minp(h): return min(h["prices"])
 
 DISCOUNT = 5  # %, только при бронировании через группу ВКонтакте (решение владельца 22.10.2026)
-VIBER, VIBER_RAW, VK, MAIL = "+7 (919) 707-85-81", "+79197078581", "https://vk.com/russianbath59", "efremova7676@mail.ru"
+VK, MAIL = "https://vk.com/russianbath59", "efremova7676@mail.ru"
+MAX = ""   # ссылка на чат в MAX (https://max.ru/…); пусто — ссылки MAX на сайте нет. В MODX — «Конфигурация» → «Контакты»
 BRAND = "Доходные Дома Ефремовых"
 FOX = '<svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg>'
 ICONS = {
@@ -62,6 +63,12 @@ MARK = False
 def mark(name, html):
     return f"<!--bn:{name}-->{html}<!--/bn:{name}-->" if MARK else html
 
+def max_link(html):
+    """Фрагмент со ссылкой на MAX ({url} — адрес): без ссылки — ничего. Для MODX — метка max, сборщик делает из неё условие по bn_max_url"""
+    if MARK:
+        return f"<!--bn:max-->{html.replace('{url}', '[[++bn_max_url]]')}<!--/bn:max-->"
+    return html.replace("{url}", MAX) if MAX else ""
+
 def icon(n): return f'<svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[n]}</svg>'
 CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'
 XICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>'
@@ -82,9 +89,11 @@ def header(active=None):
     return f'''<header class="top"><div class="wrap top__in">
   <a class="brand" href="index.html" aria-label="{BRAND}, на главную">{FOX}<span><b>{BRAND}</b><small>Дома с баней и бассейном в Перми</small></span></a>
   <nav class="nav" aria-label="Основное меню">
+    <a href="index.html"{cur("home")}>Главная</a>
     <div class="nav__drop"><button{in_houses} type="button" aria-expanded="false" aria-controls="nav-houses">Дома{CHEV}</button>
       <div class="nav__panel" id="nav-houses">{houses}<a class="nav__all" href="index.html#prices">Сравнить Дома и цены</a></div></div>
     <a href="index.html#prices">Цены</a>
+    <a href="index.html#order">Бронирование</a>
     <a href="blog.html"{cur("blog")}>Блог</a>
     <a href="kontakty.html"{cur("contacts")}>Контакты</a>
   </nav>
@@ -99,11 +108,11 @@ def drawer():
   <div class="drawer__head"><a class="brand" href="index.html">{FOX}<span><b>{BRAND}</b></span></a><button class="x" type="button" data-close aria-label="Закрыть меню">{XICON}</button></div>
   <nav class="drawer__nav" aria-label="Меню">
     <p class="drawer__lab">Дома</p>{houses}
-    <div class="drawer__links"><a href="index.html#prices">Цены</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></div>
+    <div class="drawer__links"><a href="index.html">Главная</a><a href="index.html#prices">Цены</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></div>
   </nav>
   <div class="drawer__foot">
     <a class="drawer__phone tnum" href="tel:{PHONE_RAW}">{PHONE}</a>
-    <p>Viber <a class="tnum" href="viber://chat?number=%2B{VIBER_RAW[1:]}">{VIBER}</a> · <a href="{VK}" target="_blank" rel="noopener">ВКонтакте</a></p>
+    <p>{max_link('<a href="{url}" target="_blank" rel="noopener">MAX</a> · ')}<a href="{VK}" target="_blank" rel="noopener">ВКонтакте</a></p>
     <button class="btn" type="button" data-order>Оставить заявку</button>
   </div>
 </dialog>'''
@@ -155,7 +164,7 @@ def footer(house=""):
     <p class="foot__docs"><a href="politika.html">Политика обработки персональных данных</a> · <a href="soglasie.html">Согласие на обработку персональных данных</a> · <a href="cookie.html">Политика cookie</a> · <button type="button" data-cookie-settings>Настройки cookie</button></p>
   </div>
   <nav aria-label="Дома">{links}</nav>
-  <nav aria-label="Разделы"><a href="index.html#prices">Цены</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></nav>
+  <nav aria-label="Разделы"><a href="index.html">Главная</a><a href="index.html#prices">Цены</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></nav>
 </div></footer>
 <div class="mbar"><a class="btn btn--ghost" href="tel:{PHONE_RAW}">Позвонить</a><button class="btn" type="button" data-order>Заявка</button></div>
 {order_modal(house)}
@@ -166,7 +175,7 @@ def order_band(house="", photo="en/facade", title="Оставьте заявку
         h = H[house]
         extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p><p><a class="btn" href="{h["prepay"]}">Внести предоплату</a></p><p>После того, как администратор подтвердил даты</p>'
     else:
-        extra = f'<p>Viber: <a class="nb tnum" href="viber://chat?number=%2B{VIBER_RAW[1:]}">{VIBER}</a></p><p><a class="link" href="{VK}" target="_blank" rel="noopener">Мы во ВКонтакте</a> · <a class="link" href="kontakty.html">Все контакты</a></p>'
+        extra = max_link('<p><a class="link" href="{url}" target="_blank" rel="noopener">Написать в MAX</a></p>') + f'<p><a class="link" href="{VK}" target="_blank" rel="noopener">Мы во ВКонтакте</a> · <a class="link" href="kontakty.html">Все контакты</a></p>'
     return f'''<section class="band band--soft on-light" id="order" aria-labelledby="order-title"><div class="wrap order">
   <div class="order__txt">
     <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты 50%, остальное — при заселении.</p><p class="disc-line"><a href="{VK}" target="_blank" rel="noopener">Скидка {DISCOUNT}% при бронировании через группу ВКонтакте</a></p></div>
@@ -397,7 +406,7 @@ def home():
         rows += f'<tr class="money{" money-first" if i == 0 else ""}"><th scope="row">{d}</th>' + "".join(f'<td class="tnum">{money(v["prices"][i])}</td>' for v in H.values()) + "</tr>"
     rows += '<tr><th scope="row"><span class="sr">Ссылки</span></th>' + "".join(f'<td><a href="{v["file"]}">Подробнее о доме</a><br><a class="btn btn--sm" href="{v["prepay"]}">Внести предоплату</a></td>' for v in H.values()) + "</tr>"
     posts = "".join(post_card(p) for p in POSTS[:3])
-    body = f'''{header()}
+    body = f'''{header("home")}
 <main>
 <section class="hero" aria-labelledby="hero-title">
   {mark("heroImg", img("ru/hero-2", "Русский Дом: фасад и беседка во дворе", "hero__img", lazy=False))}
@@ -606,7 +615,7 @@ def contacts_page():
 <section class="band band--tight on-light" aria-label="Как связаться"><div class="wrap">
   <div class="cgrid">
     <a class="ccard ccard--main" href="tel:{PHONE_RAW}">{icon("phone")}<span>Бронирование</span><b class="tnum">{PHONE}</b></a>
-    <a class="ccard" href="viber://chat?number=%2B{VIBER_RAW[1:]}">{icon("chat")}<span>Viber</span><b class="tnum">{VIBER}</b></a>
+    {max_link('<a class="ccard" href="{url}" target="_blank" rel="noopener">' + icon("chat") + '<span>MAX</span><b>Написать в чат</b></a>')}
     <a class="ccard" href="{VK}" target="_blank" rel="noopener">{icon("chat")}<span>ВКонтакте</span><b>vk.com/russianbath59</b></a>
     <a class="ccard" href="mailto:{MAIL}">{icon("mail")}<span>Почта</span><b>{MAIL}</b></a>
   </div>
@@ -638,7 +647,7 @@ def contacts_page():
     ld = {"@context": "https://schema.org", "@type": "ContactPage", "name": "Контакты", "url": f"{SITE}/kontakty.html",
           "mainEntity": {**ORG, "telephone": PHONE, "email": MAIL, "contactPoint": [{"@type": "ContactPoint", "telephone": PHONE, "contactType": "reservations", "areaServed": "RU", "availableLanguage": "ru"}]}}
     return dict(fn="kontakty.html", title=f"Контакты и адреса домов — {BRAND}",
-                desc="Телефон бронирования +7 (342) 277-66-22, Viber, ВКонтакте. Адреса домов с баней и бассейном в Перми на картах, предоплата и реквизиты.",
+                desc="Телефон бронирования +7 (342) 277-66-22, ВКонтакте. Адреса домов с баней и бассейном в Перми на картах, предоплата и реквизиты.",
                 body=body, lds=[ld, ld_org(), cr_ld], og="en/facade")
 
 # ---------- блог ----------
@@ -823,7 +832,7 @@ def main():
         p = v["prices"]
         llms.append(f'- [{v["name"]}]({SITE}/{v["file"]}): {v["addr"]}, {v["area"]} м², ночуют {v["sleep"]}, отдыхают до {v["max"]}; заезд {v["checkin"]}, выезд {v["checkout"]}; сутки: Пн–Чт {p[0]} ₽, Пт {p[1]} ₽, Сб {p[2]} ₽, Вс {p[3]} ₽.')
     llms += ["", "Правила: залог 5 000–20 000 ₽, питомцы +1 000 ₽, курить в доме нельзя, тишина на участке с 22:00 до 9:00, после 22:00 музыка только в доме при закрытых окнах. Предоплата после подтверждения дат администратором.",
-             "", f"- [Контакты]({SITE}/kontakty.html): телефон, Viber, ВКонтакте, адреса на карте, предоплата", "", "## Блог", ""]
+             "", f"- [Контакты]({SITE}/kontakty.html): телефон, ВКонтакте, адреса на карте, предоплата", "", "## Блог", ""]
     llms += [f'- [{p["h1"]}]({SITE}/{post_file(p)}): {p["desc"]}' for p in POSTS]
     open(f"{SITE_DIR}/llms.txt", "w", encoding="utf8", newline="\n").write("\n".join(llms) + "\n")
     print("ok:", ", ".join(p["fn"] for p in pages))

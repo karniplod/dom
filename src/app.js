@@ -229,13 +229,20 @@
       errBox.hidden = true;
       var h = HOUSES[fHouse.value];
       var action = form.getAttribute("action");
+      // цель Метрики (счётчик есть только после согласия на cookie): где оставили заявку — страница Дома, главная или другая
+      var leadGoal = function () {
+        if (!window.ym || !window.BN_YM) return;
+        var place = document.getElementById("d-title") ? "house" : (document.getElementById("prices") ? "home" : "other");
+        window.ym(window.BN_YM, "reachGoal", "lead", { place: place });
+        window.ym(window.BN_YM, "reachGoal", "lead_" + place);
+      };
       if (!action) { done(String(Date.now()).slice(-4), h); return; }   // статичная версия без сервера
       // На сайте (MODX) заявка уходит на сервер: сохраняется в «Заявках», приходит письмом
       var btn = q('button[type="submit"]'); btn.disabled = true; btn.textContent = "Отправляем…";
       fetch(action, { method: "POST", body: new FormData(form), headers: { "X-Requested-With": "XMLHttpRequest", "Accept": "application/json" }, credentials: "same-origin" })
         .then(function (r) { return r.json().catch(function () { return { ok: false, message: "Сервер ответил с ошибкой (" + r.status + ")." }; }); })
         .then(function (res) {
-          if (res && res.ok) { done(res.id, h); if (window.ym && window.BN_YM) window.ym(window.BN_YM, "reachGoal", "lead"); return; }
+          if (res && res.ok) { done(res.id, h); leadGoal(); return; }
           errBox.textContent = (res && res.message) || "Не получилось отправить заявку. Позвоните нам, пожалуйста."; errBox.hidden = false;
           btn.disabled = false; btn.textContent = "Отправить заявку";
         })
