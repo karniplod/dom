@@ -49,6 +49,8 @@
         <field key="extra_guest_price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="500"/>
         <field key="extra_guest_limit" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="10"/>
         <field key="pet_price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="1000"/>
+        <!-- баня, ₽/час в этот тип дня; пусто — базовая цена бани (booking_addons.price_per_hour) -->
+        <field key="addon_price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true"/>
 
         <index alias="house_day" name="house_day" primary="false" unique="true" type="BTREE">
             <column key="house_id" length="" collation="A" null="false"/>
@@ -72,6 +74,8 @@
         <field key="holiday_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" index="pk"/>
         <field key="house_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" index="pk"/>
         <field key="price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <!-- баня, ₽/час в эту дату; пусто — по типу дня; price = 0 — сутки Дома по правилу -->
+        <field key="addon_price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true"/>
 
         <index alias="PRIMARY" name="PRIMARY" primary="true" unique="true" type="BTREE">
             <column key="holiday_id" length="" collation="A" null="false"/>

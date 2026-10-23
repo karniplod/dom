@@ -140,10 +140,34 @@ return [
             $t->admin();
             $house = $t->run('booking_create_manual', ['house' => 'sv', 'date_from' => '2031-10-12', 'date_to' => '2031-10-13', 'guests' => 4, 'guest_name' => 'ТЕСТ Дом', 'guest_phone' => '+79000000001']);
             $t->ok($house['success'], 'дом Свиязева подтверждён на ночь 12.10');
+            // Свиязева: заезд 14:00, выезд 11:00, уборка 30 минут — бронь Дома занимает баню по часам
             $s4 = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-12', 'time_from' => '10:00', 'time_to' => '12:00']);
-            $t->eq(409, $s4['status'], 'баня в ночь брони дома — нельзя');
+            $t->ok($s4['success'], 'в день заезда до заезда с уборкой (10–12) — можно: ' . $s4['message']);
+            $s4b = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-12', 'time_from' => '12:00', 'time_to' => '14:00']);
+            $t->eq(409, $s4b['status'], 'в день заезда 12–14 — нельзя: нет 30 минут на уборку до заезда в 14:00');
+            $sl = $t->run('booking_get_availability', ['house' => 'sv', 'addon' => 1, 'date' => '2031-10-12']);
+            $t->ok(in_array(['from' => '14:00', 'to' => '24:00', 'house' => true], $sl['data']['slots_busy'] ?? [], true), 'гости Дома в занятом времени бани: с 14:00');
+            $t->eq(false, $sl['data']['day_busy'] ?? null, 'день заезда не красный — утром баню можно снять');
             $s5 = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '15:00', 'time_to' => '17:00']);
             $t->ok($s5['success'], 'в день выезда гостей дома — можно');
+            $s5b = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '09:00', 'time_to' => '11:00']);
+            $t->eq(409, $s5b['status'], 'в день выезда до 11:30 — нельзя: гости ещё в Доме и уборка');
+            $s5c = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '11:30', 'time_to' => '13:30']);
+            $t->ok($s5c['success'], 'в день выезда с 11:30 — можно');
+
+            // обратно: подтверждённые сеансы бани и бронь Дома
+            $t->admin();
+            $m1 = $t->run('booking_create_manual', ['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-20', 'time_from' => '10:00', 'time_to' => '12:00', 'guests' => 4, 'guest_name' => 'ТЕСТ Баня', 'guest_phone' => '+79000000002']);
+            $m2 = $t->run('booking_create_manual', ['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-22', 'time_from' => '10:00', 'time_to' => '12:00', 'guests' => 4, 'guest_name' => 'ТЕСТ Баня', 'guest_phone' => '+79000000002']);
+            $t->ok($m1['success'] && $m2['success'], 'сеансы 20.10 и 22.10 10–12 подтверждены');
+            $h20 = $t->request(['house' => 'sv', 'date_from' => '2031-10-20', 'date_to' => '2031-10-21']);
+            $t->ok($h20['success'], 'Дом на ночь 20.10: утренний сеанс 20.10 до заезда — не мешает: ' . $h20['message']);
+            $h21 = $t->request(['house' => 'sv', 'date_from' => '2031-10-21', 'date_to' => '2031-10-22']);
+            $t->eq(409, $h21['status'], 'Дом на ночь 21.10: сеанс 22.10 в 10:00 — гости ещё не выехали');
+            $t->guest();
+            $cal = $t->run('booking_get_availability', ['house' => 'sv', 'from' => '2031-10-19', 'to' => '2031-10-24']);
+            $t->ok(in_array('2031-10-21', $cal['data']['busy'] ?? [], true) && !in_array('2031-10-20', $cal['data']['busy'] ?? [], true),
+                'в календаре Дома занята ночь 21.10, а 20.10 свободна');
             $en = $t->request(['house' => 'en', 'addon' => 1, 'date_from' => '2031-10-10', 'time_from' => '15:00', 'time_to' => '17:00']);
             $t->eq('addon', $en['data']['field'] ?? null, 'у Английского баня отдельно выключена');
         } finally {

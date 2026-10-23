@@ -20,6 +20,7 @@ class HolidayPrice extends \Booking\Model\HolidayPrice
             'holiday_id' => NULL,
             'house_id' => NULL,
             'price' => 0,
+            'addon_price' => NULL,
         ),
         'fieldMeta' => 
         array (
@@ -49,6 +50,14 @@ class HolidayPrice extends \Booking\Model\HolidayPrice
                 'phptype' => 'integer',
                 'null' => false,
                 'default' => 0,
+            ),
+            'addon_price' => 
+            array (
+                'dbtype' => 'int',
+                'precision' => '10',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => true,
             ),
         ),
         'indexes' => 

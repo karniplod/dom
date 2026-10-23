@@ -28,13 +28,14 @@ class Get extends Base
             }
             $date = $b->date($this->str('date', 10));
             $next = (new \DateTimeImmutable($date))->modify('+1 day')->format('Y-m-d');
-            $houseBusy = $b->availability()->bookedNights($house->get('id'), $date, $next)
-                || $b->availability()->blockedNights($house->get('id'), $date, $next);
-            $slots = array_map(fn($s) => ['from' => $s['from'], 'to' => $s['to']], $b->availability()->addonBusy($addon, $date));
+            $busy = $b->availability()->addonBusy($addon, $date);
+            // день занят: Дом закрыт администратором или не осталось окна на минимум часов
+            $dayBusy = $b->availability()->blockedNights($house->get('id'), $date, $next) || !$b->availability()->addonHasWindow($addon, $busy);
+            $slots = array_map(fn($s) => ['from' => $s['from'], 'to' => $s['to']] + (!empty($s['house']) ? ['house' => true] : []), $busy);
             return [
                 'house' => $house->get('code'),
                 'date' => $date,
-                'day_busy' => (bool)$houseBusy,
+                'day_busy' => $dayBusy,
                 'slots_busy' => $slots,
                 'buffer_minutes' => (int)$addon->get('buffer_minutes'),
                 'min_hours' => (int)$addon->get('min_hours'),
@@ -48,8 +49,8 @@ class Get extends Base
             throw new BookingError('Диапазон — не больше ' . Bookings::MAX_RANGE_DAYS . ' дней', 400);
         }
         $cal = $b->availability()->houseCalendar($house, $from, $to);
-        // сутки, в которые подтверждён сеанс бани дома, для брони дома тоже заняты
-        $sessions = array_keys($b->availability()->addonSessionDates($house->get('id'), $from, $to));
+        // ночи, которым мешают подтверждённые сеансы бани (не успевают до заезда или после выезда с уборкой)
+        $sessions = $b->availability()->addonBlockedNights($house, $from, $to);
         $out = [
             'house' => $house->get('code'),
             'from' => $from,
@@ -58,20 +59,20 @@ class Get extends Base
             'busy' => array_values(array_unique(array_merge($cal['nights_busy'], $cal['nights_blocked'], $sessions))),
         ];
         sort($out['busy']);
-        // для бани отдельно: день занят только ночью брони Дома, закрытием Дома или закрытием бани на весь день (без часов) —
-        // сеансы бани и закрытия на часы проверяются по часам
-        $bathDays = [];
+        // для бани отдельно: день красный, если Дом закрыт администратором или у бани не осталось окна на минимум часов
+        // (гости Дома с заезда и до выезда, сеансы, закрытия бани — с перерывами на уборку); иначе зелёный — снять по часам
         $addon = $house->get('addon_bookable_separately') ? $this->modx->getObject(Addon::class, ['house_id' => $house->get('id'), 'active' => 1]) : null;
         if ($addon) {
-            $q = $this->modx->newQuery(BlockedSlot::class, ['addon_id' => $addon->get('id'), 'date_from:<' => $to, 'date_to:>=' => $from]);
-            $q->where(['time_from' => null, 'OR:time_from:=' => '']);
-            foreach ($this->modx->getIterator(BlockedSlot::class, $q) as $s) {
-                $d = max($from, (string)$s->get('date_from'));
-                $last = min((string)$s->get('date_to'), (new \DateTimeImmutable($to))->modify('-1 day')->format('Y-m-d'));
-                for ($i = 0; $d <= $last && $i < Bookings::MAX_RANGE_DAYS; $i++, $d = (new \DateTimeImmutable($d))->modify('+1 day')->format('Y-m-d')) $bathDays[] = $d;
+            $bath = $cal['nights_blocked'];
+            foreach (Availability::nightsBetween($from, $to) as $d) {
+                if (!in_array($d, $bath, true) && !$b->availability()->addonHasWindow($addon, $b->availability()->addonBusy($addon, $d))) {
+                    $bath[] = $d;
+                }
             }
+        } else {
+            $bath = array_merge($cal['nights_busy'], $cal['nights_blocked']);
         }
-        $bath = array_values(array_unique(array_merge($cal['nights_busy'], $cal['nights_blocked'], $bathDays)));
+        $bath = array_values(array_unique($bath));
         sort($bath);
         $out['busy_bath'] = $bath;
         if ($b->isAdmin()) {

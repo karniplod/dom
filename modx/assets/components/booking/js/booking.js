@@ -353,7 +353,9 @@
       self.fitTimes(); self.quote();
       if (d.day_busy) { self.el.slots.innerHTML = '<span class="bk-warn">В этот день Дом забронирован — баня занята</span>'; return; }
       self.el.slots.innerHTML = (d.slots_busy.length
-        ? 'Занято: ' + d.slots_busy.map(function (s) { return esc(s.from + '–' + s.to); }).join(', ') + '. Между сеансами ' + d.buffer_minutes + ' мин на уборку.'
+        ? 'Занято: ' + d.slots_busy.map(function (s) {
+            return s.house ? (s.from === '00:00' ? (s.to === '24:00' ? 'весь день — в Доме гости' : 'до ' + esc(s.to) + ' — в Доме гости') : 'с ' + esc(s.from) + ' — заезд гостей Дома') : esc(s.from + '–' + s.to);
+          }).join(', ') + '. Между сеансами ' + d.buffer_minutes + ' мин на уборку.'
         : 'Баня свободна весь день.') + ' Время подтвердит администратор, когда перезвонит.';
     });
   };
@@ -823,6 +825,10 @@
             + ['weekday', 'friday', 'saturday', 'sunday'].map(function (t) {
               return '<label class="bk-field"><span>' + esc(L[t]) + ', ₽</span><input name="price_' + t + '" type="number" min="1" required value="' + (p.rules[t] || '') + '"></label>';
             }).join('')
+            + (p.addon_on ? '<p class="bk-muted bk-full">Баня отдельно, ₽ за час. Пусто — базовая цена ' + money(p.addon_base) + ' из «Дома и бани»</p>'
+              + ['weekday', 'friday', 'saturday', 'sunday'].map(function (t) {
+                return '<label class="bk-field"><span>Баня: ' + esc(L[t].toLowerCase()) + ', ₽/час</span><input name="addon_' + t + '" type="number" min="1" placeholder="' + (p.addon_base || '') + '" value="' + ((p.addon || {})[t] || '') + '"></label>';
+              }).join('') : '')
             + '<label class="bk-field"><span>Гостей в цене</span><input name="extra_guest_limit" type="number" min="1" value="' + p.extra_guest_limit + '"></label>'
             + '<label class="bk-field"><span>Доплата за гостя сверх, ₽</span><input name="extra_guest_price" type="number" min="0" value="' + p.extra_guest_price + '"></label>'
             + '<label class="bk-field"><span>Питомец, ₽</span><input name="pet_price" type="number" min="0" value="' + p.pet_price + '"></label>'
@@ -844,9 +850,10 @@
       if (!res.success) { self.fail(res); return; }
       var T = res.data.types;
       var typeOpts = function (sel) { return Object.keys(T).map(function (k) { return '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(T[k]) + '</option>'; }).join(''); };
-      var priceInputs = function (prices) {
+      var priceInputs = function (prices, addonPrices) {
         return self.houses.map(function (h) {
-          return '<label class="bk-field"><span>Особая цена: ' + esc(h.name) + ', ₽</span><input name="price_' + esc(h.code) + '" type="number" min="1" placeholder="по правилу" value="' + ((prices || {})[h.code] || '') + '"></label>';
+          return '<label class="bk-field"><span>Особая цена: ' + esc(h.name) + ', ₽</span><input name="price_' + esc(h.code) + '" type="number" min="1" placeholder="по правилу" value="' + ((prices || {})[h.code] || '') + '"></label>'
+            + (h.addon_bookable_separately ? '<label class="bk-field"><span>Баня: ' + esc(h.name) + ', ₽/час</span><input name="addon_' + esc(h.code) + '" type="number" min="1" placeholder="по типу дня" value="' + ((addonPrices || {})[h.code] || '') + '"></label>' : '');
         }).join('');
       };
       var formHtml = function (h) {
@@ -854,7 +861,7 @@
         return '<form class="bk-formgrid" data-holiday="' + (h.id || '') + '"><label class="bk-field"><span>Дата</span><input name="date" type="date" required value="' + (h.date || '') + '"></label>'
           + '<label class="bk-field"><span>Тип</span><select name="holiday_type">' + typeOpts(h.holiday_type) + '</select></label>'
           + '<label class="bk-field bk-full"><span>Название</span><input name="comment" maxlength="255" value="' + esc(h.comment || '') + '" placeholder="Например: 8 Марта"></label>'
-          + priceInputs(h.prices) + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">' + (h.id ? 'Сохранить' : 'Добавить праздник') + '</button>'
+          + priceInputs(h.prices, h.addon_prices) + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">' + (h.id ? 'Сохранить' : 'Добавить праздник') + '</button>'
           + (h.id ? ' <button class="bk-btn bk-btn--danger" type="button" data-del="' + h.id + '">Удалить</button>' : '') + '</div></form>';
       };
       self.pane.innerHTML = '<section class="bk-box"><h3>Новая праздничная дата</h3>' + formHtml() + '</section>'
@@ -863,8 +870,8 @@
         }).join('') : '<p class="bk-muted">Праздников пока нет.</p>');
       qsa(self.pane, 'form[data-holiday]').forEach(function (f) {
         self.form(f, function (data) {
-          var p = { op: 'save', id: f.getAttribute('data-holiday'), date: data.date, holiday_type: data.holiday_type, comment: data.comment, prices: {} };
-          self.houses.forEach(function (h) { p.prices[h.code] = data['price_' + h.code] || ''; });
+          var p = { op: 'save', id: f.getAttribute('data-holiday'), date: data.date, holiday_type: data.holiday_type, comment: data.comment, prices: {}, addon_prices: {} };
+          self.houses.forEach(function (h) { p.prices[h.code] = data['price_' + h.code] || ''; p.addon_prices[h.code] = data['addon_' + h.code] || ''; });
           return self.api.call('booking_manage_holiday', p).then(function (r) { if (r.success) { self.msg('Праздник сохранён'); self.tab_holidays(); } else self.fail(r); });
         });
       });

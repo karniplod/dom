@@ -9,7 +9,8 @@ use Booking\Service\Pricing;
 /**
  * booking_manage_prices — цены суток дома по типам дней и доплаты.
  * op=list — все дома; op=save — house, rules{weekday,friday,saturday,sunday → цена > 0},
- * extra_guest_price, extra_guest_limit, pet_price (одинаковые во всех строках дома).
+ * extra_guest_price, extra_guest_limit, pet_price (одинаковые во всех строках дома);
+ * addon_<тип дня> — баня, ₽/час в этот тип дня (необязательно; пусто — базовая цена бани).
  * После сохранения сбрасывается кеш страниц — booking.prices покажет новые цены (ст. 6.3).
  */
 class Prices extends Base
@@ -38,6 +39,15 @@ class Prices extends Base
             }
             $prices[$t] = (int)$v;
         }
+        $addonPrices = [];
+        foreach (Pricing::DAY_TYPES as $t) {
+            $v = $this->getProperty('addon_' . $t);
+            if ($v === null || trim((string)$v) === '') { $addonPrices[$t] = null; continue; }
+            if (!is_scalar($v) || !preg_match('~^\d+$~', trim((string)$v)) || (int)$v <= 0) {
+                throw BookingError::field('addon_' . $t, 'Баня «' . Pricing::DAY_LABELS[$t] . '» — целое число больше нуля или пусто');
+            }
+            $addonPrices[$t] = (int)$v;
+        }
         $extra = (int)$this->int('extra_guest_price', 500);
         $limit = (int)$this->int('extra_guest_limit', 10);
         $pet = (int)$this->int('pet_price', 1000);
@@ -51,7 +61,7 @@ class Prices extends Base
         foreach ($prices as $t => $p) {
             $r = $this->modx->getObject(PriceRule::class, ['house_id' => $h->get('id'), 'day_type' => $t])
                 ?: $this->modx->newObject(PriceRule::class, ['house_id' => $h->get('id'), 'day_type' => $t]);
-            $r->fromArray(['price' => $p, 'extra_guest_price' => $extra, 'extra_guest_limit' => $limit, 'pet_price' => $pet]);
+            $r->fromArray(['price' => $p, 'extra_guest_price' => $extra, 'extra_guest_limit' => $limit, 'pet_price' => $pet, 'addon_price' => $addonPrices[$t]]);
             $r->save();
         }
         $new = $this->forHouse($h);
@@ -67,6 +77,13 @@ class Prices extends Base
         foreach (Pricing::DAY_TYPES as $t) {
             $out['rules'][$t] = isset($rules[$t]) ? (int)$rules[$t]->get('price') : null;
         }
+        $out['addon'] = [];
+        foreach (Pricing::DAY_TYPES as $t) {
+            $out['addon'][$t] = isset($rules[$t]) && $rules[$t]->get('addon_price') ? (int)$rules[$t]->get('addon_price') : null;
+        }
+        $addon = $this->modx->getObject(\Booking\Model\Addon::class, ['house_id' => $h->get('id'), 'active' => 1]);
+        $out['addon_on'] = $addon && $h->get('addon_bookable_separately');
+        $out['addon_base'] = $addon ? (int)$addon->get('price_per_hour') : 0;
         $base = $rules['weekday'] ?? reset($rules) ?: null;
         $out['extra_guest_price'] = $base ? (int)$base->get('extra_guest_price') : 500;
         $out['extra_guest_limit'] = $base ? (int)$base->get('extra_guest_limit') : 10;

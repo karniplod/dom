@@ -23,6 +23,7 @@ class PriceRule extends \Booking\Model\PriceRule
             'extra_guest_price' => 500,
             'extra_guest_limit' => 10,
             'pet_price' => 1000,
+            'addon_price' => NULL,
         ),
         'fieldMeta' => 
         array (
@@ -77,6 +78,14 @@ class PriceRule extends \Booking\Model\PriceRule
                 'phptype' => 'integer',
                 'null' => false,
                 'default' => 1000,
+            ),
+            'addon_price' => 
+            array (
+                'dbtype' => 'int',
+                'precision' => '10',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => true,
             ),
         ),
         'indexes' => 

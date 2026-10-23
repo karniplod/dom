@@ -12,6 +12,7 @@ use Booking\Service\Pricing;
  * holiday_type: pre_holiday_workday → пятница, holiday_before_dayoff → суббота,
  * holiday_before_workday → воскресенье (правило в коде, ст. 6.2).
  * prices{код дома → цена} — особая цена суток этой даты у дома (FR-003a); пусто — по правилу.
+ * addon_prices{код дома → ₽/час} — особая цена бани в эту дату; пусто — по типу дня.
  */
 class Holiday extends Base
 {
@@ -61,10 +62,12 @@ class Holiday extends Base
         foreach ($this->modx->getIterator(HolidayPrice::class, ['holiday_id' => $h->get('id')]) as $p) {
             $house = $this->modx->getObject(HouseRow::class, $p->get('house_id'));
             if ($house) {
-                $a['prices'][$house->get('code')] = (int)$p->get('price');
+                if ((int)$p->get('price') > 0) $a['prices'][$house->get('code')] = (int)$p->get('price');
+                if ((int)$p->get('addon_price') > 0) $a['addon_prices'][$house->get('code')] = (int)$p->get('addon_price');
             }
         }
         $a['prices'] = (object)$a['prices'];
+        $a['addon_prices'] = (object)($a['addon_prices'] ?? []);
         return $a;
     }
 
@@ -94,6 +97,20 @@ class Holiday extends Base
             }
             $prices[(int)$house->get('id')] = (int)$price;
         }
+        $addonPrices = [];
+        foreach ($this->arr('addon_prices') as $code => $price) {
+            if ($price === '' || $price === null) {
+                continue;
+            }
+            $house = $this->modx->getObject(HouseRow::class, ['code' => (string)$code]);
+            if (!$house) {
+                throw BookingError::field('addon_prices', 'Неизвестный Дом: ' . $code);
+            }
+            if (!preg_match('~^\d+$~', (string)$price) || (int)$price <= 0) {
+                throw BookingError::field('addon_prices', 'Цена бани — целое число больше нуля');
+            }
+            $addonPrices[(int)$house->get('id')] = (int)$price;
+        }
         $h = $id ? $this->modx->getObject(HolidayRow::class, $id) : $this->modx->newObject(HolidayRow::class);
         if (!$h) {
             throw new BookingError('Праздник не найден', 404);
@@ -102,9 +119,10 @@ class Holiday extends Base
         $h->fromArray(['date' => $date, 'holiday_type' => $type, 'comment' => $this->str('comment', 255)]);
         $h->save();
         $this->modx->removeCollection(HolidayPrice::class, ['holiday_id' => $h->get('id')]);
-        foreach ($prices as $houseId => $price) {
+        foreach (array_unique(array_merge(array_keys($prices), array_keys($addonPrices))) as $houseId) {
             $p = $this->modx->newObject(HolidayPrice::class);
-            $p->fromArray(['holiday_id' => $h->get('id'), 'house_id' => $houseId, 'price' => $price], '', true);
+            $p->fromArray(['holiday_id' => $h->get('id'), 'house_id' => $houseId, 'price' => $prices[$houseId] ?? 0,
+                'addon_price' => $addonPrices[$houseId] ?? null], '', true);
             $p->save();
         }
         $new = $this->row($h);

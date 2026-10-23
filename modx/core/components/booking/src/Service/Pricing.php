@@ -98,6 +98,28 @@ class Pricing
     }
 
     /**
+     * Цена бани за час на дату: особая цена праздника у дома → цена по типу дня (с учётом правила праздников) →
+     * базовая цена бани. Возвращает [цена, подпись дня или '' для базовой].
+     */
+    public function addonPrice(House $house, Addon $addon, string $date): array
+    {
+        $modx = $this->booking->modx;
+        $hol = $modx->getObject(Holiday::class, ['date' => $date]);
+        if ($hol) {
+            $sp = $modx->getObject(HolidayPrice::class, ['holiday_id' => $hol->get('id'), 'house_id' => $house->get('id')]);
+            if ($sp && (int)$sp->get('addon_price') > 0) {
+                return [(int)$sp->get('addon_price'), $hol->get('comment') !== '' ? $hol->get('comment') : 'праздник'];   // «(8 Марта)» или «(праздник)»
+            }
+        }
+        $type = $hol ? (self::HOLIDAY_RULE[$hol->get('holiday_type')] ?? 'saturday') : self::weekdayType($date);
+        $rules = $this->rules($house->get('id'));
+        if (isset($rules[$type]) && (int)$rules[$type]->get('addon_price') > 0) {
+            return [(int)$rules[$type]->get('addon_price'), $hol ? 'праздник по тарифу «' . self::DAY_LABELS[$type] . '»' : mb_strtolower(self::DAY_LABELS[$type])];
+        }
+        return [(int)$addon->get('price_per_hour'), ''];
+    }
+
+    /**
      * Расчёт брони дома или бани.
      * $discount — применять скидку ВКонтакте (booking.vk_discount, %): только в брони администратора по галочке;
      * заявки с сайта, из приложения и MAX — без скидки (решение владельца 22.10.2026).
@@ -110,11 +132,13 @@ class Pricing
         $nights = [];
         if ($addon) {
             $hours = Availability::minutes($timeFrom, $timeTo) / 60;
-            $pph = (int)$addon->get('price_per_hour');
+            [$pph, $day] = $this->addonPrice($house, $addon, $from);
             if ($pph <= 0) {
                 throw new BookingError('Цена бани не задана — позвоните администратору', 400, ['price_missing' => true, 'field' => 'addon']);
             }
-            $lines[] = ['label' => $addon->get('name') . ', ' . self::hours($hours), 'qty' => $hours, 'amount' => (int)round($hours * $pph)];
+            // «Баня, 3 часа × 1 800 ₽ (суббота)» — гость видит цену часа и почему она такая
+            $label = $addon->get('name') . ', ' . self::hours($hours) . ' × ' . number_format($pph, 0, '', "\u{00A0}") . "\u{00A0}₽" . ($day !== '' ? ' (' . $day . ')' : '');
+            $lines[] = ['label' => $label, 'qty' => $hours, 'amount' => (int)round($hours * $pph)];
         } else {
             $nights = $this->nights($house, $from, $to);
             // одинаковые тарифы складываем в одну строку

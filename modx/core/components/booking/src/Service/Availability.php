@@ -80,20 +80,104 @@ class Availability
         return $out;
     }
 
-    /** Даты с подтверждёнными сеансами бани дома: date => [booking_id] */
-    public function addonSessionDates(int $houseId, string $from, string $to, int $exceptBooking = 0): array
+    /** Часы работы бани в форме гостя (как в booking.js): сеанс — с 08:00, заканчивается не позже 23:00 */
+    public const BATH_OPEN = 8 * 60;
+    public const BATH_CLOSE = 23 * 60;
+
+    /** Заезд и выезд дома в минутах и перерыв на уборку бани */
+    protected function houseClock(House $house): array
     {
+        $addon = $this->booking->modx->getObject(Addon::class, ['house_id' => $house->get('id'), 'active' => 1]);
+        return [self::toMin($house->get('checkin_time')), self::toMin($house->get('checkout_time')), $addon ? (int)$addon->get('buffer_minutes') : 30];
+    }
+
+    /**
+     * Ночи дома, которые нельзя занять из-за подтверждённых сеансов бани: night => booking_id.
+     * Сеанс в день D мешает ночи D, если не кончается за перерыв до заезда; мешает ночи D−1, если начинается раньше выезда плюс перерыв.
+     * Бронь, в которой день D целиком внутри (ночи D−1 и D), — любой сеанс в этот день мешает.
+     */
+    public function addonSessionNights(House $house, string $from, string $to, int $exceptBooking = 0): array
+    {
+        [$in, $out, $buf] = $this->houseClock($house);
         $q = $this->booking->modx->newQuery(BookingRow::class);
-        $q->where(['house_id' => $houseId, 'addon_id:!=' => null, 'status' => 'confirmed',
-            'date_from:>=' => $from, 'date_from:<' => $to]);
+        $q->where(['house_id' => $house->get('id'), 'addon_id:!=' => null, 'status' => 'confirmed',
+            'date_from:>=' => $from, 'date_from:<=' => $to]);
         if ($exceptBooking) {
             $q->where(['id:!=' => $exceptBooking]);
         }
-        $out = [];
+        $nights = [];
         foreach ($this->booking->modx->getIterator(BookingRow::class, $q) as $b) {
-            $out[$b->get('date_from')][] = (int)$b->get('id');
+            $d = $b->get('date_from');
+            $prev = (new \DateTimeImmutable($d))->modify('-1 day')->format('Y-m-d');
+            $inStay = $d >= $from && $d < $to;           // в этот день заезд или гости живут дальше
+            $outDay = $d > $from && $d <= $to;           // в этот день выезд из ночи D−1
+            $a = self::toMin($b->get('time_from'));
+            $z = self::toMin($b->get('time_to'));
+            if ($inStay && ($outDay || $z + $buf > $in)) {
+                $nights[$d] = $nights[$d] ?? (int)$b->get('id');
+            }
+            if ($outDay && ($inStay || $a - $buf < $out)) {
+                $nights[$prev] = $nights[$prev] ?? (int)$b->get('id');
+            }
         }
+        ksort($nights);
+        return $nights;
+    }
+
+    /** Для календаря Дома: ночи, которые сеансы бани делают недоступными (каждая ночь — сама по себе) */
+    public function addonBlockedNights(House $house, string $from, string $to): array
+    {
+        [$in, $out, $buf] = $this->houseClock($house);
+        $q = $this->booking->modx->newQuery(BookingRow::class);
+        $q->where(['house_id' => $house->get('id'), 'addon_id:!=' => null, 'status' => 'confirmed',
+            'date_from:>=' => $from, 'date_from:<=' => $to]);
+        $nights = [];
+        foreach ($this->booking->modx->getIterator(BookingRow::class, $q) as $b) {
+            $d = $b->get('date_from');
+            if (self::toMin($b->get('time_to')) + $buf > $in && $d < $to) $nights[$d] = true;
+            $prev = (new \DateTimeImmutable($d))->modify('-1 day')->format('Y-m-d');
+            if (self::toMin($b->get('time_from')) - $buf < $out && $prev >= $from) $nights[$prev] = true;
+        }
+        return array_keys($nights);
+    }
+
+    /**
+     * Гости дома в день $date — интервалы для бани [from, to) без перерыва: заезд в эту дату — с заезда до 24:00,
+     * выезд из прошлой ночи — с 00:00 до выезда; живут весь день — 00:00–24:00.
+     */
+    public function houseSegments(House $house, string $date, int $exceptBooking = 0): array
+    {
+        $prev = (new \DateTimeImmutable($date))->modify('-1 day')->format('Y-m-d');
+        $next = (new \DateTimeImmutable($date))->modify('+1 day')->format('Y-m-d');
+        $nights = $this->bookedNights((int)$house->get('id'), $prev, $next, $exceptBooking);
+        $p = $nights[$prev] ?? 0;
+        $t = $nights[$date] ?? 0;
+        if ($p && $t) {
+            return [['from' => '00:00', 'to' => '24:00', 'booking_id' => $t, 'house' => true]];
+        }
+        $out = [];
+        if ($p) $out[] = ['from' => '00:00', 'to' => substr($house->get('checkout_time'), 0, 5), 'booking_id' => $p, 'house' => true];
+        if ($t) $out[] = ['from' => substr($house->get('checkin_time'), 0, 5), 'to' => '24:00', 'booking_id' => $t, 'house' => true];
         return $out;
+    }
+
+    /** Есть ли у бани свободное окно не короче минимума часов (08:00–23:00, перерывы на уборку учтены) */
+    public function addonHasWindow(Addon $addon, array $busy): bool
+    {
+        $buf = (int)$addon->get('buffer_minutes');
+        $min = (int)$addon->get('min_hours') * 60;
+        $iv = [];
+        foreach ($busy as $s) {
+            $pad = empty($s['blocked']) ? $buf : 0;
+            $iv[] = [self::toMin($s['from']) - $pad, self::toMin($s['to']) + $pad];
+        }
+        usort($iv, fn($x, $y) => $x[0] <=> $y[0]);
+        $t = self::BATH_OPEN;
+        foreach ($iv as [$a, $z]) {
+            if ($a - $t >= $min) return true;
+            $t = max($t, $z);
+        }
+        return self::BATH_CLOSE - $t >= $min;
     }
 
     /** Для календаря: занятые и закрытые ночи дома в диапазоне */
@@ -125,10 +209,10 @@ class Availability
                 'field' => 'dates', 'conflict' => ['blocked' => true, 'nights' => array_keys($blocked)],
             ]);
         }
-        $sessions = $this->addonSessionDates($id, $from, $to, $exceptBooking);
+        $sessions = $this->addonSessionNights($house, $from, $to, $exceptBooking);
         if ($sessions) {
-            $first = reset($sessions)[0];
-            throw new BookingError('Даты заняты: в эти сутки подтверждён сеанс бани (бронь №' . $first . ')', 409, [
+            $first = reset($sessions);
+            throw new BookingError('Даты заняты: в эти дни подтверждён сеанс бани (бронь №' . $first . ') — он не успевает до заезда или после выезда с уборкой', 409, [
                 'field' => 'dates', 'conflict' => ['booking_id' => $first, 'nights' => array_keys($sessions)],
             ]);
         }
@@ -155,6 +239,11 @@ class Availability
             $out[] = ['from' => $b->get('time_from') ? substr($b->get('time_from'), 0, 5) : '00:00',
                 'to' => $b->get('time_to') ? substr($b->get('time_to'), 0, 5) : '24:00', 'blocked' => true];
         }
+        // гости дома: с заезда и до выезда (перерыв на уборку добавляется при проверке, как между сеансами)
+        $house = $modx->getObject(House::class, (int)$addon->get('house_id'));
+        if ($house) {
+            $out = array_merge($out, $this->houseSegments($house, $date));
+        }
         return $out;
     }
 
@@ -166,12 +255,7 @@ class Availability
     {
         $houseId = (int)$addon->get('house_id');
         $next = (new \DateTimeImmutable($date))->modify('+1 day')->format('Y-m-d');
-        $nights = $this->bookedNights($houseId, $date, $next);
-        if ($nights) {
-            throw new BookingError('Баня занята: в эти сутки Дом забронирован (бронь №' . reset($nights) . ')', 409, [
-                'field' => 'dates', 'conflict' => ['booking_id' => reset($nights), 'nights' => [$date]],
-            ]);
-        }
+        // бронь Дома занимает баню по часам — с заезда и до выезда (см. houseSegments, проверка ниже вместе с сеансами)
         if ($this->blockedNights($houseId, $date, $next)) {
             throw new BookingError('Дата закрыта администратором', 409, ['field' => 'dates', 'conflict' => ['blocked' => true, 'nights' => [$date]]]);
         }
@@ -183,9 +267,12 @@ class Availability
             $sa = self::toMin($s['from']) - $pad;
             $sb = self::toMin($s['to']) + $pad;
             if ($a < $sb && $b > $sa) {
-                $msg = empty($s['blocked'])
+                $msg = !empty($s['house'])
+                    ? 'Баня занята: в Доме гости (бронь №' . $s['booking_id'] . '), ' . ($s['from'] === '00:00' ? 'выезд до ' . $s['to'] : 'заезд с ' . $s['from'])
+                      . ', ещё ' . $buf . ' минут на уборку'
+                    : (empty($s['blocked'])
                     ? 'Баня занята с ' . $s['from'] . ' до ' . $s['to'] . ' (между сеансами ' . $buf . ' минут на уборку)'
-                    : 'Это время закрыто администратором';
+                    : 'Это время закрыто администратором');
                 throw new BookingError($msg, 409, ['field' => 'time', 'conflict' => ['booking_id' => $s['booking_id'] ?? null, 'slot' => $s]]);
             }
         }
