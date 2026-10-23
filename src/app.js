@@ -315,6 +315,23 @@
     sync();
   });
 
+  // Нижняя панель «Позвонить / Заявка» (телефон): на первом экране, у блока заявки и в подвале свои кнопки и телефон —
+  // там панель прячется, видна, пока листают остальное. Без IntersectionObserver — видна всегда, как раньше
+  var mbar = document.querySelector(".mbar");
+  if (mbar && "IntersectionObserver" in window) {
+    var seen = new Set(), atTop = true;
+    var sync = function () { mbar.classList.toggle("is-off", atTop || seen.size > 0); };
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) seen.add(e.target); else seen.delete(e.target); });
+      sync();
+    }, { rootMargin: "0px 0px -70px 0px" });
+    [document.getElementById("order"), document.querySelector("footer.foot")].forEach(function (el) { if (el) io.observe(el); });
+    // первый экран — по прокрутке: первый блок страницы бывает высотой со всю статью
+    var onScroll = function () { var t = window.scrollY < window.innerHeight * 0.6; if (t !== atTop) { atTop = t; sync(); } };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    atTop = window.scrollY < window.innerHeight * 0.6; sync();
+  }
+
   // Кнопка «Наверх»: появляется, когда пролистали больше экрана
   var top = document.createElement("button");
   top.type = "button"; top.className = "totop"; top.hidden = true; top.setAttribute("aria-label", "Наверх");

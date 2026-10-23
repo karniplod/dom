@@ -266,8 +266,10 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 88px); }
 @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
 .rules { list-style: none; padding: 0; margin: 0; }
-.rules li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.rules li span:last-child { font-weight: 600; text-align: right; }
+.rules li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, max-content); gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.rules li span:last-child { font-weight: 600; text-align: right; max-width: 45ch; }
+/* узкий экран: название, под ним значение — длинное значение не наезжает на название */
+@media (max-width: 520px) { .rules li { grid-template-columns: minmax(0, 1fr); gap: 4px; } .rules li span:last-child { text-align: left; max-width: none; } }
 .faq details { border-bottom: 1px solid var(--line); }
 .faq summary { cursor: pointer; list-style: none; padding: 18px 36px 18px 0; position: relative; font-weight: 600; }
 .faq summary::-webkit-details-marker { display: none; }
@@ -438,6 +440,9 @@ fieldset.field { border: 0; margin: 0; padding: 0; }
     padding: 10px var(--gutter-r) calc(10px + env(safe-area-inset-bottom, 0px)) var(--gutter); background: rgba(34,20,14,.95); }
   .mbar .btn { min-height: 48px; padding: 0 10px; }
   .mbar .btn--ghost { color: var(--cream); }
+  /* прячется вниз отдельным свойством translate — transform занят подъёмом над баннером cookie */
+  .mbar { transition: translate .25s ease, visibility .25s; }
+  .mbar.is-off { translate: 0 110%; visibility: hidden; }
 }
 
 /* страница дома */
@@ -703,7 +708,7 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .hcard__price .disc { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: #F7E3CF; color: var(--fox-deep); font-size: 13.5px; }
 .facts-row .disc-chip { background: var(--fox-btn); border-color: var(--fox-btn); color: var(--cream); }
 /* скидка через ВКонтакте — кнопка, как остальные */
-.facts-row .disc-btn { border-radius: 999px; text-decoration: none; }
+.facts-row .disc-btn { border-radius: 999px; text-decoration: none; white-space: normal; max-width: 100%; text-align: center; line-height: 1.25; }   /* на узком экране (iPhone SE) текст переносится, а не вылезает за край */
 .omodal__disc { justify-self: start; padding: 5px 12px; border-radius: 999px; background: #F7E3CF; color: var(--fox-deep) !important; font-size: 14.5px; }
 .disc-line, .disc-line a { color: #8E3F06; }   /* на бежевом фоне блока заявки --fox-deep даёт контраст 4,15 — темнее, 5,5:1 */
 .promo p a { color: inherit; }
