@@ -466,6 +466,11 @@ SETTINGS = [
     {"key": "bn_blog_cats", "value": "\n".join("%s | %s" % kv for kv in CATS.items()), "name": "Рубрики блога", "cc": "", "help": "По рубрике в строке: «адрес | название»"},
     {"key": "bn_og_default", "value": "assets/img/ru/hero-2.jpg", "name": "Картинка для превью ссылок", "cc": "", "help": "Если у страницы нет своей"},
 ]
+from reviews import HOUSE_REVIEW_LINKS   # noqa: E402  ссылки на площадки отзывов по Домам (их читает Bania::reviewPanels)
+for k, h in H.items():
+    for plat, key in (("2ГИС", "2gis"), ("Яндекс Карты", "yandex"), ("Авито", "avito")):
+        SETTINGS.append({"key": "bn_rev_%s_%s" % (k, key), "value": HOUSE_REVIEW_LINKS.get(k, {}).get(plat, ""), "name": "%s: %s" % (h["name"], plat),
+                         "cc": "Отзывы", "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"})
 ID_SETTINGS = {"bn_politika_id": "politika", "bn_soglasie_id": "soglasie", "bn_cookie_id": "cookie", "bn_blog_id": "blog", "bn_contacts_id": "kontakty", "bn_lead_id": "api-zayavka", "bn_reviews_id": "otzyvy", "bn_rss_id": "rss"}
 for k, h in H.items():
     ID_SETTINGS["bn_house_%s_id" % k] = h["file"][:-5]

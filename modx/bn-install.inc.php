@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-23 11:36",
+ "version": "2026-10-23 11:41",
  "chunks": [
   {
    "name": "bn.fox",
@@ -1197,6 +1197,69 @@ $manifest = <<<'JSON'
    "name": "Картинка для превью ссылок",
    "cc": "",
    "help": "Если у страницы нет своей"
+  },
+  {
+   "key": "bn_rev_en_2gis",
+   "value": "https://2gis.ru/perm/firm/70000001059266688/tab/reviews",
+   "name": "Английский Дом: 2ГИС",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
+  },
+  {
+   "key": "bn_rev_en_yandex",
+   "value": "",
+   "name": "Английский Дом: Яндекс Карты",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
+  },
+  {
+   "key": "bn_rev_en_avito",
+   "value": "https://www.avito.ru/perm/doma_dachi_kottedzhi/6-k._dom_200_m_3794756036#open-reviews-list",
+   "name": "Английский Дом: Авито",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
+  },
+  {
+   "key": "bn_rev_ru_2gis",
+   "value": "https://2gis.ru/perm/geo/70030077031671788/tab/reviews",
+   "name": "Русский Дом: 2ГИС",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
+  },
+  {
+   "key": "bn_rev_ru_yandex",
+   "value": "",
+   "name": "Русский Дом: Яндекс Карты",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
+  },
+  {
+   "key": "bn_rev_ru_avito",
+   "value": "https://www.avito.ru/perm/doma_dachi_kottedzhi/4-k._dom_180_m_2291305316#open-reviews-list",
+   "name": "Русский Дом: Авито",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
+  },
+  {
+   "key": "bn_rev_sv_2gis",
+   "value": "https://2gis.ru/perm/firm/2252328095042711/tab/reviews",
+   "name": "Дом на Свиязева: 2ГИС",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
+  },
+  {
+   "key": "bn_rev_sv_yandex",
+   "value": "https://yandex.ru/maps/org/26303212403/reviews/",
+   "name": "Дом на Свиязева: Яндекс Карты",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
+  },
+  {
+   "key": "bn_rev_sv_avito",
+   "value": "https://www.avito.ru/perm/doma_dachi_kottedzhi/4-k._dom_140_m_2611121303#open-reviews-list",
+   "name": "Дом на Свиязева: Авито",
+   "cc": "Отзывы",
+   "help": "Ссылка на карточку Дома с отзывами. Пусто — логотип без ссылки"
   },
   {
    "key": "bn_politika_id",
