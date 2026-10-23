@@ -9,6 +9,7 @@
   var WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   var STATUS = { 'new': 'Новая', confirmed: 'Подтверждена', cancelled: 'Отменена', completed: 'Завершена' };
   var DEPOSIT = { not_set: 'Не назначен', pending: 'Ожидается', paid: 'Внесён', returned: 'Возвращён' };
+  var SOURCE = { site: 'Сайт', pwa: 'Приложение', max: 'MAX', admin: 'Администратор (по телефону)', migrated: 'Перенесена из прежних заявок' };
 
   // ---------------------------------------------------------------- помощники
   function esc(s) {
@@ -596,7 +597,7 @@
     var overlaps = (d.overlaps || []).map(function (o) {
       return '<li><button type="button" class="bk-link" data-open="' + o.id + '">№' + o.id + '</button> ' + esc(o.guest) + ', ' + esc(o.dates) + ' — ' + esc(STATUS[o.status]) + '</li>';
     }).join('');
-    box.innerHTML = '<h3>' + (d.addon ? 'Баня' : 'Бронь') + ' №' + d.id + ' <span class="bk-badge bk-badge--' + d.status + '">' + esc(STATUS[d.status]) + '</span>'
+    box.innerHTML = '<h3>' + (d.addon ? 'Баня' : (d.status === 'new' ? 'Заявка' : 'Бронь')) + ' №' + d.id + ' <span class="bk-badge bk-badge--' + d.status + '">' + esc(STATUS[d.status]) + '</span>'
       + (d.cancellation_requested && active ? ' <span class="bk-badge bk-badge--cancel">просят отмену</span>' : '') + '</h3>'
       + '<dl class="bk-dl"><dt>Дом</dt><dd>' + esc(d.house_name) + '</dd><dt>Даты</dt><dd>' + esc(d.dates) + '</dd>'
       + '<dt>Гость</dt><dd>' + esc(d.guest_name) + ', <a href="tel:' + esc(d.guest_phone) + '">' + esc(d.guest_phone) + '</a></dd>'
@@ -604,7 +605,7 @@
       + (d.guest_comment ? '<dt>Комментарий</dt><dd>' + esc(d.guest_comment) + '</dd>' : '')
       + (d.cancellation_reason ? '<dt>Отмена</dt><dd>' + esc(d.cancellation_reason) + '</dd>' : '')
       + '<dt>Залог</dt><dd>' + (d.deposit_amount ? money(d.deposit_amount) + ' — ' : '') + esc(DEPOSIT[d.deposit_status]) + '</dd>'
-      + '<dt>Источник</dt><dd>' + esc(d.source) + (d.legacy_lead_id ? ' (прежняя заявка №' + d.legacy_lead_id + ')' : '') + '</dd></dl>'
+      + '<dt>Источник</dt><dd>' + esc(SOURCE[d.source] || d.source) + (d.legacy_lead_id ? ' (прежняя заявка №' + d.legacy_lead_id + ')' : '') + '</dd></dl>'
       + '<table class="bk-quote__t"><tbody>' + lines + '</tbody><tfoot><tr><th>Итого</th><th>' + money(d.total) + '</th></tr></tfoot></table>'
       + (overlaps ? '<div class="bk-overlaps"><b>На эти даты ещё:</b><ul>' + overlaps + '</ul></div>' : '')
       + '<div class="bk-actions">'
@@ -678,7 +679,7 @@
       if (!res.success) { w.innerHTML = '<p class="bk-warn">' + esc(res.message) + '</p>'; return; }
       var d = res.data;
       if (!d.items.length) { w.innerHTML = '<p class="bk-muted">Ничего не найдено</p>'; return; }
-      w.innerHTML = '<table class="bk-table"><thead><tr><th>№</th><th>Статус</th><th>Дом</th><th>Даты</th><th>Гость</th><th>Гостей</th><th>Сумма</th><th>Залог</th><th>Создана</th></tr></thead><tbody>'
+      w.innerHTML = '<table class="bk-table bk-table--list"><thead><tr><th>№</th><th>Статус</th><th>Дом</th><th>Даты</th><th>Гость</th><th>Гостей</th><th>Сумма</th><th>Залог</th><th>Создана</th></tr></thead><tbody>'
         + d.items.map(function (r) {
           return '<tr data-open="' + r.id + '" tabindex="0"><td>' + r.id + '</td><td><span class="bk-badge bk-badge--' + r.status + '">' + STATUS[r.status] + '</span>'
             + (r.cancellation_requested && (r.status === 'new' || r.status === 'confirmed') ? ' <span class="bk-badge bk-badge--cancel">отмена?</span>' : '') + '</td>'
