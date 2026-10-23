@@ -352,8 +352,8 @@ class Bania
                 // QR площадки — когда есть ссылка и готов файл кода (tools/make_qr.py); на телефоне код — просто ссылка
                 $qrFile = 'assets/img/qr/rev-' . $h['code'] . '-' . $key . '.svg';
                 if ($u !== '' && is_file(MODX_BASE_PATH . $qrFile)) {
-                    $qrs .= '<a class="hrev__qr" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow" aria-label="' . $name . ': оставить отзыв о Доме «' . self::e($h['name']) . '»">'
-                        . '<span class="plat"><span class="plat__mark" style="background:' . $color . '">' . $sign . '</span><span class="plat__name">' . $name . '</span></span>'
+                    $qrs .= '<a class="hrev__qr" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow">'
+                        . '<span class="plat"><span class="plat__mark" style="background:' . $color . '" aria-hidden="true">' . $sign . '</span><span class="plat__name">' . $name . '<span class="sr">: оставить отзыв о Доме «' . self::e($h['name']) . '»</span></span></span>'
                         . '<span class="hrev__qrimg"><img src="' . self::$modx->getOption('base_url') . $qrFile . '" alt="" width="140" height="140" loading="lazy"></span></a>';
                 }
             }

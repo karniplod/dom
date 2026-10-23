@@ -243,6 +243,7 @@ CHUNKS["bn.head"] = ("Общие", """<meta charset="utf-8"><meta name="viewport
 <meta property="og:title" content="[[*longtitle:default=`[[*pagetitle]]`:htmlent]]"><meta property="og:description" content="[[*description:htmlent]]"><meta property="og:url" content="[[~[[*id]]? &scheme=`full`]]">
 [[bnOg? &tv=`[[+ogtv:default=`bn_hero`]]`]]
 [[+noindex:notempty=`<meta name="robots" content="noindex, nofollow">`]]
+[[*id:is=`[[++error_page]]`:then=`<meta name="robots" content="noindex, nofollow">`:else=``]]
 [[++bn_yandex_verification:notempty=`<meta name="yandex-verification" content="[[++bn_yandex_verification]]">`]]
 <meta name="theme-color" content="#22140E"><link rel="icon" href="[[++base_url]]assets/img/fox.svg" type="image/svg+xml">
 <link rel="alternate" type="application/rss+xml" title="Блог — [[++site_name:htmlent]]" href="[[~[[++bn_rss_id]]]]">

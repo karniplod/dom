@@ -144,7 +144,8 @@
       var days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
       var lead = (first.getDay() + 6) % 7;
       html += '<div class="bk-cal__month"><div class="bk-cal__title">' + MONTHS[first.getMonth()] + ' ' + first.getFullYear() + '</div>'
-        + '<div class="bk-cal__grid" role="grid">' + WD.map(function (w) { return '<span class="bk-cal__wd">' + w + '</span>'; }).join('');
+        // без role=grid: внутри кнопки с подписями дат, а не строки и ячейки таблицы
+        + '<div class="bk-cal__grid">' + WD.map(function (w) { return '<span class="bk-cal__wd">' + w + '</span>'; }).join('');
       for (var k = 0; k < lead; k++) html += '<span></span>';
       for (var day = 1; day <= days; day++) {
         var s = iso(new Date(first.getFullYear(), first.getMonth(), day, 12));

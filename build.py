@@ -356,8 +356,8 @@ PLATFORM_BADGE = {"2ГИС": ("#137A18", "2Г"), "Яндекс Карты": ("#C
 def review_qr(k, name, url):
     """Колонка площадки: значок с названием, под ним QR. Вся колонка — ссылка (на телефоне код не сканируют, а нажимают)"""
     color, sign = PLATFORM_BADGE[name]
-    return (f'<a class="hrev__qr" href="{esc(url)}" target="_blank" rel="noopener nofollow" aria-label="{esc(name)}: оставить отзыв о Доме «{esc(H[k]["name"])}»">'
-            f'<span class="plat"><span class="plat__mark" style="background:{color}">{esc(sign)}</span><span class="plat__name">{esc(name)}</span></span>'
+    return (f'<a class="hrev__qr" href="{esc(url)}" target="_blank" rel="noopener nofollow">'
+            f'<span class="plat"><span class="plat__mark" style="background:{color}" aria-hidden="true">{esc(sign)}</span><span class="plat__name">{esc(name)}<span class="sr">: оставить отзыв о Доме «{esc(H[k]["name"])}»</span></span></span>'
             f'<span class="hrev__qrimg"><img src="img/qr/rev-{k}-{PLATFORM_KEY[name]}.svg" alt="" width="140" height="140" loading="lazy"></span></a>')
 
 def house_review_panel(k):
