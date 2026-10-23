@@ -1,7 +1,10 @@
 """WebP-копии фото сайта для телефонов и компьютеров: site/img/**/<имя>.jpg → <имя>-<ширина>.webp (480, 800, 1200, 1600).
 Шире оригинала не делаем; пересоздаём только если JPEG новее копии. Запускается из build.py сам; вручную: py tools/make_webp.py"""
 import os, sys
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:   # без Pillow (например, сборка на GitHub) копии берутся готовые из site/img
+    Image = None
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMG = os.path.join(ROOT, "site", "img")
@@ -18,6 +21,10 @@ def widths_for(w):
 
 
 def run(quiet=False):
+    if Image is None:
+        if not quiet:
+            print("webp: Pillow не установлен — новые копии не делаю (py -m pip install pillow)")
+        return 0
     made = 0
     for dirpath, _, files in os.walk(IMG):
         if os.path.basename(dirpath) in ("qr", "reviews"):   # QR — векторные; скриншоты отзывов — как есть
