@@ -329,14 +329,18 @@ class Bania
         foreach (self::houses() as $h) {
             if ($house && $h['id'] !== (int)$house) continue;
             $logos = '';
+            $hasLink = false;
             foreach (self::REVIEW_PLATFORMS as $name => [$color, $sign, $key]) {
                 $u = trim((string)self::opt('bn_rev_' . $h['code'] . '_' . $key));
+                $hasLink = $hasLink || $u !== '';
                 $inner = '<span class="plat__mark" style="background:' . $color . '">' . $sign . '</span><span class="plat__name">' . $name . '</span>';
                 $logos .= $u !== '' ? '<a class="plat" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow">' . $inner . '</a>' : '<span class="plat">' . $inner . '</span>';
             }
             $shots = '';
             foreach (['Яндекс Карт', '2ГИС', 'Авито'] as $p) $shots .= '<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с ' . $p . '</span></div>';
-            $qr = '<figure class="hrev__qr"><img src="' . self::$modx->getOption('base_url') . 'assets/img/qr/rev-' . $h['code'] . '.svg" alt="QR-код: оставить отзыв, ' . self::e($h['name']) . '" width="150" height="150" loading="lazy"><figcaption>Оставить отзыв: наведите камеру телефона</figcaption></figure>';
+            // QR «оставить отзыв» — только когда есть ссылка на площадку и готов файл кода (tools/make_qr.py)
+            $qrFile = 'assets/img/qr/rev-' . $h['code'] . '.svg';
+            $qr = !$hasLink || !is_file(MODX_BASE_PATH . $qrFile) ? '' : '<figure class="hrev__qr"><img src="' . self::$modx->getOption('base_url') . 'assets/img/qr/rev-' . $h['code'] . '.svg" alt="QR-код: оставить отзыв, ' . self::e($h['name']) . '" width="150" height="150" loading="lazy"><figcaption>Оставить отзыв: наведите камеру телефона</figcaption></figure>';
             $out .= '<div class="hrev h-' . $h['code'] . '"><div class="hrev__head"><h3>' . self::e($h['name']) . '</h3><div class="plats">' . $logos . '</div></div>'
                 . '<div class="hrev__body"><div class="rshots">' . $shots . '</div>' . $qr . '</div></div>';
         }

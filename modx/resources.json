@@ -255,6 +255,21 @@
   "tvs": {}
  },
  {
+  "alias": "404",
+  "parent": "",
+  "template": "bn-text",
+  "hidemenu": 1,
+  "searchable": 0,
+  "richtext": 0,
+  "fields": {
+   "pagetitle": "Страница не найдена",
+   "longtitle": "Страница не найдена — Доходные Дома Ефремовых",
+   "description": "Такой страницы на сайте нет. Дома с баней и бассейном в Перми — на главной.",
+   "content": "<p>Такой страницы нет. Возможно, ссылка устарела: сайт обновился, и адреса страниц поменялись.</p>\n<p>Наши Дома:</p>\n<ul><li><a class=\"link\" href=\"[[~[[++bn_house_en_id]]]]\">Английский Дом</a> — улица Космонавта Беляева, 111</li><li><a class=\"link\" href=\"[[~[[++bn_house_ru_id]]]]\">Русский Дом</a> — улица Космонавта Беляева, 111/1</li><li><a class=\"link\" href=\"[[~[[++bn_house_sv_id]]]]\">Дом на Свиязева</a> — улица Архитектора Свиязева, 59</li></ul>\n<p class=\"nf-actions\"><a class=\"btn\" href=\"[[~[[++site_start]]]]\">На главную</a> <a class=\"btn btn--ghost\" href=\"[[~[[++bn_contacts_id]]]]\">Контакты</a></p>\n<p>Забронировать или спросить — по телефону <a class=\"link\" href=\"tel:[[++bn_phone_raw]]\">[[++bn_phone]]</a>.</p>"
+  },
+  "tvs": {}
+ },
+ {
   "alias": "kontakty",
   "parent": "",
   "template": "bn-contacts",

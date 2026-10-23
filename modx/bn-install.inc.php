@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-23 10:46",
+ "version": "2026-10-23 11:04",
  "chunks": [
   {
    "name": "bn.fox",
@@ -1296,7 +1296,8 @@ $manifest = <<<'JSON'
   "bn_rss_id": "rss",
   "bn_house_en_id": "angliyskij-dom",
   "bn_house_ru_id": "russkij-dom",
-  "bn_house_sv_id": "dom-na-sviyazeva"
+  "bn_house_sv_id": "dom-na-sviyazeva",
+  "error_page": "404"
  }
 }
 JSON;

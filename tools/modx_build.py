@@ -460,7 +460,9 @@ SETTINGS = [
 ID_SETTINGS = {"bn_politika_id": "politika", "bn_soglasie_id": "soglasie", "bn_cookie_id": "cookie", "bn_blog_id": "blog", "bn_contacts_id": "kontakty", "bn_lead_id": "api-zayavka", "bn_reviews_id": "otzyvy", "bn_rss_id": "rss"}
 for k, h in H.items():
     ID_SETTINGS["bn_house_%s_id" % k] = h["file"][:-5]
-for key in ID_SETTINGS:
+IDS_OWN = list(ID_SETTINGS)   # свои настройки «ID страницы»; error_page — системная настройка MODX, её только заполняем
+ID_SETTINGS["error_page"] = "404"
+for key in IDS_OWN:
     SETTINGS.append({"key": key, "value": "", "name": "ID страницы", "cc": "", "help": "Заполняет установщик"})
 
 # ---------------------------------------------------------------- страницы
@@ -497,6 +499,9 @@ for slug, d in B.DOCS.items():   # документы 152-ФЗ — тексто�
     RES.append({"alias": slug, "parent": "", "template": "bn-text", "hidemenu": 1, "richtext": 0,
                 "fields": {"pagetitle": d["title"], "longtitle": d["title"] + " — " + BRAND, "description": d["desc"],
                            "content": settings(links(B.legal_html(slug)))}, "tvs": {}})
+RES.append({"alias": "404", "parent": "", "template": "bn-text", "hidemenu": 1, "searchable": 0, "richtext": 0,   # страница ошибки (error_page)
+            "fields": {"pagetitle": "Страница не найдена", "longtitle": B.notfound_page()["title"], "description": B.notfound_page()["desc"],
+                       "content": settings(links(B.notfound_html()))}, "tvs": {}})
 cp = B.contacts_page()
 RES.append({"alias": "kontakty", "parent": "", "template": "bn-contacts", "fields": {"pagetitle": "Контакты", "longtitle": cp["title"], "description": cp["desc"]}, "tvs": {}})
 bi = B.blog_index()

@@ -217,6 +217,28 @@ def legal_page(slug):
 {footer()}'''
     return dict(fn=slug + ".html", title=f'{d["title"]} — {BRAND}', desc=d["desc"], body=body, lds=[cr_ld], og="ru/hero-2")
 
+def notfound_html():
+    """Текст страницы 404 (тот же в MODX — «Содержимое» страницы ошибки): куда пойти дальше"""
+    houses = "".join(f'<li><a class="link" href="{h["file"]}">{h["name"]}</a> — {esc(h["street"])}</li>' for h in H.values())
+    return f'''<p>Такой страницы нет. Возможно, ссылка устарела: сайт обновился, и адреса страниц поменялись.</p>
+<p>Наши Дома:</p>
+<ul>{houses}</ul>
+<p class="nf-actions"><a class="btn" href="index.html">На главную</a> <a class="btn btn--ghost" href="kontakty.html">Контакты</a></p>
+<p>Забронировать или спросить — по телефону <a class="link" href="tel:{PHONE_RAW}">{PHONE}</a>.</p>'''
+
+def notfound_page():
+    body = f'''{header()}
+<main>
+<section class="phead on-light"><div class="wrap">
+  <h1>Страница не найдена</h1>
+</div></section>
+<section class="band band--tight on-light"><div class="wrap"><div class="prose">
+{notfound_html()}
+</div></div></section>
+</main>
+{footer()}'''
+    return dict(fn="404.html", title=f"Страница не найдена — {BRAND}", desc="Такой страницы на сайте нет. Дома с баней и бассейном в Перми — на главной.", body=body, lds=[], og="ru/hero-2", noindex=True)
+
 def crumbs(items):
     """items: [(название, ссылка или None)] — хлебные крошки и их разметка."""
     out = " <span aria-hidden=\"true\">/</span> ".join(f'<a href="{u}">{esc(t)}</a>' if u else f'<span aria-current="page">{esc(t)}</span>' for t, u in items)
@@ -323,7 +345,8 @@ def house_review_panel(k):
     shots = REVIEW_SHOTS.get(k, [])
     shots_html = "".join(f'<a class="rshot" href="img/reviews/{esc(s)}" data-lb="rev-{k}"><img src="img/reviews/{esc(s)}" alt="Отзыв гостя: {esc(h["name"])}" loading="lazy"></a>' for s in shots) \
         or "".join(f'<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с {p}</span></div>' for p in ("Яндекс Карт", "2ГИС", "Авито"))
-    qr = f'<figure class="hrev__qr"><img src="img/qr/rev-{k}.svg" alt="QR-код: оставить отзыв, {esc(h["name"])}" width="150" height="150" loading="lazy"><figcaption>Оставить отзыв: наведите камеру телефона</figcaption></figure>'
+    # QR «оставить отзыв» — только на настоящую площадку (tools/make_qr.py); пока ссылок нет, кода не показываем
+    qr = "" if not any(links.get(n) for n in REVIEW_PLATFORMS) else f'<figure class="hrev__qr"><img src="img/qr/rev-{k}.svg" alt="QR-код: оставить отзыв, {esc(h["name"])}" width="150" height="150" loading="lazy"><figcaption>Оставить отзыв: наведите камеру телефона</figcaption></figure>'
     return (f'<div class="hrev h-{k}"><div class="hrev__head"><h3>{h["name"]}</h3><div class="plats">{logos}</div></div>'
             f'<div class="hrev__body"><div class="rshots">{shots_html}</div>{qr}</div></div>')
 
@@ -757,7 +780,7 @@ def main():
     open(f"{SITE_DIR}/js/app.js", "w", encoding="utf8", newline="\n").write(js)
     open(f"{SITE_DIR}/js/cookies.js", "w", encoding="utf8", newline="\n").write(rd("cookies.js"))
     open(f"{SITE_DIR}/img/fox.svg", "w", encoding="utf8", newline="\n").write(rd("fox.svg").replace("<path ", '<path fill="#D8650F" '))
-    pages = [home()] + [house_page(k) for k in H] + [contacts_page(), blog_index()] + [post_page(p) for p in POSTS] + [prepay_page(k) for k in H] + [legal_page(s) for s in DOCS]
+    pages = [home()] + [house_page(k) for k in H] + [contacts_page(), blog_index()] + [post_page(p) for p in POSTS] + [prepay_page(k) for k in H] + [legal_page(s) for s in DOCS] + [notfound_page()]
     def og_image(pg):
         u = f'{SITE}/img/{pg["og"]}.jpg'
         wh = jpeg_size(f'{SITE_DIR}/img/{pg["og"]}.jpg')
