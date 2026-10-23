@@ -174,7 +174,7 @@ def order_band(house="", photo="en/facade", title="Оставьте заявку
         h = H[house]
         extra = f'<p>{h["addr"]}, заезд с {h["checkin"]}, выезд до {h["checkout"]}</p><p><a class="btn" href="{h["prepay"]}">Внести предоплату</a></p><p>После того, как администратор подтвердил даты</p>'
     else:
-        extra = max_link('<p><a class="link" href="{url}" target="_blank" rel="noopener">Написать в MAX</a></p>') + f'<p><a class="link" href="{VK}" target="_blank" rel="noopener">Мы во ВКонтакте</a> · <a class="link" href="kontakty.html">Все контакты</a></p>'
+        extra = max_link('<p><a class="link" href="{url}" target="_blank" rel="noopener">Написать в MAX</a></p>') + f'<p><a class="link" href="{VK}" target="_blank" rel="noopener">Мы во ВКонтакте</a> · <a class="link" href="kontakty.html">Все контакты</a></p>' + mark("appLink", "")   # в MODX — ссылка на приложение бронирования (bnAppLink)
     return f'''<section class="band band--soft on-light" id="order" aria-labelledby="order-title"><div class="wrap order">
   <div class="order__txt">
     <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты 50%, остальное — при заселении.</p><p class="disc-line"><a href="{VK}" target="_blank" rel="noopener">Скидка {DISCOUNT}% при бронировании через группу ВКонтакте</a></p></div>
@@ -360,7 +360,7 @@ def house_review_panel(k):
     qrs = "".join(review_qr(k, n, links[n]) for n in REVIEW_PLATFORMS if links.get(n))
     qr = (f'<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код или нажмите на площадку</p><div class="hrev__qrrow">{qrs}</div></div>') if qrs else ""
     return (f'<div class="hrev h-{k}"><div class="hrev__head"><h3>{h["name"]}</h3></div>'
-            f'<div class="hrev__body"><div class="rshots">{shots_html}</div>{qr}</div></div>')
+            f'<div class="hrev__body">{rail(shots_html, "Скриншоты отзывов: " + h["name"], "rail--dark rail--shots")}{qr}</div></div>')
 
 def reviews_block(house=None):
     """Отзывы гостей: карусель и по каждому Дому — площадки, QR-код и скриншоты отзывов."""

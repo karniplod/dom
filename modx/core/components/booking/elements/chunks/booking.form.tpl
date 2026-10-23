@@ -50,4 +50,5 @@
   <button class="btn bk-btn" type="submit">Отправить заявку</button>
 </form>
 <div class="bk-done" data-bk-done hidden role="status"></div>
+[[+app_url:notempty=`<p class="bk-appnote"><span>Бронируете у нас не в первый раз? Поставьте приложение на телефон — бронирование будет открываться с главного экрана.</span> <a class="bk-link" href="[[+app_url]]">Открыть приложение</a></p>`]]
 </div>

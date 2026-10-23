@@ -68,7 +68,9 @@ MENU_RE = re.compile(r"<!--bn:menu:(\w+)-->.*?<!--/bn:menu:\1-->", re.S)
 
 
 def menu_snippets(html):
-    """Меню шапки, выдвижного меню и подвала — сниппет bnMenu: новая страница с «Показывать в меню» появится сама"""
+    """Меню шапки, выдвижного меню и подвала — сниппет bnMenu: новая страница с «Показывать в меню» появится сама;
+    метка appLink — ссылка на приложение бронирования (bnAppLink, только если установлен компонент booking)"""
+    html = html.replace("<!--bn:appLink--><!--/bn:appLink-->", "[[bnAppLink]]")
     return MENU_RE.sub(lambda m: "[[bnMenu? &place=`%s`]]" % m.group(1), html)
 
 

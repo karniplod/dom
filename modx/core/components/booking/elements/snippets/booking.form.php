@@ -69,6 +69,13 @@ $doc = function ($alias) use ($modx) {
     return $r ? $modx->makeUrl($r->get('id'), '', '', 'abs') : $modx->makeUrl((int)$modx->getOption('site_start'), '', '', 'abs');
 };
 
+// приложение (/booking/app) — подсказка под полной формой на сайте; в самом приложении не нужна
+$appUrl = '';
+if ($mode === 'full' && ($scriptProperties['client'] ?? 'site') !== 'pwa' && ($fp = (int)$modx->getOption('booking.form_page'))) {
+    $app = $modx->getObject(\MODX\Revolution\modResource::class, ['alias' => 'app', 'parent' => $fp, 'published' => 1, 'deleted' => 0]);
+    if ($app) $appUrl = $modx->makeUrl($app->get('id'), '', '', 'abs');
+}
+
 static $n = 0;
 $n++;
 return $modx->getChunk($tpl, [
@@ -84,4 +91,5 @@ return $modx->getChunk($tpl, [
     'client' => htmlspecialchars((string)($scriptProperties['client'] ?? 'site')),
     'politika_url' => $doc('politika'),
     'soglasie_url' => $doc('soglasie'),
+    'app_url' => $appUrl,
 ]);

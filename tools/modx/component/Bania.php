@@ -348,7 +348,7 @@ class Bania
             foreach (['Яндекс Карт', '2ГИС', 'Авито'] as $p) $shots .= '<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с ' . $p . '</span></div>';
             $qr = $qrs === '' ? '' : '<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код или нажмите на площадку</p><div class="hrev__qrrow">' . $qrs . '</div></div>';
             $out .= '<div class="hrev h-' . $h['code'] . '"><div class="hrev__head"><h3>' . self::e($h['name']) . '</h3></div>'
-                . '<div class="hrev__body"><div class="rshots">' . $shots . '</div>' . $qr . '</div></div>';
+                . '<div class="hrev__body">' . self::rail($shots, 'Скриншоты отзывов: ' . self::e($h['name']), 'rail--dark rail--shots') . $qr . '</div></div>';
         }
         return $out;
     }

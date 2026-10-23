@@ -143,7 +143,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-23 12:30",
+ "version": "2026-10-23 14:00",
  "chunks": [
   {
    "name": "bn.fox",
@@ -369,6 +369,11 @@ $manifest = <<<'JSON'
   }
  ],
  "snippets": [
+  {
+   "name": "bnAppLink",
+   "file": "snippets/bnAppLink.php",
+   "description": "ссылка на приложение бронирования (/booking/app компонента booking); приложения нет — ничего"
+  },
   {
    "name": "bnBlogChips",
    "file": "snippets/bnBlogChips.php",

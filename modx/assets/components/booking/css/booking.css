@@ -18,6 +18,7 @@
   --bk-busy: #CFC8C1;
   --bk-busy-ink: #8A8079;
   --bk-red: #9B2C10;
+  --bk-red-bg: #F6D6CE;
   --bk-display: var(--display, "Prata", Georgia, serif);
   --bk-text: var(--text, "Golos Text", "Segoe UI", Roboto, Arial, sans-serif);
   color: var(--bk-ink);
@@ -52,6 +53,9 @@
 .bk-chips input:checked + span { background: var(--bk-ink); color: var(--bk-cream); border-color: var(--bk-ink); }
 .bk-chips input:focus-visible + span { outline: 2px solid var(--bk-fox); outline-offset: 2px; }
 .bk-note { font-size: 14.5px; color: var(--bk-soft); margin: 0; }
+/* под полной формой на сайте: приложение на телефон */
+.bk-appnote { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--bk-line, #D3BFA8); font-size: 14.5px; color: var(--bk-soft); }
+.bk-appnote a { white-space: nowrap; font-weight: 500; }
 .bk-muted { color: var(--bk-soft); font-size: 14.5px; margin: 0; }
 .bk-warn { color: var(--bk-red); font-size: 14.5px; margin: 0; }
 .bk-note-orange { color: var(--bk-orange); font-weight: 500; margin: 0; }
@@ -75,7 +79,9 @@
 .bk-datebtn { width: 100%; min-height: 48px; padding: 11px 13px; text-align: left; border: 1px solid var(--bk-line); border-radius: 4px; background: #fff; color: var(--bk-ink); font: 400 16px/1.3 var(--bk-text); cursor: pointer; }
 .bk-cal { position: relative; background: var(--bk-card); border: 1px solid var(--bk-line); border-radius: 6px; padding: 12px; }
 .bk-cal--pop { margin-top: 6px; }
-.bk--compact .bk-cal { max-width: 420px; }
+/* компактная форма: календарь во всю ширину поля дат; клетки не квадратные, а по высоте кнопки — иначе на широком поле растягиваются */
+.bk--compact .bk-cal { width: 100%; }
+.bk--compact .bk-cal__day { aspect-ratio: auto; height: 44px; }
 .bk-cal__head { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; justify-content: space-between; pointer-events: none; }
 .bk-cal__nav { pointer-events: auto; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: var(--bk-ink); font-size: 26px; line-height: 1; cursor: pointer; }
 .bk-cal__nav:hover { background: rgba(34,20,14,.07); }
@@ -103,6 +109,12 @@
 .bk-sw--new { background: #fff; border: 2px solid var(--bk-fox); border-radius: 50%; }
 .bk-sw--cancel { background: var(--bk-orange-bg); border-color: var(--bk-orange); }
 .bk-sw--block { background: repeating-linear-gradient(45deg, var(--bk-busy) 0 3px, #fff 3px 6px); }
+/* «Только баня»: зелёный — свободна (снять по часам), красный — занята весь день */
+.bk-cal--bath .bk-cal__day:not(:disabled):not(.is-from) { background: var(--bk-green-bg); color: var(--bk-green); border-color: #B5D3B8; font-weight: 600; }
+.bk-cal--bath .bk-cal__day:not(:disabled):not(.is-from):hover { border-color: var(--bk-green); }
+.bk-cal--bath .bk-cal__day.is-busy { background: var(--bk-red-bg); color: var(--bk-red); text-decoration: line-through; }
+.bk-sw--bathfree { background: var(--bk-green-bg); border-color: #B5D3B8; }
+.bk-sw--bathbusy { background: var(--bk-red-bg); border-color: #E4A99C; }
 .bk-bath { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
 
 /* ---------- расчёт */

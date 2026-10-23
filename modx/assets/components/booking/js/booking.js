@@ -68,6 +68,7 @@
     this.el = el;
     this.months = opts.months || 1;
     this.single = !!opts.single;
+    this.bath = false;   // режим «Только баня»: свободные дни зелёные (по часам), занятые весь день — красные
     this.onRange = opts.onRange;
     this.onMonth = opts.onMonth;
     this.busy = {};
@@ -161,13 +162,17 @@
         if (this.from === s) cls.push('is-from');
         if (this.to === s) cls.push('is-to');
         if (this.from && this.to && s > this.from && s < this.to) cls.push('is-in');
+        var state = this.bath ? (busy ? ', баня занята весь день' : (past ? '' : ', баня свободна')) : (busy ? ', занято' : '');
         html += '<button type="button" class="' + cls.join(' ') + '" data-day="' + s + '"' + (disabled ? ' disabled' : '')
-          + ' aria-label="' + human(s, true) + (busy ? ', занято' : '') + '">' + day + '</button>';
+          + ' aria-label="' + human(s, true) + state + '">' + day + '</button>';
       }
       html += '</div></div>';
     }
-    html += '</div><div class="bk-cal__legend"><span><i class="bk-sw bk-sw--free"></i>свободно</span><span><i class="bk-sw bk-sw--busy"></i>занято</span>'
-      + '<span><i class="bk-sw bk-sw--pick"></i>ваши даты</span></div>';
+    html += '</div><div class="bk-cal__legend">' + (this.bath
+      ? '<span><i class="bk-sw bk-sw--bathfree"></i>баня свободна — по часам</span><span><i class="bk-sw bk-sw--bathbusy"></i>занята весь день</span><span><i class="bk-sw bk-sw--pick"></i>ваш день</span>'
+      : '<span><i class="bk-sw bk-sw--free"></i>свободно</span><span><i class="bk-sw bk-sw--busy"></i>занято</span><span><i class="bk-sw bk-sw--pick"></i>ваши даты</span>')
+      + '</div>';
+    this.el.classList.toggle('bk-cal--bath', this.bath);
     if (this.offline) html += '<p class="bk-warn">Нет связи с сервером — занятость не показывается. Проверьте интернет и обновите.</p>';
     else if (this.loading) html += '<p class="bk-muted">Загружаем занятость…</p>';
     this.el.innerHTML = html;
@@ -245,6 +250,7 @@
   GuestForm.prototype.onKind = function () {
     var bath = this.isBath();
     this.cal.single = bath;
+    this.cal.bath = bath;
     this.cal.from = this.cal.to = null;
     this.el.from.value = this.el.to.value = '';
     if (this.el.bath) this.el.bath.hidden = !bath;
@@ -309,9 +315,9 @@
       if (!res.success) { self.el.slots.textContent = res.message; return; }
       var d = res.data;
       if (d.day_busy) { self.el.slots.innerHTML = '<span class="bk-warn">В этот день Дом забронирован — баня занята</span>'; return; }
-      self.el.slots.innerHTML = d.slots_busy.length
+      self.el.slots.innerHTML = (d.slots_busy.length
         ? 'Занято: ' + d.slots_busy.map(function (s) { return esc(s.from + '–' + s.to); }).join(', ') + '. Между сеансами ' + d.buffer_minutes + ' мин на уборку.'
-        : 'Весь день свободен.';
+        : 'Баня свободна весь день.') + ' Время подтвердит администратор, когда перезвонит.';
     });
   };
   GuestForm.prototype.quote = function () {
@@ -325,7 +331,7 @@
     this.api.call('booking_quote', p, 'GET').then(function (res) {
       if (req !== self.qreq) return;
       if (!res.success) { q.innerHTML = '<p class="bk-warn">' + esc(res.message) + '</p>'; return; }
-      q.innerHTML = renderQuote(res.data);
+      q.innerHTML = renderQuote(res.data, self.isBath());
     });
   };
   GuestForm.prototype.qreq = 0;
@@ -368,12 +374,12 @@
     box.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  function renderQuote(d) {
+  function renderQuote(d, bath) {   // bath — «Только баня»: заезд и выезд Дома не показываем
     var rows = d.lines.map(function (l) {
       return '<tr' + (l.amount < 0 ? ' class="bk-quote__disc"' : '') + '><td>' + esc(l.label) + '</td><td>' + (l.amount < 0 ? '−' + money(-l.amount) : money(l.amount)) + '</td></tr>';
     }).join('');
     return '<table class="bk-quote__t"><tbody>' + rows + '</tbody><tfoot><tr><th>Итого</th><th>' + money(d.total) + '</th></tr></tfoot></table>'
-      + (d.checkin ? '<p class="bk-muted">Заезд с ' + esc(d.checkin) + ', выезд до ' + esc(d.checkout) + '</p>' : '');
+      + (d.checkin && !bath ? '<p class="bk-muted">Заезд с ' + esc(d.checkin) + ', выезд до ' + esc(d.checkout) + '</p>' : '');
   }
 
   function maskPhone(input) {
