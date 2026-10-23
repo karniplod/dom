@@ -321,7 +321,6 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 .hrev { border: 1px solid var(--line-dark); border-radius: 8px; padding: 20px; display: grid; gap: 16px; background: var(--bark-2); }
 .hrev__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
 .hrev__head h3 { font-size: 24px; color: var(--cream); }
-.plats { display: flex; flex-wrap: wrap; gap: 8px; }
 .plat { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: #fff; color: var(--bark); font-weight: 600; font-size: 14.5px; text-decoration: none; }
 a.plat:hover { box-shadow: 0 0 0 2px var(--fox); }
 .plat__mark { display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 5px; border-radius: 6px; color: #fff; font: 700 12px/1 var(--text); }
@@ -332,12 +331,22 @@ a.plat:hover { box-shadow: 0 0 0 2px var(--fox); }
 /* QR «оставить отзыв»: по коду на площадку, над кодом — её значок и название */
 .hrev__qrs { display: grid; gap: 10px; }
 .hrev__qrlab { font-size: 14.5px; color: var(--cream-soft); }
-.hrev__qrrow { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 170px)); gap: 12px; }
-.hrev__qr { display: grid; gap: 8px; justify-items: center; align-content: space-between; text-align: center; padding: 10px 10px 12px; border-radius: 8px; background: #fff; color: var(--bark); text-decoration: none; transition: box-shadow .2s; }
-.hrev__qr:hover { box-shadow: 0 0 0 2px var(--fox); }
-.hrev__qrname { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14.5px; }
-.hrev__qr img { width: 100%; max-width: 140px; height: auto; aspect-ratio: 1; }
-@media (max-width: 520px) { .hrev__qrrow { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .hrev__qr { padding: 8px 6px 10px; } .hrev__qrname { font-size: 12.5px; gap: 5px; } .hrev__qrname .plat__mark { min-width: 22px; height: 22px; font-size: 11px; } }
+/* колонка площадки: значок сверху, QR под ним; вся колонка — ссылка */
+.hrev__qrrow { display: flex; flex-wrap: wrap; gap: 20px 24px; }
+.hrev__qr { display: grid; gap: 10px; justify-items: center; width: 156px; text-decoration: none; color: var(--bark); border-radius: 10px; }
+.hrev__qr .plat { white-space: nowrap; transition: box-shadow .2s; }
+.hrev__qrimg { display: block; width: 100%; padding: 8px; border-radius: 8px; background: #fff; transition: box-shadow .2s, transform .2s; }
+.hrev__qrimg img { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+.hrev__qr:hover .hrev__qrimg, .hrev__qr:hover .plat { box-shadow: 0 0 0 2px var(--fox); }
+.hrev__qr:hover .hrev__qrimg { transform: translateY(-2px); }
+.hrev__qr:focus-visible { outline: 2px solid var(--fox); outline-offset: 4px; }
+@media (max-width: 520px) {
+  .hrev__qrrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .hrev__qr { width: auto; gap: 8px; }
+  .hrev__qr .plat { width: 100%; white-space: normal; justify-content: center; gap: 5px; padding: 5px 6px; font-size: 12px; line-height: 1.15; min-height: 44px; border-radius: 12px; }
+  .hrev__qr .plat__mark { min-width: 20px; height: 20px; padding: 0 3px; font-size: 10px; border-radius: 5px; flex: none; }
+  .hrev__qrimg { padding: 5px; }
+}
 .reviews { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .review-slot { border: 1px dashed var(--line-dark); border-radius: 6px; padding: 28px; display: grid; gap: 10px; color: var(--cream-soft); min-height: 180px; align-content: center; }
 .review-slot h3 { font-size: 24px; color: var(--cream); }

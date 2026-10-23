@@ -328,24 +328,21 @@ class Bania
         $out = '';
         foreach (self::houses() as $h) {
             if ($house && $h['id'] !== (int)$house) continue;
-            $logos = '';
             $qrs = '';
             foreach (self::REVIEW_PLATFORMS as $name => [$color, $sign, $key]) {
                 $u = trim((string)self::opt('bn_rev_' . $h['code'] . '_' . $key));
                 // QR площадки — когда есть ссылка и готов файл кода (tools/make_qr.py); на телефоне код — просто ссылка
                 $qrFile = 'assets/img/qr/rev-' . $h['code'] . '-' . $key . '.svg';
                 if ($u !== '' && is_file(MODX_BASE_PATH . $qrFile)) {
-                    $qrs .= '<a class="hrev__qr" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow">'
-                        . '<span class="hrev__qrname"><span class="plat__mark" style="background:' . $color . '">' . $sign . '</span>' . $name . '</span>'
-                        . '<img src="' . self::$modx->getOption('base_url') . $qrFile . '" alt="QR-код: отзыв о Доме «' . self::e($h['name']) . '» в ' . $name . '" width="140" height="140" loading="lazy"></a>';
+                    $qrs .= '<a class="hrev__qr" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow" aria-label="Оставить отзыв о Доме «' . self::e($h['name']) . '» в ' . $name . '">'
+                        . '<span class="plat"><span class="plat__mark" style="background:' . $color . '">' . $sign . '</span><span class="plat__name">' . $name . '</span></span>'
+                        . '<span class="hrev__qrimg"><img src="' . self::$modx->getOption('base_url') . $qrFile . '" alt="" width="140" height="140" loading="lazy"></span></a>';
                 }
-                $inner = '<span class="plat__mark" style="background:' . $color . '">' . $sign . '</span><span class="plat__name">' . $name . '</span>';
-                $logos .= $u !== '' ? '<a class="plat" href="' . self::e($u) . '" target="_blank" rel="noopener nofollow">' . $inner . '</a>' : '<span class="plat">' . $inner . '</span>';
             }
             $shots = '';
             foreach (['Яндекс Карт', '2ГИС', 'Авито'] as $p) $shots .= '<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с ' . $p . '</span></div>';
-            $qr = $qrs === '' ? '' : '<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код площадки или нажмите на него</p><div class="hrev__qrrow">' . $qrs . '</div></div>';
-            $out .= '<div class="hrev h-' . $h['code'] . '"><div class="hrev__head"><h3>' . self::e($h['name']) . '</h3><div class="plats">' . $logos . '</div></div>'
+            $qr = $qrs === '' ? '' : '<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код или нажмите на площадку</p><div class="hrev__qrrow">' . $qrs . '</div></div>';
+            $out .= '<div class="hrev h-' . $h['code'] . '"><div class="hrev__head"><h3>' . self::e($h['name']) . '</h3></div>'
                 . '<div class="hrev__body"><div class="rshots">' . $shots . '</div>' . $qr . '</div></div>';
         }
         return $out;

@@ -341,29 +341,24 @@ def review_card_(r):
 # Плашки площадок отзывов: простой знак и название (без фирменных картинок)
 PLATFORM_BADGE = {"2ГИС": ("#19AA1E", "2Г"), "Яндекс Карты": ("#FC3F1D", "Я"), "Авито": ("#00AAFF", "A")}
 
-def platform_logo(name, url=""):
-    color, sign = PLATFORM_BADGE[name]
-    inner = f'<span class="plat__mark" style="background:{color}">{esc(sign)}</span><span class="plat__name">{esc(name)}</span>'
-    return f'<a class="plat" href="{esc(url)}" target="_blank" rel="noopener nofollow">{inner}</a>' if url else f'<span class="plat">{inner}</span>'
-
 def review_qr(k, name, url):
+    """Колонка площадки: значок с названием, под ним QR. Вся колонка — ссылка (на телефоне код не сканируют, а нажимают)"""
     color, sign = PLATFORM_BADGE[name]
-    return (f'<a class="hrev__qr" href="{esc(url)}" target="_blank" rel="noopener nofollow">'
-            f'<span class="hrev__qrname"><span class="plat__mark" style="background:{color}">{esc(sign)}</span>{esc(name)}</span>'
-            f'<img src="img/qr/rev-{k}-{PLATFORM_KEY[name]}.svg" alt="QR-код: отзыв о Доме «{esc(H[k]["name"])}» в {esc(name)}" width="140" height="140" loading="lazy"></a>')
+    return (f'<a class="hrev__qr" href="{esc(url)}" target="_blank" rel="noopener nofollow" aria-label="Оставить отзыв о Доме «{esc(H[k]["name"])}» в {esc(name)}">'
+            f'<span class="plat"><span class="plat__mark" style="background:{color}">{esc(sign)}</span><span class="plat__name">{esc(name)}</span></span>'
+            f'<span class="hrev__qrimg"><img src="img/qr/rev-{k}-{PLATFORM_KEY[name]}.svg" alt="" width="140" height="140" loading="lazy"></span></a>')
 
 def house_review_panel(k):
     """По Дому: площадки отзывов, QR-код «оставить отзыв» и скриншоты отзывов (или заглушки, пока их нет)."""
     h = H[k]
     links = HOUSE_REVIEW_LINKS.get(k, {})
-    logos = "".join(platform_logo(n, links.get(n, "")) for n in REVIEW_PLATFORMS)
     shots = REVIEW_SHOTS.get(k, [])
     shots_html = "".join(f'<a class="rshot" href="img/reviews/{esc(s)}" data-lb="rev-{k}"><img src="img/reviews/{esc(s)}" alt="Отзыв гостя: {esc(h["name"])}" loading="lazy"></a>' for s in shots) \
         or "".join(f'<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с {p}</span></div>' for p in ("Яндекс Карт", "2ГИС", "Авито"))
     # QR «оставить отзыв» — по коду на каждую площадку со ссылкой (tools/make_qr.py); на телефоне код — просто ссылка
     qrs = "".join(review_qr(k, n, links[n]) for n in REVIEW_PLATFORMS if links.get(n))
-    qr = (f'<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код площадки или нажмите на него</p><div class="hrev__qrrow">{qrs}</div></div>') if qrs else ""
-    return (f'<div class="hrev h-{k}"><div class="hrev__head"><h3>{h["name"]}</h3><div class="plats">{logos}</div></div>'
+    qr = (f'<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код или нажмите на площадку</p><div class="hrev__qrrow">{qrs}</div></div>') if qrs else ""
+    return (f'<div class="hrev h-{k}"><div class="hrev__head"><h3>{h["name"]}</h3></div>'
             f'<div class="hrev__body"><div class="rshots">{shots_html}</div>{qr}</div></div>')
 
 def reviews_block(house=None):
