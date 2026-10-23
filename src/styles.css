@@ -244,7 +244,7 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 @media (pointer: fine) { .strip { cursor: grab; } }
 .strip.is-drag { cursor: grabbing; user-select: none; }
 .strip.is-drag a { pointer-events: none; }
-.strip a { position: relative; border-radius: 6px; overflow: hidden; display: block; }
+.strip a { position: relative; border-radius: 6px; overflow: hidden; display: block; cursor: zoom-in; }
 .strip img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; -webkit-user-drag: none; user-select: none; transition: transform .6s ease; }
 .strip a:hover img { transform: scale(1.03); }
 .rail__nav { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
@@ -437,7 +437,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; }
 .dprice { font: 400 22px/1.2 var(--display); }
 .dprice small { font: 400 14px var(--text); color: var(--cream-soft); }
 .gal { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 200px; grid-auto-flow: dense; gap: 8px; }
-.gal a { position: relative; border-radius: 6px; overflow: hidden; display: block; }
+.gal a { position: relative; border-radius: 6px; overflow: hidden; display: block; cursor: zoom-in; }
 .gal a.w { grid-column: span 2; }
 .gal a.t { grid-row: span 2; }
 .gal a.big { grid-column: span 2; grid-row: span 2; }
@@ -705,8 +705,6 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .hcard__media a[hidden] { display: none; }
 .hcard__media img { transition: transform .6s ease, filter .3s ease; }
 .hcard__media a:hover img, .hcard__media a:focus-visible img { transform: scale(1.05); filter: brightness(.85); }
-.hcard__media a::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 0 transparent; transition: box-shadow .3s; pointer-events: none; }
-.hcard__media a:hover::after { box-shadow: inset 0 0 0 3px rgba(246,238,227,.55); }
 .hcard__zoom { position: absolute; left: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(20,12,8,.62); color: var(--cream); font-size: 14px; font-weight: 500; backdrop-filter: blur(6px); transition: background .2s; }
 .hcard__zoom svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
 .hcard__media a:first-child:hover .hcard__zoom { background: var(--fox-btn); }
