@@ -21,6 +21,7 @@
  *   --no-files / ?nofiles=1      не копировать файлы сайта из site/
  *   --no-tune / ?notune=1        не трогать настройки MODX (адреса, кэш, .htaccess)
  *   --no-clientconfig / ?nocc=1  контакты — в системные настройки, даже если установлен ClientConfig
+ *   --no-managers / ?nomanagers=1  не создавать группы «Менеджеры сайта» и «Бронирование» и их пользователей (admin1–4, booking1–4)
  *   --static / ?static=1         элементы читают код из файлов этой папки (папку тогда не удалять)
  *   --force / ?force=1           продолжить, несмотря на конфликты имён; перезаписать и элементы, изменённые в админке
  *   --check / ?check=1           только проверить уже установленный сайт (ничего не меняет)
@@ -51,6 +52,7 @@ $noExtras = $opt('--no-extras', 'noextras');
 $noFiles = $opt('--no-files', 'nofiles');
 $noTune = $opt('--no-tune', 'notune');
 $noCc = $opt('--no-clientconfig', 'nocc');
+$noManagers = $opt('--no-managers', 'nomanagers');   // не создавать группу «Менеджеры сайта» и admin1–admin4
 $static = $opt('--static', 'static');
 $force = $opt('--force', 'force');
 $checkOnly = $opt('--check', 'check');
@@ -133,6 +135,9 @@ if (!$cli && !empty($_GET['remove'])) {
 // --- журнал
 $log = [];
 function say($kind, $text) { global $log; $log[] = [$kind, $text]; }
+// пароли новых пользователей: только на экран установки, в журнал на сервере не пишутся
+$secrets = [];
+function secret($text) { global $secrets; $secrets[] = $text; }
 $logDir = MODX_CORE_PATH . 'cache/logs/';
 $logFile = $logDir . "bn-install-$stamp.log";
 
@@ -143,7 +148,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-23 16:21",
+ "version": "2026-10-23 16:39",
  "chunks": [
   {
    "name": "bn.fox",
@@ -1848,6 +1853,159 @@ try {
     if (!$dry && ($r = setting('link_tag_scheme', 'abs'))) say($r, 'настройка link_tag_scheme = abs (ссылки от корня сайта)');
     $modx->setOption('link_tag_scheme', 'abs');
 
+    // --- менеджеры сайта: группа «Менеджеры сайта» и пользователи admin1–admin4 (решение владельца 23.10.2026)
+    // Права — на основе политики «Content Editor»: страницы, публикация, тексты в чанках, файлы и фото, «Конфигурация»,
+    // бронирование и заявки. Нельзя: ставить и удалять дополнения, системные настройки, пользователи, шаблоны и сниппеты.
+    // Пользователи, которые уже есть, не трогаются (пароль не меняется). Без группы и прав — ни одного пользователя.
+    if (!$dry && !$noManagers) {
+        try {
+            $mgrPol = $modx->getObject(\MODX\Revolution\modAccessPolicy::class, ['name' => 'Менеджер сайта']);
+            if (!$mgrPol) {
+                $base = $modx->getObject(\MODX\Revolution\modAccessPolicy::class, ['name' => 'Content Editor']);
+                $tplPol = $modx->getObject(\MODX\Revolution\modAccessPolicyTemplate::class, ['name' => 'AdministratorTemplate']);
+                $data = $base ? (array)$base->get('data') : [];
+                foreach (['components', 'publish_document', 'unpublish_document', 'view_unpublished', 'resource_quick_create', 'resource_quick_update',
+                          'element_tree', 'view_element', 'view_chunk', 'edit_chunk', 'save_chunk', 'view_tv',
+                          'file_manager', 'file_list', 'file_tree', 'file_view', 'file_upload', 'file_create', 'file_update', 'file_remove',
+                          'directory_list', 'directory_create', 'booking_admin', 'bn_site'] as $perm) $data[$perm] = true;
+                $mgrPol = $modx->newObject(\MODX\Revolution\modAccessPolicy::class);
+                $mgrPol->fromArray(['name' => 'Менеджер сайта', 'description' => 'Доходные Дома: страницы, тексты, фото, «Конфигурация», бронирование и заявки — без дополнений, настроек и пользователей',
+                    'template' => $tplPol ? (int)$tplPol->get('id') : 1, 'class' => '', 'lexicon' => 'permissions', 'data' => $data]);
+                if (saved($mgrPol, 'политику «Менеджер сайта»')) say('new', 'политика доступа «Менеджер сайта»');
+            }
+            $mgrGroup = $modx->getObject(\MODX\Revolution\modUserGroup::class, ['name' => 'Менеджеры сайта']);
+            if (!$mgrGroup) {
+                $mgrGroup = $modx->newObject(\MODX\Revolution\modUserGroup::class);
+                $mgrGroup->fromArray(['name' => 'Менеджеры сайта', 'description' => 'Администраторы Домов: ведут бронирование, заявки и содержимое сайта']);
+                if (saved($mgrGroup, 'группу «Менеджеры сайта»')) say('new', 'группа пользователей «Менеджеры сайта»');
+            }
+            if ($mgrPol && $mgrPol->get('id') && $mgrGroup && $mgrGroup->get('id')) {
+                foreach (['mgr', 'web'] as $ctxKey) {   // web — права на страницы сайта (их контекст), mgr — вход в админку и меню
+                    $acl = ['target' => $ctxKey, 'principal_class' => \MODX\Revolution\modUserGroup::class, 'principal' => (int)$mgrGroup->get('id')];
+                    if (!$modx->getObject(\MODX\Revolution\modAccessContext::class, $acl)) {
+                        $a = $modx->newObject(\MODX\Revolution\modAccessContext::class);
+                        $a->fromArray($acl + ['authority' => 9999, 'policy' => (int)$mgrPol->get('id')]);
+                        if (saved($a, "доступ группы к контексту $ctxKey")) say('new', "«Менеджеры сайта»: доступ к контексту $ctxKey");
+                    }
+                }
+                $role = $modx->getObject(\MODX\Revolution\modUserGroupRole::class, ['name' => 'Member']);
+                for ($i = 1; $i <= 4; $i++) {
+                    $login = 'admin' . $i;
+                    if ($modx->getObject(\MODX\Revolution\modUser::class, ['username' => $login])) { say('skip', "пользователь $login уже есть — не трогаю"); continue; }
+                    $alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                    $pwd = '';
+                    for ($k = 0; $k < 14; $k++) $pwd .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+                    $u = $modx->newObject(\MODX\Revolution\modUser::class);
+                    $u->fromArray(['username' => $login, 'active' => 1, 'primary_group' => (int)$mgrGroup->get('id')]);
+                    $u->set('password', $pwd);
+                    $profile = $modx->newObject(\MODX\Revolution\modUserProfile::class);
+                    $profile->fromArray(['fullname' => 'Администратор ' . $i, 'email' => '']);
+                    $u->addOne($profile, 'Profile');
+                    if (!saved($u, "пользователя $login")) continue;
+                    $member = $modx->newObject(\MODX\Revolution\modUserGroupMember::class);
+                    $member->fromArray(['user_group' => (int)$mgrGroup->get('id'), 'member' => (int)$u->get('id'), 'role' => $role ? (int)$role->get('id') : 1, 'rank' => 0]);
+                    saved($member, "членство $login в группе");
+                    say('new', "пользователь $login («Менеджеры сайта») — пароль показан ниже, в журнал не записан");
+                    secret("$login — пароль: $pwd");
+                }
+            }
+        } catch (Throwable $e) { say('error', 'менеджеры сайта: ' . $e->getMessage()); }
+    }
+
+    // --- право bn_site («Сайт: Конфигурация и заявки») и учётки «только бронирование» booking1–booking4
+    // ClientConfig своих прав не проверяет: без этого любой вошедший в админку открыл бы «Конфигурацию» по ссылке.
+    // bn_site есть у Administrator и «Менеджеров сайта»; у группы «Бронирование» — только раздел «Бронирование».
+    if (!$dry && !$noManagers) {
+        try {
+            $admTpl = $modx->getObject(\MODX\Revolution\modAccessPolicyTemplate::class, ['name' => 'AdministratorTemplate']);
+            if ($admTpl && !$modx->getObject(\MODX\Revolution\modAccessPermission::class, ['template' => $admTpl->get('id'), 'name' => 'bn_site'])) {
+                $perm = $modx->newObject(\MODX\Revolution\modAccessPermission::class);
+                $perm->fromArray(['template' => $admTpl->get('id'), 'name' => 'bn_site', 'description' => 'Сайт: «Конфигурация» и «Заявки»', 'value' => true]);
+                if (saved($perm, 'право bn_site')) say('new', 'право доступа bn_site («Конфигурация» и «Заявки»)');
+            }
+            foreach (['Administrator', 'Менеджер сайта'] as $polName) {
+                $pol = $modx->getObject(\MODX\Revolution\modAccessPolicy::class, ['name' => $polName]);
+                if (!$pol) continue;
+                $d = $pol->get('data'); $d = is_array($d) ? $d : (json_decode((string)$d, true) ?: []);
+                if (empty($d['bn_site'])) { $d['bn_site'] = true; $pol->set('data', $d); if (saved($pol, "политику $polName")) say('upd', "политика «{$polName}»: право bn_site"); }
+            }
+            foreach (['clientconfig', 'Заявки'] as $menuText) {   // пункты меню — только с правом bn_site
+                $m = $modx->getObject(\MODX\Revolution\modMenu::class, ['text' => $menuText]);
+                if ($m && $m->get('permissions') !== 'bn_site') { $m->set('permissions', 'bn_site'); if (saved($m, "пункт меню $menuText")) say('upd', "меню «{$menuText}»: только с правом bn_site"); }
+            }
+            $plugCode = <<<'PHP'
+/** bnAccess — «Конфигурация» (ClientConfig) только с правом bn_site: у дополнения нет своей проверки прав, а учётки «Бронирование» работают только в бронировании */
+if (!$modx->context || $modx->context->get('key') !== 'mgr' || !$modx->user || !$modx->user->isAuthenticated('mgr') || $modx->hasPermission('bn_site')) return;
+$script = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? ''));
+$page = $modx->event->name === 'OnManagerPageInit' && in_array((string)($_GET['namespace'] ?? ''), ['clientconfig', 'bania'], true);
+$connector = $modx->event->name === 'OnMODXInit' && strpos($script, '/components/clientconfig/') !== false;
+if (!$page && !$connector) return;
+http_response_code(403);
+if ($connector) { header('Content-Type: application/json; charset=utf-8'); echo json_encode(['success' => false, 'message' => 'Нет доступа к «Конфигурации»'], JSON_UNESCAPED_UNICODE); exit; }
+echo '<!doctype html><meta charset="utf-8"><p style="font:16px sans-serif;padding:32px">Нет доступа: этот раздел открыт только администраторам сайта. <a href="?">В начало</a></p>';
+exit;
+PHP;
+            $plug = $modx->getObject(\MODX\Revolution\modPlugin::class, ['name' => 'bnAccess']) ?: $modx->newObject(\MODX\Revolution\modPlugin::class);
+            $isNewPlug = !$plug->get('id');
+            if ($isNewPlug || $plug->get('plugincode') !== $plugCode) {
+                $plug->fromArray(['name' => 'bnAccess', 'description' => '«Конфигурация» (ClientConfig) и «Заявки» — только с правом bn_site', 'plugincode' => $plugCode,
+                    'category' => category('Доходные дома'), 'disabled' => 0]);
+                if (saved($plug, 'плагин bnAccess')) say($isNewPlug ? 'new' : 'upd', 'плагин bnAccess (закрывает «Конфигурацию» без права bn_site)');
+            }
+            foreach (['OnMODXInit', 'OnManagerPageInit'] as $ev) {
+                if ($plug->get('id') && !$modx->getObject(modPluginEvent::class, ['pluginid' => $plug->get('id'), 'event' => $ev])) {
+                    $pe = $modx->newObject(modPluginEvent::class);
+                    $pe->fromArray(['pluginid' => $plug->get('id'), 'event' => $ev, 'priority' => 0, 'propertyset' => 0], '', true, true);
+                    saved($pe, "событие $ev плагина bnAccess");
+                }
+            }
+
+            // группа «Бронирование»: вход в админку и только раздел «Бронирование»
+            $bkPol = $modx->getObject(\MODX\Revolution\modAccessPolicy::class, ['name' => 'Только бронирование']);
+            if (!$bkPol) {
+                $bkPol = $modx->newObject(\MODX\Revolution\modAccessPolicy::class);
+                $bkPol->fromArray(['name' => 'Только бронирование', 'description' => 'Доходные Дома: только раздел «Бронирование» — календарь, заявки, Дома и бани, цены, праздники, закрытые даты',
+                    'template' => $admTpl ? (int)$admTpl->get('id') : 1, 'class' => '', 'lexicon' => 'permissions',
+                    'data' => array_fill_keys(['frames', 'home', 'logout', 'change_profile', 'language', 'help', 'menu_user', 'components', 'booking_admin', 'load', 'list', 'view'], true)]);
+                if (saved($bkPol, 'политику «Только бронирование»')) say('new', 'политика доступа «Только бронирование»');
+            }
+            $bkGroup = $modx->getObject(\MODX\Revolution\modUserGroup::class, ['name' => 'Бронирование']);
+            if (!$bkGroup) {
+                $bkGroup = $modx->newObject(\MODX\Revolution\modUserGroup::class);
+                $bkGroup->fromArray(['name' => 'Бронирование', 'description' => 'Сотрудники бронирования: только раздел «Бронирование», без страниц сайта и настроек']);
+                if (saved($bkGroup, 'группу «Бронирование»')) say('new', 'группа пользователей «Бронирование»');
+            }
+            if ($bkPol->get('id') && $bkGroup->get('id')) {
+                $acl = ['target' => 'mgr', 'principal_class' => \MODX\Revolution\modUserGroup::class, 'principal' => (int)$bkGroup->get('id')];
+                if (!$modx->getObject(\MODX\Revolution\modAccessContext::class, $acl)) {
+                    $a = $modx->newObject(\MODX\Revolution\modAccessContext::class);
+                    $a->fromArray($acl + ['authority' => 9999, 'policy' => (int)$bkPol->get('id')]);
+                    if (saved($a, 'доступ группы «Бронирование» к админке')) say('new', '«Бронирование»: доступ к админке (контекст mgr)');
+                }
+                $role = $modx->getObject(\MODX\Revolution\modUserGroupRole::class, ['name' => 'Member']);
+                for ($i = 1; $i <= 4; $i++) {
+                    $login = 'booking' . $i;
+                    if ($modx->getObject(\MODX\Revolution\modUser::class, ['username' => $login])) { say('skip', "пользователь $login уже есть — не трогаю"); continue; }
+                    $alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                    $pwd = '';
+                    for ($k = 0; $k < 14; $k++) $pwd .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+                    $u = $modx->newObject(\MODX\Revolution\modUser::class);
+                    $u->fromArray(['username' => $login, 'active' => 1, 'primary_group' => (int)$bkGroup->get('id')]);
+                    $u->set('password', $pwd);
+                    $profile = $modx->newObject(\MODX\Revolution\modUserProfile::class);
+                    $profile->fromArray(['fullname' => 'Бронирование ' . $i, 'email' => '']);
+                    $u->addOne($profile, 'Profile');
+                    if (!saved($u, "пользователя $login")) continue;
+                    $member = $modx->newObject(\MODX\Revolution\modUserGroupMember::class);
+                    $member->fromArray(['user_group' => (int)$bkGroup->get('id'), 'member' => (int)$u->get('id'), 'role' => $role ? (int)$role->get('id') : 1, 'rank' => 0]);
+                    saved($member, "членство $login в группе");
+                    say('new', "пользователь $login («Бронирование») — пароль показан ниже, в журнал не записан");
+                    secret("$login — пароль: $pwd");
+                }
+            }
+        } catch (Throwable $e) { say('error', 'учётки бронирования: ' . $e->getMessage()); }
+    }
+
     // --- 13. библиотека сайта: core/components/bania/ (Bania.php, страница «Заявки»)
     $comp = MODX_CORE_PATH . 'components/bania/';
     $copied = 0;
@@ -2012,6 +2170,8 @@ function report($finished) {
     if ($cli) {
         echo $title, "\n";
         foreach ($log as $l) echo "[{$l[0]}] {$l[1]}\n";
+        global $secrets;
+        if ($secrets) echo "\nПАРОЛИ НОВЫХ ПОЛЬЗОВАТЕЛЕЙ — сохраните сейчас, больше не покажем (в журнал не записаны):\n  " . implode("\n  ", $secrets) . "\n";
         exit($count['error'] ? 1 : 0);
     }
     $colors = ['new' => '#1e7d45', 'upd' => '#1f5fbf', 'skip' => '#8a7a70', 'ok' => '#1e7d45', 'warn' => '#a35b00', 'error' => '#b3261e'];
@@ -2035,5 +2195,10 @@ function report($finished) {
     }
     $list = '<ul style="list-style:none;padding:0">';
     foreach ($log as $l) $list .= '<li style="padding:2px 0"><b style="color:' . $colors[$l[0]] . '">' . $names[$l[0]] . '</b> ' . htmlspecialchars($l[1]) . '</li>';
-    echo page($title, $body . $list . '</ul>');
+    global $secrets;
+    $pw = $secrets ? '<div style="margin:0 0 18px;padding:14px 18px;border:2px solid #b3261e;border-radius:10px;background:#fff6f4">'
+        . '<b>Пароли новых пользователей — сохраните сейчас, больше не покажем.</b> В журнал на сервере они не записаны.<ul style="margin:8px 0 0;padding-left:20px;font-family:monospace">'
+        . implode('', array_map(function ($x) { return '<li>' . htmlspecialchars($x) . '</li>'; }, $secrets)) . '</ul>'
+        . '<p style="margin:8px 0 0">Вход: /manager/. Каждый может сменить пароль, имя и почту у себя в профиле (меню пользователя → «Профиль»).</p></div>' : '';
+    echo page($title, $pw . $body . $list . '</ul>');
 }

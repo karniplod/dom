@@ -9,7 +9,8 @@ require_once dirname(__DIR__) . '/Bania.php';
 class BaniaIndexManagerController extends \MODX\Revolution\modExtraManagerController
 {
     public function getPageTitle() { return 'Заявки'; }
-    public function checkPermissions() { return $this->modx->hasPermission('frames'); }
+    // «Заявки» сайта — с именами и телефонами гостей: только у администраторов и «Менеджеров сайта» (право bn_site)
+    public function checkPermissions() { return $this->modx->hasPermission('frames') && $this->modx->hasPermission('bn_site'); }
     public function getTemplateFile() { return ''; }
     public function getLanguageTopics() { return []; }
 
