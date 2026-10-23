@@ -151,9 +151,11 @@ return [
             $s5 = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '15:00', 'time_to' => '17:00']);
             $t->ok($s5['success'], 'в день выезда гостей дома — можно');
             $s5b = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '09:00', 'time_to' => '11:00']);
-            $t->eq(409, $s5b['status'], 'в день выезда до 11:30 — нельзя: гости ещё в Доме и уборка');
-            $s5c = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '11:30', 'time_to' => '13:30']);
-            $t->ok($s5c['success'], 'в день выезда с 11:30 — можно');
+            $t->eq(409, $s5b['status'], 'в день выезда 9–11 — нельзя: гости ещё в Доме');
+            $s5d = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '11:30', 'time_to' => '13:30']);
+            $t->eq(409, $s5d['status'], 'в день выезда с 11:30 — нельзя: уборка Дома после выезда 60 минут');
+            $s5c = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '12:00', 'time_to' => '14:00']);
+            $t->ok($s5c['success'], 'в день выезда с 12:00 (выезд 11:00 + уборка Дома 60 минут) — можно');
 
             // обратно: подтверждённые сеансы бани и бронь Дома
             $t->admin();
@@ -164,6 +166,23 @@ return [
             $t->ok($h20['success'], 'Дом на ночь 20.10: утренний сеанс 20.10 до заезда — не мешает: ' . $h20['message']);
             $h21 = $t->request(['house' => 'sv', 'date_from' => '2031-10-21', 'date_to' => '2031-10-22']);
             $t->eq(409, $h21['status'], 'Дом на ночь 21.10: сеанс 22.10 в 10:00 — гости ещё не выехали');
+            // уборка Дома — своё поле: 120 минут → в день выезда баня с 13:00
+            $t->admin();
+            $houses = $t->run('booking_manage_house', ['op' => 'list'])['data']['items'];
+            $svh = array_values(array_filter($houses, fn($h) => $h['code'] === 'sv'))[0];
+            $keep = (int)($svh['cleanup_minutes'] ?? 60);
+            $up = $t->run('booking_manage_house', ['op' => 'save'] + array_intersect_key($svh, array_flip(['id', 'code', 'name', 'slug', 'address', 'capacity_sleep', 'capacity_party', 'checkin_time', 'checkout_time', 'sort', 'active'])) + ['cleanup_minutes' => 120]);
+            $t->ok($up['success'], 'уборка Дома 120 минут сохранена: ' . $up['message']);
+            try {
+                $c1 = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '12:30', 'time_to' => '14:30']);
+                $t->eq(409, $c1['status'], 'уборка Дома 120 минут: с 12:30 — нельзя');
+                $c2 = $t->request(['house' => 'sv', 'addon' => 1, 'date_from' => '2031-10-13', 'time_from' => '13:00', 'time_to' => '15:00']);
+                $t->ok($c2['success'], 'уборка Дома 120 минут: с 13:00 — можно');
+            } finally {
+                $t->admin();
+                $t->run('booking_manage_house', ['op' => 'save'] + array_intersect_key($svh, array_flip(['id', 'code', 'name', 'slug', 'address', 'capacity_sleep', 'capacity_party', 'checkin_time', 'checkout_time', 'sort', 'active'])) + ['cleanup_minutes' => $keep]);
+            }
+            $t->admin();
             $t->guest();
             $cal = $t->run('booking_get_availability', ['house' => 'sv', 'from' => '2031-10-19', 'to' => '2031-10-24']);
             $t->ok(in_array('2031-10-21', $cal['data']['busy'] ?? [], true) && !in_array('2031-10-20', $cal['data']['busy'] ?? [], true),

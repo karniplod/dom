@@ -7,6 +7,7 @@
    чтобы при подмене шрифта текст не переносился иначе и страница не прыгала. Цифры сняты в Chrome по русскому тексту. */
 /* <picture> вокруг фото не участвует в вёрстке: фото ведёт себя как прямой потомок ссылки или блока */
 picture { display: contents; }
+picture > source { display: none; }   /* иначе пустой <source> становится ячейкой сетки или flex-ряда (меню Домов, карточки) */
 /* текст только для экранного диктора */
 .sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @font-face { font-family: "Golos Fallback"; src: local("Arial"), local("ArialMT"); size-adjust: 105.76%; ascent-override: 92.66%; descent-override: 20.8%; line-gap-override: 0%; }

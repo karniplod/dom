@@ -88,6 +88,10 @@ class House extends Base
         if ($in < $out) {
             throw BookingError::field('checkin_time', 'Заезд не раньше выезда — иначе соседние брони пересекутся');
         }
+        $clean = $this->int('cleanup_minutes', $id ? (int)$h->get('cleanup_minutes') : 60);
+        if ($clean < 0 || $clean > 600) {
+            throw BookingError::field('cleanup_minutes', 'Уборка Дома — от 0 до 600 минут');
+        }
         foreach (['code' => $code, 'slug' => $slug] as $f => $v) {
             $dup = $this->modx->getObject(HouseRow::class, [$f => $v, 'id:!=' => $id]);
             if ($dup) {
@@ -100,7 +104,7 @@ class House extends Base
             'address' => $this->str('address', 255),
             'resource_id' => $this->int('resource_id') ?: null,
             'capacity_sleep' => $sleep, 'capacity_party' => $party,
-            'checkin_time' => $in, 'checkout_time' => $out,
+            'checkin_time' => $in, 'checkout_time' => $out, 'cleanup_minutes' => $clean,
             'sort' => (int)$this->int('sort', (int)$h->get('sort')),
             'active' => $this->getProperty('active') === null ? ($id ? $h->get('active') : 1) : $this->bool('active'),
         ]);

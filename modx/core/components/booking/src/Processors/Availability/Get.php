@@ -31,7 +31,8 @@ class Get extends Base
             $busy = $b->availability()->addonBusy($addon, $date);
             // день занят: Дом закрыт администратором или не осталось окна на минимум часов
             $dayBusy = $b->availability()->blockedNights($house->get('id'), $date, $next) || !$b->availability()->addonHasWindow($addon, $busy);
-            $slots = array_map(fn($s) => ['from' => $s['from'], 'to' => $s['to']] + (!empty($s['house']) ? ['house' => true] : []), $busy);
+            $slots = array_map(fn($s) => ['from' => $s['from'], 'to' => $s['to']] + (!empty($s['house']) ? ['house' => true] : [])
+                + (!empty($s['nopad']) ? ['nopad' => true] : []) + (!empty($s['blocked']) ? ['blocked' => true] : []), $busy);
             return [
                 'house' => $house->get('code'),
                 'date' => $date,

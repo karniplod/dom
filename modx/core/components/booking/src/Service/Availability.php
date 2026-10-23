@@ -84,21 +84,22 @@ class Availability
     public const BATH_OPEN = 8 * 60;
     public const BATH_CLOSE = 23 * 60;
 
-    /** Заезд и выезд дома в минутах и перерыв на уборку бани */
+    /** Заезд и выезд дома в минутах, уборка бани (перед заездом и между сеансами), уборка Дома после выезда */
     protected function houseClock(House $house): array
     {
         $addon = $this->booking->modx->getObject(Addon::class, ['house_id' => $house->get('id'), 'active' => 1]);
-        return [self::toMin($house->get('checkin_time')), self::toMin($house->get('checkout_time')), $addon ? (int)$addon->get('buffer_minutes') : 30];
+        return [self::toMin($house->get('checkin_time')), self::toMin($house->get('checkout_time')), $addon ? (int)$addon->get('buffer_minutes') : 60,
+            (int)$house->get('cleanup_minutes')];
     }
 
     /**
      * Ночи дома, которые нельзя занять из-за подтверждённых сеансов бани: night => booking_id.
-     * Сеанс в день D мешает ночи D, если не кончается за перерыв до заезда; мешает ночи D−1, если начинается раньше выезда плюс перерыв.
+     * Сеанс в день D мешает ночи D, если не кончается за уборку бани до заезда; мешает ночи D−1, если начинается раньше выезда плюс уборка Дома.
      * Бронь, в которой день D целиком внутри (ночи D−1 и D), — любой сеанс в этот день мешает.
      */
     public function addonSessionNights(House $house, string $from, string $to, int $exceptBooking = 0): array
     {
-        [$in, $out, $buf] = $this->houseClock($house);
+        [$in, $out, $buf, $clean] = $this->houseClock($house);
         $q = $this->booking->modx->newQuery(BookingRow::class);
         $q->where(['house_id' => $house->get('id'), 'addon_id:!=' => null, 'status' => 'confirmed',
             'date_from:>=' => $from, 'date_from:<=' => $to]);
@@ -116,7 +117,7 @@ class Availability
             if ($inStay && ($outDay || $z + $buf > $in)) {
                 $nights[$d] = $nights[$d] ?? (int)$b->get('id');
             }
-            if ($outDay && ($inStay || $a - $buf < $out)) {
+            if ($outDay && ($inStay || $a < $out + $clean)) {
                 $nights[$prev] = $nights[$prev] ?? (int)$b->get('id');
             }
         }
@@ -127,7 +128,7 @@ class Availability
     /** Для календаря Дома: ночи, которые сеансы бани делают недоступными (каждая ночь — сама по себе) */
     public function addonBlockedNights(House $house, string $from, string $to): array
     {
-        [$in, $out, $buf] = $this->houseClock($house);
+        [$in, $out, $buf, $clean] = $this->houseClock($house);
         $q = $this->booking->modx->newQuery(BookingRow::class);
         $q->where(['house_id' => $house->get('id'), 'addon_id:!=' => null, 'status' => 'confirmed',
             'date_from:>=' => $from, 'date_from:<=' => $to]);
@@ -136,14 +137,15 @@ class Availability
             $d = $b->get('date_from');
             if (self::toMin($b->get('time_to')) + $buf > $in && $d < $to) $nights[$d] = true;
             $prev = (new \DateTimeImmutable($d))->modify('-1 day')->format('Y-m-d');
-            if (self::toMin($b->get('time_from')) - $buf < $out && $prev >= $from) $nights[$prev] = true;
+            if (self::toMin($b->get('time_from')) < $out + $clean && $prev >= $from) $nights[$prev] = true;
         }
         return array_keys($nights);
     }
 
     /**
-     * Гости дома в день $date — интервалы для бани [from, to) без перерыва: заезд в эту дату — с заезда до 24:00,
-     * выезд из прошлой ночи — с 00:00 до выезда; живут весь день — 00:00–24:00.
+     * Гости дома в день $date — интервалы для бани [from, to): заезд в эту дату — с заезда до 24:00 (уборка бани перед
+     * заездом добавляется при проверке, как между сеансами); выезд из прошлой ночи — с 00:00 до выезда плюс уборка Дома
+     * (nopad: своя уборка уже внутри, перерыв бани не добавляется); живут весь день — 00:00–24:00.
      */
     public function houseSegments(House $house, string $date, int $exceptBooking = 0): array
     {
@@ -156,7 +158,11 @@ class Availability
             return [['from' => '00:00', 'to' => '24:00', 'booking_id' => $t, 'house' => true]];
         }
         $out = [];
-        if ($p) $out[] = ['from' => '00:00', 'to' => substr($house->get('checkout_time'), 0, 5), 'booking_id' => $p, 'house' => true];
+        if ($p) {
+            $end = min(24 * 60, self::toMin($house->get('checkout_time')) + (int)$house->get('cleanup_minutes'));
+            $out[] = ['from' => '00:00', 'to' => sprintf('%02d:%02d', intdiv($end, 60), $end % 60), 'booking_id' => $p, 'house' => true, 'nopad' => true,
+                'checkout' => substr($house->get('checkout_time'), 0, 5)];
+        }
         if ($t) $out[] = ['from' => substr($house->get('checkin_time'), 0, 5), 'to' => '24:00', 'booking_id' => $t, 'house' => true];
         return $out;
     }
@@ -168,7 +174,7 @@ class Availability
         $min = (int)$addon->get('min_hours') * 60;
         $iv = [];
         foreach ($busy as $s) {
-            $pad = empty($s['blocked']) ? $buf : 0;
+            $pad = empty($s['blocked']) && empty($s['nopad']) ? $buf : 0;
             $iv[] = [self::toMin($s['from']) - $pad, self::toMin($s['to']) + $pad];
         }
         usort($iv, fn($x, $y) => $x[0] <=> $y[0]);
@@ -263,13 +269,13 @@ class Availability
         $a = self::toMin($timeFrom);
         $b = self::toMin($timeTo);
         foreach ($this->addonBusy($addon, $date, $exceptBooking) as $s) {
-            $pad = empty($s['blocked']) ? $buf : 0;
+            $pad = empty($s['blocked']) && empty($s['nopad']) ? $buf : 0;
             $sa = self::toMin($s['from']) - $pad;
             $sb = self::toMin($s['to']) + $pad;
             if ($a < $sb && $b > $sa) {
                 $msg = !empty($s['house'])
-                    ? 'Баня занята: в Доме гости (бронь №' . $s['booking_id'] . '), ' . ($s['from'] === '00:00' ? 'выезд до ' . $s['to'] : 'заезд с ' . $s['from'])
-                      . ', ещё ' . $buf . ' минут на уборку'
+                    ? 'Баня занята: в Доме гости (бронь №' . $s['booking_id'] . '), '
+                      . (!empty($s['nopad']) ? 'выезд до ' . $s['checkout'] . ', уборка Дома до ' . $s['to'] : ($s['from'] === '00:00' ? 'живут весь день' : 'заезд с ' . $s['from'] . ', до него ' . $buf . ' минут на уборку бани'))
                     : (empty($s['blocked'])
                     ? 'Баня занята с ' . $s['from'] . ' до ' . $s['to'] . ' (между сеансами ' . $buf . ' минут на уборку)'
                     : 'Это время закрыто администратором');

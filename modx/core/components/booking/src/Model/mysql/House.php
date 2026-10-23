@@ -27,6 +27,7 @@ class House extends \Booking\Model\House
             'capacity_party' => 1,
             'checkin_time' => '15:00:00',
             'checkout_time' => '12:00:00',
+            'cleanup_minutes' => 60,
             'addon_bookable_separately' => 0,
             'active' => 1,
             'sort' => 0,
@@ -110,6 +111,15 @@ class House extends \Booking\Model\House
                 'phptype' => 'string',
                 'null' => false,
                 'default' => '12:00:00',
+            ),
+            'cleanup_minutes' => 
+            array (
+                'dbtype' => 'smallint',
+                'precision' => '5',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => false,
+                'default' => 60,
             ),
             'addon_bookable_separately' => 
             array (

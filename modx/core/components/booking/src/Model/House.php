@@ -16,6 +16,7 @@ use xPDO\xPDO;
  * @property integer $capacity_party
  * @property string $checkin_time
  * @property string $checkout_time
+ * @property integer $cleanup_minutes уборка Дома после выезда, минут
  * @property boolean $addon_bookable_separately
  * @property boolean $active
  * @property integer $sort

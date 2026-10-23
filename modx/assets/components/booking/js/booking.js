@@ -280,7 +280,7 @@
   /* сеанс [a, b) в минутах задевает занятый интервал с перерывом на уборку? (сервер проверяет так же) */
   GuestForm.prototype.clash = function (a, b) {
     var buf = this.buf || 0;
-    return (this.busySlots || []).some(function (s) { return a < toMin(s.to) + buf && b > toMin(s.from) - buf; });
+    return (this.busySlots || []).some(function (s) { var p = s.blocked || s.nopad ? 0 : buf; return a < toMin(s.to) + p && b > toMin(s.from) - p; });   // как на сервере
   };
   /* занятые часы недоступны в «С» и «До»; выбранное время, если оно занято, — на первое свободное */
   GuestForm.prototype.fitTimes = function () {
@@ -354,7 +354,7 @@
       if (d.day_busy) { self.el.slots.innerHTML = '<span class="bk-warn">В этот день Дом забронирован — баня занята</span>'; return; }
       self.el.slots.innerHTML = (d.slots_busy.length
         ? 'Занято: ' + d.slots_busy.map(function (s) {
-            return s.house ? (s.from === '00:00' ? (s.to === '24:00' ? 'весь день — в Доме гости' : 'до ' + esc(s.to) + ' — в Доме гости') : 'с ' + esc(s.from) + ' — заезд гостей Дома') : esc(s.from + '–' + s.to);
+            return s.house ? (s.from === '00:00' ? (s.to === '24:00' ? 'весь день — в Доме гости' : 'до ' + esc(s.to) + ' — выезд гостей Дома и уборка') : 'с ' + esc(s.from) + ' — заезд гостей Дома') : esc(s.from + '–' + s.to);
           }).join(', ') + '. Между сеансами ' + d.buffer_minutes + ' мин на уборку.'
         : 'Баня свободна весь день.') + ' Время подтвердит администратор, когда перезвонит.';
     });
@@ -788,6 +788,7 @@
           + '<label class="bk-field"><span>Отдыхают (максимум в заявке)</span><input name="capacity_party" type="number" min="1" value="' + h.capacity_party + '"></label>'
           + '<label class="bk-field"><span>Заезд</span><input name="checkin_time" type="time" value="' + h.checkin_time + '"></label>'
           + '<label class="bk-field"><span>Выезд</span><input name="checkout_time" type="time" value="' + h.checkout_time + '"></label>'
+          + '<label class="bk-field"><span>Уборка Дома после выезда, мин</span><input name="cleanup_minutes" type="number" min="0" max="600" value="' + (h.cleanup_minutes != null ? h.cleanup_minutes : 60) + '"></label>'
           + '<label class="bk-field"><span>Порядок</span><input name="sort" type="number" min="0" value="' + h.sort + '"></label>'
           + '<label class="bk-check"><input type="checkbox" name="active"' + (h.active ? ' checked' : '') + '> показывать в форме</label>'
           + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Сохранить Дом</button></div></form>'

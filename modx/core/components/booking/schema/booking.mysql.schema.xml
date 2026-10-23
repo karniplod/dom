@@ -14,6 +14,8 @@
         <field key="capacity_party" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="1"/>
         <field key="checkin_time" dbtype="time" phptype="string" null="false" default="15:00:00"/>
         <field key="checkout_time" dbtype="time" phptype="string" null="false" default="12:00:00"/>
+        <!-- уборка Дома после выезда гостей, минут: в день выезда баню можно снять только после неё -->
+        <field key="cleanup_minutes" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="60"/>
         <field key="addon_bookable_separately" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="0"/>
         <field key="active" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="1"/>
         <field key="sort" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="0"/>

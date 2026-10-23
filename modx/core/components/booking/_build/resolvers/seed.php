@@ -33,7 +33,7 @@ foreach ($houses as $h) {
         'code' => $h['code'], 'name' => $h['name'], 'slug' => $h['slug'], 'address' => $h['address'],
         'resource_id' => $res ? $res->get('id') : null,
         'capacity_sleep' => $h['capacity_sleep'], 'capacity_party' => $h['capacity_party'],
-        'checkin_time' => $h['checkin_time'], 'checkout_time' => $h['checkout_time'],
+        'checkin_time' => $h['checkin_time'], 'checkout_time' => $h['checkout_time'], 'cleanup_minutes' => 60,
         'addon_bookable_separately' => 0, 'active' => 1, 'sort' => $h['sort'],
     ]);
     $house->save();
