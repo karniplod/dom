@@ -19,6 +19,28 @@ class Bookings
 
     protected Booking $booking;
 
+    /**
+     * Текст гостя без тегов MODX: «[[…]]» в имени, комментарии или причине отмены иначе выполнится,
+     * когда значение попадёт в чанк письма (MODX разбирает подставленные плейсхолдеры повторно).
+     * В API-режиме (api.php, SendIt) MODX сам запрос не очищает.
+     */
+    public static function clean(string $s): string
+    {
+        $s = strip_tags($s);
+        // повторяем, пока меняется: удаление «]]» в «[]][» само даёт новый «[[»
+        do {
+            $before = $s;
+            $s = str_replace(['[[', ']]'], '', $s);
+        } while ($s !== $before);
+        return trim($s);
+    }
+
+    /** Значение для чанка (письма): HTML и служебные символы MODX — как сущности, чтобы парсер их не тронул */
+    public static function forChunk($s): string
+    {
+        return str_replace(['[', ']', '`', '{', '}'], ['&#91;', '&#93;', '&#96;', '&#123;', '&#125;'], htmlspecialchars((string)$s));
+    }
+
     public function __construct(Booking $booking)
     {
         $this->booking = $booking;
@@ -86,13 +108,13 @@ class Bookings
         $in['pets'] = $pets;
 
         if ($contacts) {
-            $name = mb_substr(trim(strip_tags((string)($p['name'] ?? ''))), 0, 100);
+            $name = mb_substr(self::clean((string)($p['name'] ?? '')), 0, 100);
             if (mb_strlen($name) < 2) {
                 throw BookingError::field('name', 'Как к вам обращаться?');
             }
             $in['name'] = $name;
             $in['phone'] = $b->phone($p['phone'] ?? '');
-            $in['comment'] = mb_substr(trim(strip_tags((string)($p['comment'] ?? ''))), 0, 2000);
+            $in['comment'] = mb_substr(self::clean((string)($p['comment'] ?? '')), 0, 2000);
         }
         return $in;
     }
@@ -283,21 +305,21 @@ class Bookings
         $a = $this->toAdmin($row);
         $lines = '';
         foreach ($a['lines'] as $l) {
-            $lines .= '<tr><td>' . htmlspecialchars($l['label']) . '</td><td style="text-align:right">' . $this->booking->money((int)$l['amount']) . '</td></tr>';
+            $lines .= '<tr><td>' . self::forChunk($l['label']) . '</td><td style="text-align:right">' . $this->booking->money((int)$l['amount']) . '</td></tr>';
         }
         return [
             'booking_id' => $a['id'],
-            'house_name' => $a['house_name'],
-            'dates' => $a['dates'] . ($a['addon'] ? ' (баня отдельно)' : ''),
+            'house_name' => self::forChunk($a['house_name']),
+            'dates' => self::forChunk($a['dates'] . ($a['addon'] ? ' (баня отдельно)' : '')),
             'guests' => $a['guests'],
             'pets' => $a['pets'],
             'total' => $this->booking->money($a['total']),
             'discount' => $a['quote_discount'] ? $this->booking->money($a['quote_discount']) : '',
             'lines' => $lines,
-            'guest_name' => htmlspecialchars($a['guest_name']),
-            'guest_phone' => $a['guest_phone'],
-            'guest_comment' => nl2br(htmlspecialchars($a['guest_comment'])),
-            'cancellation_reason' => nl2br(htmlspecialchars($a['cancellation_reason'])),
+            'guest_name' => self::forChunk($a['guest_name']),
+            'guest_phone' => self::forChunk($a['guest_phone']),
+            'guest_comment' => nl2br(self::forChunk($a['guest_comment'])),
+            'cancellation_reason' => nl2br(self::forChunk($a['cancellation_reason'])),
             'admin_link' => htmlspecialchars(rtrim($this->booking->modx->getOption('site_url'), '/') . '/'
                 . trim($this->booking->modx->getOption('manager_url', null, 'manager/'), '/') . '/?a=index&namespace=booking#id=' . $a['id']),
         ];

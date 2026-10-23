@@ -62,7 +62,8 @@ abstract class Base extends Processor
     protected function str(string $key, int $max = 255): string
     {
         $v = $this->getProperty($key);
-        return is_scalar($v) ? mb_substr(trim(strip_tags((string)$v)), 0, $max) : '';
+        // без HTML и тегов MODX «[[…]]» — см. Bookings::clean()
+        return is_scalar($v) ? mb_substr(\Booking\Service\Bookings::clean((string)$v), 0, $max) : '';
     }
 
     protected function int(string $key, ?int $default = null): ?int
