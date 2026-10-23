@@ -594,7 +594,10 @@ class Bania
         if (empty($in['agree'])) $err[] = 'отметьте согласие на обработку данных';
         $d1 = preg_match('~^\d{4}-\d{2}-\d{2}$~', (string)($in['checkin'] ?? '')) ? $in['checkin'] : null;
         $d2 = preg_match('~^\d{4}-\d{2}-\d{2}$~', (string)($in['checkout'] ?? '')) ? $in['checkout'] : null;
-        if ($d1 && $d2 && $d2 <= $d1) $err[] = 'дата выезда должна быть позже заезда';
+        if (!$d1 || !$d2) $err[] = 'выберите даты заезда и выезда';
+        elseif ($d1 < date('Y-m-d')) $err[] = 'дата заезда уже прошла';
+        elseif ($d2 <= $d1) $err[] = 'дата выезда должна быть позже заезда';
+        elseif ($h && ($busy = self::busyNights($h['id'], $d1, $d2))) $err[] = 'эти даты уже заняты (' . date('d.m', strtotime($busy[0])) . (count($busy) > 1 ? ' и ещё ' . (count($busy) - 1) : '') . ') — выберите другие или позвоните нам';
         if ($err) return ['ok' => false, 'code' => 422, 'message' => 'Чтобы отправить заявку, ' . implode(', ', $err) . '.'];
         $guests = max(0, min(99, (int)($in['guests'] ?? 0)));
         [$nights, $sum] = ($d1 && $d2) ? self::estimate($h, $d1, $d2, $guests) : [0, 0];

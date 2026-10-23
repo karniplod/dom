@@ -24,7 +24,7 @@
       <label class="check"><input type="checkbox" data-pay-agree><span>Я прочитал условия предоплаты и согласен с ними</span></label></div>
     <div class="hero__cta"><a class="btn btn--lg is-off" href="[[bnHouse? &id=`[[*parent]]` &part=`sbp`]]" target="_blank" rel="noopener" data-pay-btn aria-disabled="true">Внести предоплату через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="[[bnHouse? &id=`[[*parent]]` &part=`code`]]">Оставить заявку</button></div>
   </div>
-  <figure class="paypage__qr"><img src="[[++base_url]]assets/img/qr/[[bnHouse? &id=`[[*parent]]` &part=`code`]].svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>
+  <figure class="paypage__qr is-locked" data-pay-qr><div class="paypage__qrimg"><img src="[[++base_url]]assets/img/qr/[[bnHouse? &id=`[[*parent]]` &part=`code`]].svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><p class="paypage__lock">Код появится, когда отметите согласие с условиями предоплаты</p></div><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>
 </div></section>
 </main>
 [[$bn.footer]]

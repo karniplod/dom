@@ -351,7 +351,7 @@ pp = B.post_page(POSTS[0])["body"]
 _, _, pm, _ = page_parts(pp)
 for name, repl in (("crumbs", "[[bnCrumbs]]"), ("postMeta", "[[bnPost? &part=`meta`]]"), ("v:post_title", "[[*pagetitle]]"), ("v:post_lead", "[[*introtext]]"),
                    ("postCover", "[[bnPost? &part=`cover`]]"), ("toc", "[[bnPost? &part=`toc`]]"), ("postBody", "[[bnPost? &part=`body`]]"),
-                   ("v:share_url", "[[bnPost? &part=`share_url`]]"), ("v:share_title", "[[bnPost? &part=`share_title`]]"),
+                   ("v:share_url", "[[bnPost? &part=`share_url`]]"),
                    ("postHouses", "[[bnPost? &part=`houses`]]"), ("postOthers", "[[bnPosts? &limit=`3` &exclude=`[[*id]]`]]")):
     pm = unmark(pm, name, repl)
 pm = common(strip_marks(pm)).replace('href="[[~[[++bn_blog_id]]]]"', 'href="[[~[[*parent]]]]"')

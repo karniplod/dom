@@ -698,7 +698,7 @@ def post_page(p):
     inline_cta = '<aside class="callout"><p><b>Хотите узнать, свободны ли даты?</b> Оставьте заявку — администратор перезвонит и назовёт точную сумму.</p><button class="btn btn--sm" type="button" data-order>Оставить заявку</button></aside>'
     secs = "".join(secs_l[:mid]) + inline_cta + "".join(secs_l[mid:])
     others = [o for o in POSTS if o is not p][:3]
-    share_u, share_t = quote(url, safe=""), quote(p["h1"], safe="")
+    share_u = quote(url, safe="")
     body = f'''{header("blog")}
 <main>
 <article class="post">
@@ -716,7 +716,7 @@ def post_page(p):
     </aside>
     <div class="prose">
       {mark("postBody", secs)}
-      <footer class="share"><span>Поделиться:</span><a class="link" href="https://vk.com/share.php?url={mark("v:share_url", share_u)}" target="_blank" rel="noopener">ВКонтакте</a><a class="link" href="https://t.me/share/url?url={mark("v:share_url", share_u)}&amp;text={mark("v:share_title", share_t)}" target="_blank" rel="noopener">Telegram</a><button class="link" type="button" data-copy>Скопировать ссылку</button></footer>
+      <footer class="share"><span>Поделиться:</span><a class="link" href="https://vk.com/share.php?url={mark("v:share_url", share_u)}" target="_blank" rel="noopener">ВКонтакте</a><button class="link" type="button" data-copy>Скопировать ссылку</button></footer>
     </div>
   </div>
 </article>
@@ -761,7 +761,7 @@ def prepay_page(k):
       <label class="check"><input type="checkbox" data-pay-agree><span>Я прочитал условия предоплаты и согласен с ними</span></label></div>
     <div class="hero__cta"><a class="btn btn--lg is-off" href="{h["sbp"]}" target="_blank" rel="noopener" data-pay-btn aria-disabled="true">Внести предоплату через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="{k}">Оставить заявку</button></div>
   </div>
-  <figure class="paypage__qr"><img src="img/qr/{k}.svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>
+  <figure class="paypage__qr is-locked" data-pay-qr><div class="paypage__qrimg"><img src="img/qr/{k}.svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><p class="paypage__lock">Код появится, когда отметите согласие с условиями предоплаты</p></div><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>
 </div></section>
 </main>
 {footer(k)}'''

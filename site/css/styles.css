@@ -728,7 +728,13 @@ table.cmp--sm { min-width: 520px; font-size: 15.5px; }
 .paysteps li { counter-increment: s; display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; font-size: 17px; }
 .paysteps li::before { content: counter(s); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--hc, var(--bark)); color: var(--cream); font: 400 18px/1 var(--display); }
 .paypage__qr { margin: 0; padding: 20px; border-radius: 8px; background: var(--card); box-shadow: 0 1px 0 var(--line); border-top: 4px solid var(--hc, var(--fox)); text-align: center; }
-.paypage__qr img { width: 100%; height: auto; }
+.paypage__qr img { width: 100%; height: auto; transition: filter .35s ease, opacity .35s ease; }
+/* до согласия с условиями код размыт (не сканируется) и подписан; размер блока не меняется — страница не прыгает */
+.paypage__qrimg { position: relative; }
+.paypage__lock { position: absolute; inset: 0; display: none; place-items: center; padding: 16px; margin: 0; font-weight: 600; font-size: 15.5px; line-height: 1.4; color: var(--bark); }
+.paypage__qr.is-locked img { filter: blur(14px); opacity: .25; }
+.paypage__qr.is-locked .paypage__lock { display: grid; }
+.paypage__qr.is-locked figcaption { visibility: hidden; }
 .paypage__qr figcaption { margin-top: 10px; font-size: 14.5px; color: var(--ink-soft); }
 
 /* карточка дома: фото открываются в просмотре — показываем это при наведении */

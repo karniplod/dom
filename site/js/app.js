@@ -223,6 +223,10 @@
       if (!q('[name="name"]').value.trim()) problems.push("укажите имя");
       if (phone.value.replace(/\D/g, "").length < 11) problems.push("проверьте телефон: нужно 10 цифр после +7");
       if (!fHouse.value) problems.push("выберите Дом");
+      // форма с novalidate: ограничение min браузер при отправке не проверяет, а дату можно вписать с клавиатуры
+      if (!fIn.value || !fOut.value) problems.push("выберите даты заезда и выезда");
+      else if (fIn.value < iso(today)) problems.push("дата заезда уже прошла — выберите сегодня или позже");
+      else if (fOut.value <= fIn.value) problems.push("дата выезда должна быть позже заезда");
       if (!q('[name="agree"]').checked) problems.push("отметьте согласие на обработку данных");
       if (q('[name="website"]').value) return; // ловушка для ботов
       if (problems.length) { errBox.textContent = "Чтобы отправить заявку, " + problems.join(", ") + "."; errBox.hidden = false; return; }
@@ -287,7 +291,11 @@
   $$("[data-pay-agree]").forEach(function (box) {
     var btn = document.querySelector("[data-pay-btn]");
     if (!btn) return;
-    var sync = function () { btn.classList.toggle("is-off", !box.checked); btn.setAttribute("aria-disabled", box.checked ? "false" : "true"); };
+    var qr = document.querySelector("[data-pay-qr]");   // QR-код СБП — тоже только после согласия
+    var sync = function () {
+      btn.classList.toggle("is-off", !box.checked); btn.setAttribute("aria-disabled", box.checked ? "false" : "true");
+      if (qr) { qr.classList.toggle("is-locked", !box.checked); qr.querySelector("img").setAttribute("aria-hidden", box.checked ? "false" : "true"); }
+    };
     btn.addEventListener("click", function (e) { if (!box.checked) { e.preventDefault(); box.focus(); box.closest("label").classList.add("is-need"); } });
     box.addEventListener("change", function () { box.closest("label").classList.remove("is-need"); sync(); });
     sync();
