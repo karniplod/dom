@@ -148,7 +148,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-23 16:39",
+ "version": "2026-10-24 21:50",
  "chunks": [
   {
    "name": "bn.fox",
@@ -1852,6 +1852,17 @@ try {
     // ссылки [[~id]] — от корня сайта («/kontakty»): в разметке нет <base>, и относительные ссылки со статей блога вели бы в /blog/…
     if (!$dry && ($r = setting('link_tag_scheme', 'abs'))) say($r, 'настройка link_tag_scheme = abs (ссылки от корня сайта)');
     $modx->setOption('link_tag_scheme', 'abs');
+    // MaxNotify3 по умолчанию шлёт через посредника rumaxbot.ru; у владельца свой бот в «MAX для бизнеса» — переключаем на него,
+    // если посредник не настроен (ключ api_key пуст). Токен бота и id группы вписывает владелец: в файлах их нет (ст. 7.4)
+    if (is_dir(MODX_CORE_PATH . 'components/maxnotify3/') && $modx->getOption('maxnotify3.provider') === 'rumaxbot'
+        && trim((string)$modx->getOption('maxnotify3.api_key')) === '') {
+        foreach (['maxnotify3.provider' => 'maxbusiness', 'maxnotify3.max_api_url' => 'https://platform-api2.max.ru/messages', 'maxnotify3.max_recipient_type' => 'chat_id'] as $k => $v) {
+            if (!$dry && ($r = setting($k, $v, 'MAX'))) say($r, "настройка $k = $v (свой бот MAX)");
+        }
+    }
+    if (is_dir(MODX_CORE_PATH . 'components/maxnotify3/') && (trim((string)$modx->getOption('maxnotify3.max_token')) === '' || trim((string)$modx->getOption('maxnotify3.max_recipient_ids')) === '')) {
+        say('warn', 'MAX: впишите токен бота (maxnotify3.max_token) и id группы администраторов (maxnotify3.max_recipient_ids) — см. INSTALL.md, раздел «MAX»');
+    }
 
     // --- менеджеры сайта: группа «Менеджеры сайта» и пользователи admin1–admin4 (решение владельца 23.10.2026)
     // Права — на основе политики «Content Editor»: страницы, публикация, тексты в чанках, файлы и фото, «Конфигурация»,
