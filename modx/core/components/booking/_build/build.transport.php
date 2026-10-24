@@ -30,7 +30,7 @@ $modx->setLogLevel(modX::LOG_LEVEL_INFO);
 $modx->setLogTarget('ECHO');
 
 const PKG = 'booking';
-const PKG_VERSION = '1.0.0';
+const PKG_VERSION = '1.1.0';
 const PKG_RELEASE = 'pl';
 
 $root = dirname(__DIR__, 4) . '/';                       // modx/
@@ -131,6 +131,13 @@ $rm(rtrim($stage, '/'));
 $signature = PKG . '-' . PKG_VERSION . '-' . PKG_RELEASE;
 $zip = MODX_CORE_PATH . 'packages/' . $signature . '.transport.zip';
 printf("Пакет: %s (%.1f КБ) за %.1f с\n", $zip, filesize($zip) / 1024, microtime(true) - $t0);
+// копия в dist/ проекта — этот файл загружают в «Пакеты → Установщик» на рабочем сайте
+$dist = dirname(__DIR__, 5) . '/dist/';
+if (is_dir($dist)) {
+    foreach (glob($dist . PKG . '-*.transport.zip') ?: [] as $old) @unlink($old);
+    copy($zip, $dist . $signature . '.transport.zip');
+    echo 'Для сайта: ' . realpath($dist . $signature . '.transport.zip') . "\n";
+}
 
 // ---------------------------------------------------------------- установка на этот MODX (стенд)
 if ($install) {
@@ -151,7 +158,7 @@ if ($install) {
     $pkg->fromArray([
         'created' => date('Y-m-d H:i:s'), 'updated' => null, 'state' => 1, 'workspace' => 1,
         'provider' => $provider ? $provider->get('id') : 0, 'source' => $signature . '.transport.zip', 'package_name' => PKG,
-        'version_major' => 1, 'version_minor' => 0, 'version_patch' => 0, 'release' => PKG_RELEASE,
+        'version_major' => 1, 'version_minor' => 1, 'version_patch' => 0, 'release' => PKG_RELEASE,
     ]);
     $pkg->save();
     $ok = $pkg->install();

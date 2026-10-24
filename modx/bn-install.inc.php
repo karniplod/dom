@@ -119,8 +119,16 @@ if (!$cli && !($modx->user && $modx->user->isAuthenticated('mgr') && $modx->user
 $ver = method_exists($modx, 'getVersionData') ? $modx->getVersionData() : [];
 if ((int)($ver['version'] ?? 3) < 3) stop('Это MODX ' . ($ver['full_version'] ?? '2.x') . '. Установщик рассчитан на MODX 3.');
 
+// Защита от подделки запроса (CSRF): установка и удаление — только кнопками этой страницы, с ключом сессии администратора.
+// Открыли адрес без ключа (ссылка с чужой страницы, картинка) — только пробный прогон, ничего не меняется
+$csrf = $cli ? '' : (string)$modx->user->getUserToken('mgr');
+$confirmed = $cli || ($csrf !== '' && hash_equals($csrf, (string)($_GET['t'] ?? '')));
+if (!$confirmed) $dry = true;
+$keep = $cli ? [] : array_diff_key($_GET, array_flip(['t', 'dry', 'check', 'remove', 'update']));   // ключи --force, --no-… из адреса — в кнопки
+$act = function (array $q) use ($csrf, $keep) { return '?' . htmlspecialchars(http_build_query($keep + $q + ['t' => $csrf])); };
+
 // --- удалить папку установщика (кнопка в конце отчёта, только из браузера)
-if (!$cli && !empty($_GET['remove'])) {
+if (!$cli && !empty($_GET['remove']) && $confirmed) {
     $removed = true;
     $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
     foreach ($it as $f) { if (!($f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname()))) $removed = false; }
@@ -148,7 +156,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-24 23:17",
+ "version": "2026-10-24 23:36",
  "chunks": [
   {
    "name": "bn.fox",
@@ -2187,6 +2195,7 @@ function report($finished) {
     }
     $colors = ['new' => '#1e7d45', 'upd' => '#1f5fbf', 'skip' => '#8a7a70', 'ok' => '#1e7d45', 'warn' => '#a35b00', 'error' => '#b3261e'];
     $names = ['new' => 'новое', 'upd' => 'обновлено', 'skip' => 'без изменений', 'ok' => 'проверено ✓', 'warn' => 'внимание', 'error' => 'ошибка'];
+    global $act;
     $btn = function ($href, $text, $main = false) {
         return '<a href="' . $href . '" style="display:inline-block;margin:0 8px 8px 0;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:600;'
             . ($main ? 'background:#B04E09;color:#fff' : 'background:#fff;color:#2A1A14;box-shadow:inset 0 0 0 1.5px #E7D3C0') . '">' . $text . '</a>';
@@ -2194,15 +2203,15 @@ function report($finished) {
     $body = '';
     if ($checkOnly) $body .= '<p>' . ($count['error'] ? 'Есть ошибки — смотрите красные строки. Чаще всего помогает запустить установщик ещё раз. ' : 'Сайт работает. ')
         . $btn('?check=1', 'Проверить ещё раз') . $btn(htmlspecialchars($modx->getOption('site_url')), 'Открыть сайт', true) . '</p>';
-    elseif ($dry && !$count['error']) $body .= '<p>Всё верно? ' . $btn('?', 'Установить', true) . $btn('?update=1', 'Установить и перезаписать страницы') . '</p>';
+    elseif ($dry && !$count['error']) $body .= '<p>Всё верно? ' . $btn($act([]), 'Установить', true) . $btn($act(['update' => 1]), 'Установить и перезаписать страницы') . '</p>';
     elseif ($dry) $body .= '<p style="color:#b3261e">Исправьте ошибки (красным) и запустите пробный прогон снова: ' . $btn('?dry=1', 'Проверить ещё раз') . '</p>';
     else {
         $site = htmlspecialchars($modx->getOption('site_url'));
         $body .= '<p>' . ($count['error'] ? 'Есть ошибки — смотрите красные строки и журнал. ' : 'Сайт установлен. ') . $btn($site, 'Открыть сайт', true)
             . $btn(htmlspecialchars(MODX_MANAGER_URL), 'Открыть админку') . '</p>'
-            . '<p>Ниже — результаты самопроверки (зелёным «проверено ✓»). Дальше: проверьте контакты в «Конфигурации» и отправьте с сайта тестовую заявку — она появится в «Пакеты → Заявки». '
+            . '<p>Ниже — результаты самопроверки (зелёным «проверено ✓»). Дальше: проверьте контакты в «Конфигурации» и отправьте с сайта тестовую заявку — она появится в «Пакеты → Бронирование» (без него — в «Пакеты → Заявки»). '
             . 'Проверить сайт ещё раз можно в любой момент: ' . $btn('?check=1', 'Только проверить') . '</p>';
-        if ($inside && !$static && !$count['error']) $body .= '<p>Папка установщика больше не нужна: ' . $btn('?remove=1', 'Удалить папку установщика') . '</p>';
+        if ($inside && !$static && !$count['error']) $body .= '<p>Папка установщика больше не нужна: ' . $btn($act(['remove' => 1]), 'Удалить папку установщика') . '</p>';
     }
     $list = '<ul style="list-style:none;padding:0">';
     foreach ($log as $l) $list .= '<li style="padding:2px 0"><b style="color:' . $colors[$l[0]] . '">' . $names[$l[0]] . '</b> ' . htmlspecialchars($l[1]) . '</li>';

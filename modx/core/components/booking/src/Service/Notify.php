@@ -22,7 +22,9 @@ class Notify
     public function adminEmail(): string
     {
         $modx = $this->booking->modx;
-        return trim((string)$modx->getOption('booking.admin_email', null, '')) ?: (string)$modx->getOption('emailsender');
+        // своя почта бронирования → «Почта для заявок» из «Конфигурации» (bn_lead_email) → системный адрес MODX
+        return trim((string)$modx->getOption('booking.admin_email', null, ''))
+            ?: ($this->booking->faq()->cc('bn_lead_email') ?: (string)$modx->getOption('emailsender'));
     }
 
     /** Письмо и сообщение в MAX администратору по чанку */

@@ -10,7 +10,9 @@ $hooks = ['booking.hook', 'email'];
 if ($modx->getCount(\MODX\Revolution\modSnippet::class, ['name' => 'maxNotify3SendIt'])) {
     $hooks[] = 'maxNotify3SendIt';
 }
-$to = trim((string)$modx->getOption('booking.admin_email', null, '')) ?: (string)$modx->getOption('emailsender');
+// почта для заявок: своя бронирования → «Почта для заявок» из «Конфигурации» → системный адрес MODX (как Notify::adminEmail)
+$to = $modx->services->has('booking') ? $modx->services->get('booking')->notify()->adminEmail()
+    : (trim((string)$modx->getOption('booking.admin_email', null, '')) ?: (string)$modx->getOption('emailsender'));
 
 return [
     'booking_request' => [

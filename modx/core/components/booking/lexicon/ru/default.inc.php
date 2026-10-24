@@ -17,7 +17,7 @@ $_lang['booking.err_overlap'] = 'Даты заняты: пересечение �
 $_lang['booking.err_deposit'] = 'Залог — от 5 000 до 20 000 ₽';
 
 $_lang['setting_booking.admin_email'] = 'Почта администратора';
-$_lang['setting_booking.admin_email_desc'] = 'Куда приходят новые заявки и запросы отмены. Несколько адресов — через запятую. Пусто — emailsender.';
+$_lang['setting_booking.admin_email_desc'] = 'Куда приходят новые заявки и запросы отмены. Несколько адресов — через запятую. Пусто — «Почта для заявок» из «Конфигурации», без неё — emailsender.';
 $_lang['setting_booking.vk_discount'] = 'Скидка при бронировании через ВКонтакте, %';
 $_lang['setting_booking.vk_discount_desc'] = 'На сайте не применяется: администратор отмечает её в брони по телефону для гостей из группы ВКонтакте.';
 $_lang['setting_booking.vk_url'] = 'Группа ВКонтакте';

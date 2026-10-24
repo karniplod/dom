@@ -43,7 +43,12 @@ class BaniaIndexManagerController extends \MODX\Revolution\modExtraManagerContro
         $where = ['1=1']; $args = [];
         if (isset(Bania::STATUSES[$status])) { $where[] = 'status = ?'; $args[] = $status; }
         if ($house) { $where[] = 'house_id = ?'; $args[] = $house; }
-        if ($q !== '') { $where[] = '(name LIKE ? OR phone LIKE ? OR id = ?)'; $args[] = "%$q%"; $args[] = '%' . preg_replace('~\D~', '', $q) . '%'; $args[] = (int)$q; }
+        if ($q !== '') {   // поиск по имени, по цифрам телефона (если они есть в запросе) и по номеру
+            $digits = preg_replace('~\D~', '', $q);
+            $where[] = '(name LIKE ?' . ($digits !== '' ? ' OR phone LIKE ? OR id = ?' : '') . ')';
+            $args[] = "%$q%";
+            if ($digits !== '') { $args[] = "%$digits%"; $args[] = (int)$digits; }
+        }
         $sql = 'SELECT * FROM ' . Bania::table('leads') . ' WHERE ' . implode(' AND ', $where) . ' ORDER BY created_at DESC LIMIT 500';
         $st = $modx->prepare($sql); $st->execute($args);
         $rows = $st->fetchAll(\PDO::FETCH_ASSOC);
@@ -54,8 +59,10 @@ class BaniaIndexManagerController extends \MODX\Revolution\modExtraManagerContro
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['№', 'Создана', 'Статус', 'Дом', 'Заезд', 'Выезд', 'Суток', 'Гостей', 'Примерно, ₽', 'Имя', 'Телефон', 'Связь', 'Повод', 'Комментарий', 'Заметка'], ';');
-            foreach ($rows as $r) fputcsv($out, [$r['id'], $r['created_at'], Bania::STATUSES[$r['status']] ?? $r['status'], $r['house_name'], $r['checkin'], $r['checkout'], $r['nights'], $r['guests'],
-                                                 $r['estimate'], $r['name'], $r['phone'], $r['contact'], $r['occasion'], $r['comment'], $r['note']], ';');
+            // ячейка с «= + - @» в начале — для Excel формула: имя гостя «=HYPERLINK(…)» выполнилось бы при открытии файла
+            $cell = function ($v) { $v = (string)$v; return $v !== '' && strpos('=+-@', $v[0]) !== false ? "'" . $v : $v; };
+            foreach ($rows as $r) fputcsv($out, array_map($cell, [$r['id'], $r['created_at'], Bania::STATUSES[$r['status']] ?? $r['status'], $r['house_name'], $r['checkin'], $r['checkout'], $r['nights'], $r['guests'],
+                                                 $r['estimate'], $r['name'], $r['phone'], $r['contact'], $r['occasion'], $r['comment'], $r['note']]), ';');
             fclose($out);
             exit;
         }

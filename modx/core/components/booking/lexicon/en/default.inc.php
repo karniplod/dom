@@ -17,7 +17,7 @@ $_lang['booking.err_overlap'] = 'Dates are taken: overlaps booking #[[+id]]';
 $_lang['booking.err_deposit'] = 'Deposit must be 5,000–20,000 RUB';
 
 $_lang['setting_booking.admin_email'] = 'Admin email';
-$_lang['setting_booking.admin_email_desc'] = 'Where new requests and cancellation requests go. Comma-separated. Empty — emailsender.';
+$_lang['setting_booking.admin_email_desc'] = 'Where new requests and cancellation requests go. Comma-separated. Empty — ClientConfig bn_lead_email, then emailsender.';
 $_lang['setting_booking.vk_discount'] = 'VK booking discount, %';
 $_lang['setting_booking.vk_discount_desc'] = 'Not applied on the website: the admin ticks it in phone bookings for guests from the VK group.';
 $_lang['setting_booking.vk_url'] = 'VK group';
