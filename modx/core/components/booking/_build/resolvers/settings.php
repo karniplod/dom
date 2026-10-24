@@ -30,7 +30,7 @@ $settings = [
     'booking.vk_url' => ['https://vk.com/russianbath59', 'textfield'],
     'booking.request_link_page' => ['0', 'numberfield'],
     'booking.form_page' => ['0', 'numberfield'],
-    'booking.timezone' => ['Europe/Moscow', 'textfield'],
+    'booking.timezone' => ['Asia/Yekaterinburg', 'textfield'],   // Пермь (UTC+5): «сегодня», прошедшие даты, время заявок
     'booking.rate_limit' => ['30', 'numberfield'],
     'booking.bot_enabled' => ['0', 'combo-boolean'],   // бот MAX отвечает гостям на вопросы (токен — maxnotify3.max_token)
 ];
@@ -41,6 +41,12 @@ foreach ($settings as $key => [$value, $xtype]) {
     $s = $modx->newObject(modSystemSetting::class);
     $s->fromArray(['key' => $key, 'value' => $value, 'xtype' => $xtype, 'namespace' => 'booking', 'area' => 'booking'], '', true);
     $s->save();
+}
+// часовой пояс версии 1.0 по умолчанию был московский — Дома в Перми (UTC+5): нетронутое значение исправляем
+$tz = $modx->getObject(modSystemSetting::class, ['key' => 'booking.timezone']);
+if ($tz && $tz->get('value') === 'Europe/Moscow') {
+    $tz->set('value', 'Asia/Yekaterinburg');
+    $tz->save();
 }
 // скидка на сайте отменена (решение владельца 22.10.2026) — прежняя настройка больше не нужна
 $modx->removeCollection(modSystemSetting::class, ['key' => 'booking.site_discount']);

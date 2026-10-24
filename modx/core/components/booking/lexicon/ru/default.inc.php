@@ -27,7 +27,7 @@ $_lang['setting_booking.request_link_page_desc'] = 'ID страницы со с�
 $_lang['setting_booking.form_page'] = 'Страница бронирования';
 $_lang['setting_booking.form_page_desc'] = 'ID страницы /booking с формой [[!booking.form? &mode=`full`]].';
 $_lang['setting_booking.timezone'] = 'Часовой пояс';
-$_lang['setting_booking.timezone_desc'] = 'Для дат заезда и «сегодня».';
+$_lang['setting_booking.timezone_desc'] = 'Для дат заезда, «сегодня» и времени заявок. Пермь — Asia/Yekaterinburg (UTC+5).';
 $_lang['setting_booking.rate_limit'] = 'Запросов гостя в минуту';
 $_lang['setting_booking.rate_limit_desc'] = 'Ограничение запросов к API с одного IP.';
 $_lang['setting_booking.bot_enabled'] = 'Бот MAX отвечает на вопросы';

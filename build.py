@@ -276,10 +276,19 @@ def ld_house(k):
         "priceRange": f'{minp(h)}–{max(h["prices"])} RUB', "checkinTime": h["checkin"], "checkoutTime": h["checkout"],
         "numberOfRooms": h["rooms"], "petsAllowed": True, "smokingAllowed": False,
         "amenityFeature": [{"@type": "LocationFeatureSpecification", "name": n, "value": True} for _, n, _ in h["comfort"]],
-        "makesOffer": {"@type": "Offer", "priceCurrency": "RUB", "price": minp(h), "description": "Аренда Дома на сутки"}}
+        "makesOffer": {"@type": "Offer", "priceCurrency": "RUB", "price": minp(h), "description": "Аренда Дома на сутки"},
+        "sameAs": [card_url(u) for u in HOUSE_REVIEW_LINKS.get(k, {}).values() if u],
+        "parentOrganization": ORG,
+        "potentialAction": {"@type": "ReserveAction", "target": f"{SITE}/index.html#order", "name": "Забронировать"}}
 def ld_faq(items):
     return {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in items]}
-ORG = {"@type": "Organization", "name": BRAND, "url": SITE + "/", "logo": SITE + "/img/fox.svg"}
+ORG = {"@type": "Organization", "name": BRAND, "url": SITE + "/", "logo": SITE + "/img/logo-512.png"}
+def card_url(u):
+    """Ссылка «оставить отзыв» → адрес карточки организации на площадке (для sameAs): без /tab/…, ?… и #…"""
+    return re.sub(r"(/tab/.*|[?#].*)$", "", u)
+def ld_site():
+    """WebSite — по нему Google показывает в выдаче название сайта, а не домен"""
+    return {"@context": "https://schema.org", "@type": "WebSite", "name": BRAND, "alternateName": "Ефремовские бани", "url": SITE + "/", "inLanguage": "ru"}
 def ld_org():
     return {"@context": "https://schema.org", **ORG, "image": f"{SITE}/img/ru/hero-2.jpg", "telephone": PHONE, "email": MAIL,
             "sameAs": [VK], "department": [{"@type": "LodgingBusiness", "name": v["name"], "url": f'{SITE}/{v["file"]}'} for v in H.values()]}
@@ -527,7 +536,7 @@ def home():
 {footer()}'''
     return dict(fn="index.html", title=f"Снять Дом с баней и бассейном в Перми посуточно — {BRAND}",
                 desc="Дома с баней и бассейном в Перми посуточно — вместо сауны целый Дом на сутки: Английский, Русский и Дом на Свиязева. Бильярд, мангал, до 20 гостей. От 15 000 ₽.",
-                body=body, lds=[ld_org(), ld_faq(HOME_FAQ)], og="ru/hero-2", og_alt="Русский Дом: фасад и беседка во дворе")
+                body=body, lds=[ld_site(), ld_org(), ld_faq(HOME_FAQ)], og="ru/hero-2", og_alt="Русский Дом: фасад и беседка во дворе")
 
 # ---------- страница Дома ----------
 def house_page(k):
@@ -791,7 +800,9 @@ def relink(doc, up):
 FONTS = ('<link rel="preload" href="fonts/golos-text-cyrillic-1.woff2" as="font" type="font/woff2" crossorigin>'
          '<link rel="preload" href="fonts/prata-cyrillic-5.woff2" as="font" type="font/woff2" crossorigin>'
          '<link rel="stylesheet" href="fonts/fonts.css">')
-FAV = 'data:image/svg+xml,' + rd("fox.svg").replace('<path ', '<path fill="%23D8650F" ').replace('"', "'").replace("#", "%23")
+# значки — файлами: data:-значок Яндекс для выдачи не берёт; favicon.ico в корне спрашивают все (tools/make_favicon.py)
+FAV = ('<link rel="icon" href="favicon.ico" sizes="48x48"><link rel="icon" href="img/fox.svg" type="image/svg+xml">'
+       '<link rel="icon" href="img/favicon-120.png" type="image/png" sizes="120x120"><link rel="apple-touch-icon" href="img/apple-touch-icon.png">')
 # скидка только через ВКонтакте (решение владельца 22.10.2026) — в расчёте формы сайта её нет
 HJS = {"_discount": 0} | {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"], base=v["base"], extra=v["extra"]) for k, v in H.items()}
 RSS_LINK = f'<link rel="alternate" type="application/rss+xml" title="Блог — {BRAND}" href="rss.xml">'
@@ -799,7 +810,7 @@ RSS_LINK = f'<link rel="alternate" type="application/rss+xml" title="Блог �
 def main():
     global css, js, data_js
     css, js = rd("styles.css"), rd("app.js")
-    sys.path.insert(0, os.path.join(ROOT, "tools")); import make_webp; make_webp.run(quiet=True)   # WebP-копии новых фото — до разметки: img() смотрит, какие копии есть
+    sys.path.insert(0, os.path.join(ROOT, "tools")); import make_webp, make_favicon; make_webp.run(quiet=True); make_favicon.run(quiet=True)   # WebP-копии новых фото — до разметки: img() смотрит, какие копии есть
     data_js = "window.HOUSES = " + json.dumps(HJS, ensure_ascii=False) + ";"
     for d in (SITE_DIR + "/css", SITE_DIR + "/js", ART):
         os.makedirs(d, exist_ok=True)
@@ -823,7 +834,7 @@ def main():
         head = (f'<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
                 f'<title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><link rel="canonical" href="{url}">'
                 f'<meta property="og:type" content="{pg.get("ogtype", "website")}"><meta property="og:locale" content="ru_RU"><meta property="og:site_name" content="{BRAND}"><meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{url}">{og_image(pg)}{pg.get("extra", "")}{'<meta name="robots" content="noindex, nofollow">' if PREVIEW or pg.get("noindex") else ""}'
-                f'<meta name="theme-color" content="#22140E"><link rel="icon" href="{FAV}">{RSS_LINK}{FONTS}{ld}')
+                f'<meta name="theme-color" content="#22140E">{FAV}{RSS_LINK}{FONTS}{ld}')
         doc = f'<!doctype html>\n<html lang="ru">\n<head>{head}<link rel="stylesheet" href="css/styles.css"></head>\n<body>\n{body}\n<script>{data_js}</script>\n<script src="js/app.js"></script>\n<script src="js/cookies.js" defer data-bn-cookies data-policy="cookie.html" data-version="{COOKIE_VERSION}" data-ym=""></script>\n</body>\n</html>\n'
         art = f'<!doctype html>\n<html lang="ru">\n<head>{head}<style>\n{css}\n</style></head>\n<body>\n{body}\n<script>{data_js}\n{js}</script>\n</body>\n</html>\n'
         depth = fn.count("/")

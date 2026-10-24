@@ -156,7 +156,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-24 23:36",
+ "version": "2026-10-25 00:13",
  "chunks": [
   {
    "name": "bn.fox",
@@ -1489,6 +1489,8 @@ $snippetExists = function ($name) use ($modx) { return (bool)$modx->getObject(mo
 $extras = [   // имя у поставщика → [адрес поставщика, начало подписи пакета, признак установки]
     'ClientConfig' => ['https://rest.modx.com/extras/', 'clientconfig', function () { return is_dir(MODX_CORE_PATH . 'components/clientconfig/'); }],
     'TinyMCE Rich Text Editor' => ['https://rest.modx.com/extras/', 'tinymcerte', function () { return is_dir(MODX_CORE_PATH . 'components/tinymcerte/'); }],
+    // транслитерация адресов: новая статья «Баня зимой» → /blog/banya-zimoj (латиница не превращается в %D0%91… при пересылке)
+    'translit' => ['https://rest.modx.com/extras/', 'translit', function () { return is_dir(MODX_CORE_PATH . 'components/translit/'); }],
 ];
 $missing = [];
 foreach ($extras as $name => [$url, $sigPrefix, $has]) if (!$has()) $missing[] = $name;
@@ -1744,6 +1746,16 @@ try {
             if ($dry) { $cur = $modx->getObject(modSystemSetting::class, $k); if (!$cur || (string)$cur->get('value') !== $v) say('upd', "настройка $k = «{$v}»"); continue; }
             if ($r = setting($k, $v, 'Доходные дома')) say($r, "настройка $k = «{$v}»");
             $modx->setOption($k, $v);   // сразу в этот запуск: адреса страниц ниже считаются по этим настройкам
+        }
+        // адреса новых страниц латиницей (дополнение Translit): только буквы, цифры и «-», сразу при вводе заголовка.
+        // Готовые адреса не меняются — в том числе /Предоплата1/ старого сайта
+        if (is_dir(MODX_CORE_PATH . 'components/translit/') && $modx->getOption('friendly_alias_translit') === 'none') {
+            foreach (['friendly_alias_translit' => 'russian', 'friendly_alias_restrict_chars' => 'alphanumeric', 'friendly_alias_realtime' => '1'] as $k => $v) {
+                if ($dry) { say('upd', "настройка $k = «{$v}»"); continue; }
+                if ($r = setting($k, $v, 'Доходные дома')) say($r, "настройка $k = «{$v}» (адреса новых страниц латиницей)");
+            }
+        } elseif (!is_dir(MODX_CORE_PATH . 'components/translit/')) {
+            say('warn', 'нет дополнения Translit — адреса новых статей будут русскими буквами; поставьте translit в «Пакеты → Установщик»');
         }
         $html = $modx->getObject(modContentType::class, ['mime_type' => 'text/html']);
         if ($html && $html->get('file_extensions') !== '') {

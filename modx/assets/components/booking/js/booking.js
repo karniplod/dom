@@ -509,7 +509,7 @@
     var t = new Date();
     this.gridFrom = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() - 2, 12));
     this.gridDays = window.matchMedia('(max-width: 760px)').matches ? 14 : 31;
-    this.listFilter = { status: 'new,confirmed', house: '', q: '', page: 1 };
+    this.listFilter = { status: 'new,confirmed', house: '', q: '', from: '', to: '', page: 1 };
     var self = this;
     root.innerHTML = '<nav class="bk-tabs" role="tablist">' + this.tabs.map(function (k) {
       return '<button type="button" role="tab" class="bk-tab" data-tab="' + k + '">' + TABS[k] + '</button>';
@@ -724,11 +724,19 @@
     var st = [['new,confirmed', 'Активные'], ['new', 'Новые'], ['cancel_requested', 'Просят отмену'], ['confirmed', 'Подтверждённые'], ['completed', 'Завершённые'], ['cancelled', 'Отменённые'], ['', 'Все']];
     this.pane.innerHTML = '<form class="bk-bar" data-filter><select name="status">' + st.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === f.status ? ' selected' : '') + '>' + s[1] + '</option>'; }).join('') + '</select>'
       + '<select name="house">' + this.houseOptions(f.house, 'Все Дома') + '</select><input name="q" type="search" placeholder="Имя, телефон, №" value="' + esc(f.q) + '">'
+      // период: брони, у которых проживание попадает в эти даты (и для выгрузки в Excel)
+      + '<label class="bk-period">с <input name="from" type="date" value="' + esc(f.from || '') + '" aria-label="Проживание с"></label>'
+      + '<label class="bk-period">по <input name="to" type="date" value="' + esc(f.to || '') + '" aria-label="Проживание по"></label>'
       + '<button class="bk-btn bk-btn--sm bk-btn--ghost" type="submit">Найти</button>'
-      + '<button class="bk-btn bk-btn--sm" type="button" data-manual>Бронь по телефону</button></form><div class="bk-listwrap"><p class="bk-muted">Загружаем…</p></div>';
+      + '<button class="bk-btn bk-btn--sm" type="button" data-manual>Бронь по телефону</button>'
+      + '<button class="bk-btn bk-btn--sm bk-btn--ghost" type="button" data-export>Выгрузить в Excel</button></form><div class="bk-listwrap"><p class="bk-muted">Загружаем…</p></div>';
     var ff = qs(this.pane, '[data-filter]');
     this.form(ff, function (data) { Object.assign(f, data, { page: 1 }); self.tab_list(); });
     qs(this.pane, '[data-manual]').addEventListener('click', function () { self.manual(); });
+    qs(this.pane, '[data-export]').addEventListener('click', function (e) {
+      qsa(ff, 'select[name], input[name]').forEach(function (i) { f[i.name] = i.value; });   // фильтр как в форме, даже без «Найти»
+      self.exportCsv(e.currentTarget);
+    });
     this.api.call('booking_list', f).then(function (res) {
       var w = qs(self.pane, '.bk-listwrap');
       if (!res.success) { w.innerHTML = '<p class="bk-warn">' + esc(res.message) + '</p>'; return; }
@@ -745,6 +753,36 @@
         + (d.total > d.per_page ? '<div class="bk-bar"><button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-p="-1"' + (d.page <= 1 ? ' disabled' : '') + '>‹</button> стр. ' + d.page + ' из ' + Math.ceil(d.total / d.per_page)
           + ' <button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-p="1"' + (d.page * d.per_page >= d.total ? ' disabled' : '') + '>›</button></div>' : '');
       qsa(w, '[data-p]').forEach(function (b) { b.addEventListener('click', function () { f.page += +b.getAttribute('data-p'); self.tab_list(); }); });
+    });
+  };
+  /* Выгрузка в Excel: все заявки по текущему фильтру — CSV через «;» с BOM (Excel открывает кириллицу).
+     Ячейка с «= + - @» в начале (и после пробелов) — с апострофом: иначе Excel выполнит её как формулу */
+  Admin.prototype.exportCsv = function (btn) {
+    var self = this;
+    btn.disabled = true;
+    this.api.call('booking_list', Object.assign({}, this.listFilter, { all: 1, page: 1 })).then(function (res) {
+      btn.disabled = false;
+      if (!res.success) { window.alert(res.message || 'Не удалось выгрузить'); return; }
+      var cell = function (v) {
+        var s = String(v == null ? '' : v);
+        if (/^\s*[=+\-@]|^[\t\r]/.test(s)) s = "'" + s;
+        return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      var rows = [['№', 'Создана', 'Статус', 'Дом', 'Что', 'Даты', 'Гостей', 'Питомцев', 'Сумма, ₽', 'Скидка, ₽', 'Залог, ₽', 'Залог', 'Имя', 'Телефон',
+        'Комментарий гостя', 'Просит отменить', 'Причина отмены', 'Источник', 'Заметка администратора']];
+      res.data.items.forEach(function (r) {
+        rows.push([r.id, r.created_at, STATUS[r.status] || r.status, r.house_name, r.addon ? 'баня' : 'Дом', r.dates, r.guests, r.pets, r.total,
+          r.quote_discount || '', r.deposit_amount || '', DEPOSIT[r.deposit_status] || '', r.guest_name, r.guest_phone, r.guest_comment,
+          r.cancellation_requested ? 'да' : '', r.cancellation_reason, SOURCE[r.source] || r.source, r.admin_note]);
+      });
+      var csv = '﻿' + rows.map(function (r) { return r.map(cell).join(';'); }).join('\r\n');
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      var fl = self.listFilter;
+      a.download = 'bronirovanie-' + (fl.from || fl.to ? (fl.from || '…') + '_' + (fl.to || '…') : iso(new Date())) + '.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      if (res.data.total > res.data.items.length) window.alert('Выгружено ' + res.data.items.length + ' из ' + res.data.total + ' — уточните фильтр');
     });
   };
   Admin.prototype.manual = function () {

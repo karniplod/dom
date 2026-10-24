@@ -156,7 +156,7 @@ class Booking
 
     public function tz(): \DateTimeZone
     {
-        return new \DateTimeZone($this->modx->getOption('booking.timezone', null, 'Europe/Moscow') ?: 'Europe/Moscow');
+        return new \DateTimeZone($this->modx->getOption('booking.timezone', null, 'Asia/Yekaterinburg') ?: 'Asia/Yekaterinburg');   // Пермь — UTC+5
     }
 
     public function today(): string

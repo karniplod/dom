@@ -493,7 +493,7 @@ class Bania
         return ['html' => '<nav class="crumbs" aria-label="Навигация">' . $html . '</nav>', 'ld' => $ld];
     }
     public static function org() {
-        return ['@type' => 'Organization', 'name' => self::opt('site_name', 'Доходные дома Ефремовых'), 'url' => self::full(''), 'logo' => self::full('assets/img/fox.svg')];
+        return ['@type' => 'Organization', 'name' => self::opt('site_name', 'Доходные дома Ефремовых'), 'url' => self::full(''), 'logo' => self::full('assets/img/logo-512.png')];   // Google не берёт SVG-логотип
     }
     public static function ldScript(array $data) { return '<script type="application/ld+json">' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>'; }
     public static function ld(modResource $r) {
@@ -502,6 +502,8 @@ class Bania
         $out = [];
         $phone = self::opt('bn_phone'); $mail = self::opt('bn_email');
         if ($name === 'bn-home') {
+            // WebSite — по нему Google показывает в выдаче название сайта, а не домен
+            $out[] = ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => self::opt('site_name', 'Доходные дома Ефремовых'), 'alternateName' => 'Ефремовские бани', 'url' => self::full(''), 'inLanguage' => 'ru'];
             $out[] = ['@context' => 'https://schema.org'] + self::org() + ['image' => self::full(ltrim((string)$r->getTVValue('bn_hero'), '/')), 'telephone' => $phone, 'email' => $mail,
                 'sameAs' => array_values(array_filter([self::opt('bn_vk_url')])),
                 'department' => array_values(array_map(function ($h) { return ['@type' => 'LodgingBusiness', 'name' => $h['name'], 'url' => self::full($h['url'])]; }, self::houses()))];
@@ -513,7 +515,11 @@ class Bania
                 'priceRange' => $h['min'] . '–' . $h['max_price'] . ' RUB', 'checkinTime' => $h['checkin'], 'checkoutTime' => $h['checkout'], 'numberOfRooms' => $h['rooms'],
                 'petsAllowed' => true, 'smokingAllowed' => false,
                 'amenityFeature' => array_map(function ($c) { return ['@type' => 'LocationFeatureSpecification', 'name' => $c[1], 'value' => true]; }, $h['comfort']),
-                'makesOffer' => ['@type' => 'Offer', 'priceCurrency' => 'RUB', 'price' => $h['min'], 'description' => 'Аренда дома на сутки']];
+                'makesOffer' => ['@type' => 'Offer', 'priceCurrency' => 'RUB', 'price' => $h['min'], 'description' => 'Аренда дома на сутки'],
+                // карточки Дома на 2ГИС, Яндекс Картах, Авито — из ссылок «оставить отзыв» («Конфигурация» → «Отзывы»), без хвостов /tab/…, ?…, #…
+                'sameAs' => array_values(array_filter(array_map(function ($k) use ($h) { return preg_replace('~(/tab/.*|[?#].*)$~', '', trim((string)self::opt('bn_rev_' . $h['code'] . '_' . $k))); }, ['2gis', 'yandex', 'avito']))),
+                'parentOrganization' => self::org(),
+                'potentialAction' => ['@type' => 'ReserveAction', 'target' => self::full(ltrim((string)self::$modx->runSnippet('bnBookingUrl'), '/')), 'name' => 'Забронировать']];
         }
         if (in_array($name, ['bn-home', 'bn-house'], true) && ($faq = self::faqItems($r->get('id')))) {
             $out[] = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => array_map(function ($x) { return ['@type' => 'Question', 'name' => $x[0], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $x[1]]]; }, $faq)];

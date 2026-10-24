@@ -6,11 +6,12 @@ use Booking\Model\House;
 use Booking\Processors\Base;
 
 /**
- * booking_list — заявки и брони с фильтрами: status, house, from, to, q (имя, телефон, номер), page.
+ * booking_list — заявки и брони с фильтрами: status, house, from, to, q (имя, телефон, номер), page; all=1 — все строки (выгрузка в Excel).
  */
 class GetList extends Base
 {
     public const PER_PAGE = 50;
+    public const EXPORT_MAX = 5000;
 
     protected function handle(): array
     {
@@ -46,7 +47,9 @@ class GetList extends Base
         $total = $modx->getCount(BookingRow::class, $q);
         $page = max(1, (int)$this->int('page', 1));
         $q->sortby($this->str('sort', 20) === 'date' ? 'date_from' : 'id', 'DESC');
-        $q->limit(self::PER_PAGE, ($page - 1) * self::PER_PAGE);
+        // all=1 — выгрузка в Excel: все строки по фильтру (не больше EXPORT_MAX), без постраничности
+        $all = (int)$this->int('all', 0) === 1;
+        $q->limit($all ? self::EXPORT_MAX : self::PER_PAGE, $all ? 0 : ($page - 1) * self::PER_PAGE);
         $bk = $this->booking->bookings();
         $items = [];
         foreach ($modx->getIterator(BookingRow::class, $q) as $row) {

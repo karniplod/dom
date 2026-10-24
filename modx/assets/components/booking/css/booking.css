@@ -161,6 +161,7 @@
 .bk-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .bk-bar input, .bk-bar select { width: auto; min-height: 40px; padding: 8px 10px; }
 .bk-bar--end { justify-content: flex-end; }
+.bk-period { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
 .bk-legend { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 13px; color: var(--bk-soft); margin-left: auto; }
 .bk-legend .bk-sw { margin-right: 2px; }
 .bk-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
