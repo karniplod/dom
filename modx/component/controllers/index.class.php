@@ -60,7 +60,7 @@ class BaniaIndexManagerController extends \MODX\Revolution\modExtraManagerContro
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['№', 'Создана', 'Статус', 'Дом', 'Заезд', 'Выезд', 'Суток', 'Гостей', 'Примерно, ₽', 'Имя', 'Телефон', 'Связь', 'Повод', 'Комментарий', 'Заметка'], ';');
             // ячейка с «= + - @» в начале — для Excel формула: имя гостя «=HYPERLINK(…)» выполнилось бы при открытии файла
-            $cell = function ($v) { $v = (string)$v; return $v !== '' && strpos('=+-@', $v[0]) !== false ? "'" . $v : $v; };
+            $cell = function ($v) { $v = (string)$v; return preg_match('~^\s*[=+\-@]|^[\t\r]~u', $v) ? "'" . $v : $v; };   // и с пробелами, табуляцией, переводом строки впереди
             foreach ($rows as $r) fputcsv($out, array_map($cell, [$r['id'], $r['created_at'], Bania::STATUSES[$r['status']] ?? $r['status'], $r['house_name'], $r['checkin'], $r['checkout'], $r['nights'], $r['guests'],
                                                  $r['estimate'], $r['name'], $r['phone'], $r['contact'], $r['occasion'], $r['comment'], $r['note']]), ';');
             fclose($out);
