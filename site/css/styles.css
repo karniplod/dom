@@ -279,6 +279,7 @@ table.cmp { width: 100%; border-collapse: collapse; min-width: 720px; font-size:
 .faq details.is-closing summary::after { transform: none; }
 .faq__a { overflow: hidden; }
 .faq details p { padding: 0 0 20px; color: var(--ink-soft); max-width: 64ch; }
+.faq__ask { margin: 22px 0 0; color: var(--ink-soft); }
 
 /* SEO-текст */
 .seo { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 80px); }

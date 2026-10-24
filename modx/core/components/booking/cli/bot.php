@@ -5,6 +5,8 @@
  *   php bot.php status                             — бот найден по токену, подключён ли вебхук
  *   php bot.php poll                               — запасной режим без домена: бот сам забирает сообщения из MAX и отвечает (Ctrl+C — стоп)
  *   php bot.php poll --once                        — один раз забрать и ответить
+ *   php bot.php chats                              — номера (id) групп и каналов, куда добавлен бот: для maxnotify3.max_recipient_ids и для post
+ *   php bot.php post                               — предпросмотр поста для канала; post <id канала> [--pin] — опубликовать (и закрепить)
  *   php bot.php subscribe https://ваш-домен/assets/components/booking/bot.php   — подключить вебхук (рабочий сайт с https)
  *   php bot.php unsubscribe https://ваш-домен/assets/components/booking/bot.php — отключить вебхук
  * Путь к сайту: --config=путь/к/config.core.php (по умолчанию — сайт, в котором лежит этот файл).
@@ -78,6 +80,32 @@ switch ($cmd) {
             elseif ($n > 0) echo date('H:i:s') . " ответов: $n\n";
         } while (!$once);
         break;
+    case 'chats':
+        $needToken();
+        $list = $bot->chats();
+        if (!$list) {
+            echo "Групп и каналов не найдено. Добавьте бота в группу или канал администратором и напишите там любое сообщение, затем повторите.\n"
+                . "(Если уже подключён вебхук — так не найти: сначала unsubscribe.)\n";
+        }
+        foreach ($list as $id => $title) echo "$id — $title\n";
+        break;
+    case 'post':
+        $chat = (int)($args[1] ?? 0);
+        $botUrl = $booking->faq()->cc('bn_max_url');
+        $reply = $booking->faq()->channelPost($botUrl !== '' ? $botUrl : 'https://max.ru/');
+        if ($chat === 0 || in_array('--preview', $argv, true)) {
+            $show($reply);
+            echo $chat === 0 ? "\nЭто предпросмотр. Опубликовать: php bot.php post <id канала> [--pin] (id — команда chats)\n" : '';
+            if ($chat === 0) break;
+        }
+        $needToken();
+        if ($botUrl === '') {
+            fwrite(STDERR, "Впишите ссылку на бота в «Конфигурация» → «Контакты» → MAX: она нужна для кнопки «Задать вопрос боту»\n");
+            exit(2);
+        }
+        $mid = $bot->post($chat, $reply, in_array('--pin', $argv, true));
+        echo $mid !== '' ? "Опубликовано" . (in_array('--pin', $argv, true) ? ' и закреплено' : '') . ".\n" : "Не опубликовано: бот должен быть администратором канала с правом писать. Подробности — в журнале ошибок MODX.\n";
+        break;
     case 'subscribe':
     case 'unsubscribe':
         $needToken();
@@ -91,5 +119,5 @@ switch ($cmd) {
             : "MAX ответил $code: " . json_encode($res, JSON_UNESCAPED_UNICODE) . "\n";
         break;
     default:
-        echo preg_replace('~^.*?/\*\*\n|\*/.*$~s', '', file_get_contents(__FILE__, false, null, 0, 1200)), "\n";
+        echo preg_replace('~^.*?/\*\*\n|\*/.*$~s', '', file_get_contents(__FILE__, false, null, 0, 2000)), "\n";
 }

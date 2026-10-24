@@ -494,7 +494,7 @@ def home():
 
 <section class="band on-light" id="rules" aria-labelledby="rules-title"><div class="wrap two">
   <div><div class="sec-head"><h2 class="h-sec" id="rules-title">Правила домов</h2></div>{mark("rules", rules_list())}</div>
-  <div class="faq"><div class="sec-head"><h2 class="h-sec">Частые вопросы</h2></div>{mark("faq", faq_block(HOME_FAQ))}</div>
+  <div class="faq"><div class="sec-head"><h2 class="h-sec">Частые вопросы</h2></div>{mark("faq", faq_block(HOME_FAQ))}{max_link('<p class="faq__ask">Не нашли ответ? <a class="link" href="{url}" target="_blank" rel="noopener">Спросите бота в MAX</a> — ответит сразу: цены, заезд, баня, правила.</p>')}</div>
 </div></section>
 
 <section class="band band--soft" aria-labelledby="seo-title"><div class="wrap seo">
@@ -588,7 +588,7 @@ def house_page(k):
 
 <section class="band on-light" aria-labelledby="s-title"><div class="wrap two">
   <div class="seo__text"><h2 class="h-sec" id="s-title" style="color:var(--bark)">{h["name"]} в Перми посуточно</h2>{mark("houseSeo", seo)}</div>
-  <div class="faq"><div class="sec-head"><h2 class="h-sec">Вопросы о доме</h2></div>{mark("houseFaq", faq_block(h["faq"]))}</div>
+  <div class="faq"><div class="sec-head"><h2 class="h-sec">Вопросы о доме</h2></div>{mark("houseFaq", faq_block(h["faq"]))}{max_link('<p class="faq__ask">Не нашли ответ? <a class="link" href="{url}" target="_blank" rel="noopener">Спросите бота в MAX</a> — ответит сразу: цены, заезд, баня, правила.</p>')}</div>
 </div></section>
 
 {mark("houseReviews", reviews_block(k))}

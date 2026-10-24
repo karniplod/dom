@@ -96,6 +96,46 @@ class MaxBot
         return $code === 200;
     }
 
+    /** Пост в канал или группу (бот — администратор): возвращает id сообщения или '' */
+    public function post(int $chatId, array $reply, bool $pin = false): string
+    {
+        [$code, $data] = $this->call('POST', '/messages', ['chat_id' => $chatId, 'disable_link_preview' => 'true'], $this->body($reply));
+        $mid = $code === 200 ? (string)($data['message']['body']['mid'] ?? '') : '';
+        if ($mid !== '' && $pin) {
+            $this->call('PUT', '/chats/' . $chatId . '/pin', [], ['message_id' => $mid, 'notify' => false]);
+        }
+        return $mid;
+    }
+
+    /**
+     * Группы и каналы, куда добавлен бот: из ещё не забранных событий (bot_added, сообщения в группах).
+     * Маркер не сохраняется — события остаются для poll. При подключённом вебхуке MAX их так не отдаёт.
+     * @return array chat_id => описание
+     */
+    public function chats(): array
+    {
+        [$code, $data] = $this->call('GET', '/updates', ['timeout' => 1, 'limit' => 100, 'types' => 'bot_added,message_created,user_added']);
+        if ($code !== 200) {
+            return [];
+        }
+        $out = [];
+        foreach ($data['updates'] ?? [] as $u) {
+            if (($u['update_type'] ?? '') === 'bot_added' && isset($u['chat_id'])) {
+                $out[(int)$u['chat_id']] = !empty($u['is_channel']) ? 'канал' : 'группа';
+            } elseif (($u['update_type'] ?? '') === 'message_created') {
+                $r = $u['message']['recipient'] ?? [];
+                if (in_array($r['chat_type'] ?? '', ['chat', 'channel'], true) && isset($r['chat_id'])) {
+                    $out[(int)$r['chat_id']] = $r['chat_type'] === 'channel' ? 'канал' : 'группа';
+                }
+            }
+        }
+        foreach ($out as $id => $kind) {   // название — из сведений о чате
+            [$c, $chat] = $this->call('GET', '/chats/' . $id);
+            if ($c === 200 && !empty($chat['title'])) $out[$id] = $kind . ' «' . $chat['title'] . '»';
+        }
+        return $out;
+    }
+
     protected function body(array $reply): array
     {
         $body = ['text' => $reply['text']];

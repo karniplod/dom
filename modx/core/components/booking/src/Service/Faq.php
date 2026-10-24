@@ -115,6 +115,32 @@ class Faq
             . "\n\nИли выберите тему ниже.");
     }
 
+    /** Пост для канала Домов: о Домах по данным сайта и кнопки «Задать вопрос боту» и «Забронировать» */
+    public function channelPost(string $botUrl): array
+    {
+        $lines = [];
+        $min = 0;
+        foreach ($this->houses() as $h) {
+            $lines[] = $h->get('name') . ' — ' . $h->get('address') . ', ночуют до ' . (int)$h->get('capacity_sleep') . ' гостей';
+            foreach ($this->booking->pricing()->rules((int)$h->get('id')) as $r) {
+                $min = $min === 0 ? (int)$r->get('price') : min($min, (int)$r->get('price'));
+            }
+        }
+        $text = "Доходные Дома Ефремовых — Дома с баней и бассейном в Перми, на сутки для отдыха и праздников.\n\n"
+            . implode("\n", $lines)
+            . ($min > 0 ? "\n\nОт " . $this->booking->money($min) . ' за сутки, баня и бассейн входят в цену.' : '')
+            . "\n\nЕсть вопрос — напишите нашему боту: сразу ответит про цены, заезд и выезд, баню и правила."
+            . "\nЗабронировать — кнопкой ниже: выберите Дом и даты, администратор перезвонит и подтвердит.";
+        if (($p = $this->cc('bn_phone')) !== '') {
+            $text .= "\nТелефон: " . $p;
+        }
+        $rows = [[['type' => 'link', 'text' => 'Задать вопрос боту', 'url' => $botUrl]]];
+        if ($url = $this->appUrl()) {
+            $rows[] = [['type' => 'link', 'text' => 'Забронировать', 'url' => $url]];
+        }
+        return ['text' => $text, 'buttons' => $rows];
+    }
+
     public function greeting(): array
     {
         return $this->reply("Здравствуйте! Я бот Доходных Домов Ефремовых в Перми.\n"

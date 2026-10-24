@@ -76,6 +76,34 @@ return [
         $t->ok(!$bot->checkSecret('чужой-секрет'), 'чужой секрет — отказ');
     },
 
+    'бот: пост в канал с закреплением, поиск групп и каналов' => function (BookingTest $t) {
+        $bot = $t->booking->maxBot();
+        $calls = [];
+        $bot->transport = function ($method, $path, $query, $body) use (&$calls) {
+            $calls[] = compact('method', 'path', 'query', 'body');
+            if ($path === '/updates') return [200, ['updates' => [
+                ['update_type' => 'bot_added', 'chat_id' => -100, 'is_channel' => true, 'user' => []],
+                ['update_type' => 'message_created', 'message' => ['recipient' => ['chat_type' => 'chat', 'chat_id' => -200], 'body' => ['mid' => 'x', 'text' => 'проверка']]],
+                ['update_type' => 'message_created', 'message' => ['recipient' => ['chat_type' => 'dialog', 'chat_id' => 5], 'body' => ['mid' => 'y', 'text' => 'привет']]],
+            ], 'marker' => 1]];
+            if ($path === '/chats/-200') return [200, ['title' => 'ТЕСТ Администраторы']];
+            if ($path === '/messages') return [200, ['message' => ['body' => ['mid' => 'mid-77']]]];
+            return [200, ['success' => true]];
+        };
+        $post = $t->booking->faq()->channelPost('https://max.ru/test_bot');
+        $t->ok(strpos($post['text'], 'Дом на Свиязева') !== false && mb_stripos($post['text'], 'саун') === false, 'пост: Дома по данным сайта, «баня»');
+        $t->eq('https://max.ru/test_bot', $post['buttons'][0][0]['url'] ?? null, 'кнопка «Задать вопрос боту» — ссылка из «Конфигурации»');
+        $t->eq('mid-77', $bot->post(-100, $post, true), 'опубликовано в канал');
+        $t->eq(-100, $calls[0]['query']['chat_id'] ?? null, 'в канал по chat_id');
+        $t->ok(($calls[1]['method'] ?? '') === 'PUT' && ($calls[1]['path'] ?? '') === '/chats/-100/pin' && ($calls[1]['body']['message_id'] ?? '') === 'mid-77', 'пост закреплён');
+        $calls = [];
+        $chats = $bot->chats();
+        $t->eq('канал', $chats[-100] ?? null, 'канал найден по bot_added');
+        $t->eq('группа «ТЕСТ Администраторы»', $chats[-200] ?? null, 'группа найдена по сообщению, с названием');
+        $t->ok(!isset($chats[5]), 'личные чаты в список не попадают');
+        $t->ok(!isset($calls[0]['query']['marker']), 'маркер не передаётся — события остаются для poll');
+    },
+
     'бот: ответы только по данным сайта, «баня», а не «сауна»' => function (BookingTest $t) {
         $faq = $t->booking->faq();
         $qs = ['привет', 'сколько стоит', 'можно снять только сауну?', 'во сколько заезд в русском доме', 'где вы находитесь', 'есть бильярд?',
