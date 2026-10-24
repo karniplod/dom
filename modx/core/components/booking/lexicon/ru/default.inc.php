@@ -30,3 +30,7 @@ $_lang['setting_booking.timezone'] = 'Часовой пояс';
 $_lang['setting_booking.timezone_desc'] = 'Для дат заезда и «сегодня».';
 $_lang['setting_booking.rate_limit'] = 'Запросов гостя в минуту';
 $_lang['setting_booking.rate_limit_desc'] = 'Ограничение запросов к API с одного IP.';
+$_lang['setting_booking.bot_enabled'] = 'Бот MAX отвечает на вопросы';
+$_lang['setting_booking.bot_enabled_desc'] = 'Да — бот отвечает гостям в личном чате MAX на общие вопросы по данным сайта: цены, заезд, баня, правила, адреса. Токен бота — maxnotify3.max_token. Подключение — INSTALL.md, раздел «MAX», и docs/max.md.';
+$_lang['setting_booking.bot_secret'] = 'Секрет вебхука бота';
+$_lang['setting_booking.bot_secret_desc'] = 'Создаётся сам при подключении вебхука. Не меняйте вручную.';

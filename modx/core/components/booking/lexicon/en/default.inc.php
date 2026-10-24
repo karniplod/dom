@@ -30,3 +30,7 @@ $_lang['setting_booking.timezone'] = 'Time zone';
 $_lang['setting_booking.timezone_desc'] = 'For check-in dates and "today".';
 $_lang['setting_booking.rate_limit'] = 'Guest requests per minute';
 $_lang['setting_booking.rate_limit_desc'] = 'API rate limit per IP.';
+$_lang['setting_booking.bot_enabled'] = 'MAX bot answers questions';
+$_lang['setting_booking.bot_enabled_desc'] = 'Yes — the MAX bot answers general questions of guests from site data. Bot token: maxnotify3.max_token.';
+$_lang['setting_booking.bot_secret'] = 'Bot webhook secret';
+$_lang['setting_booking.bot_secret_desc'] = 'Created automatically on webhook subscription.';

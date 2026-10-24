@@ -55,6 +55,8 @@ class Booking
     protected ?Log $log = null;
     protected ?Notify $notify = null;
     protected ?Bookings $bookings = null;
+    protected ?Faq $faq = null;
+    protected ?MaxBot $maxBot = null;
 
     public function __construct(modX $modx)
     {
@@ -76,6 +78,8 @@ class Booking
     public function log(): Log { return $this->log ??= new Log($this); }
     public function notify(): Notify { return $this->notify ??= new Notify($this); }
     public function bookings(): Bookings { return $this->bookings ??= new Bookings($this); }
+    public function faq(): Faq { return $this->faq ??= new Faq($this); }
+    public function maxBot(): MaxBot { return $this->maxBot ??= new MaxBot($this); }
 
     public function setActor(array $actor): void
     {

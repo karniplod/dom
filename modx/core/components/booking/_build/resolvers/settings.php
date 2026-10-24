@@ -32,6 +32,7 @@ $settings = [
     'booking.form_page' => ['0', 'numberfield'],
     'booking.timezone' => ['Europe/Moscow', 'textfield'],
     'booking.rate_limit' => ['30', 'numberfield'],
+    'booking.bot_enabled' => ['0', 'combo-boolean'],   // бот MAX отвечает гостям на вопросы (токен — maxnotify3.max_token)
 ];
 foreach ($settings as $key => [$value, $xtype]) {
     if ($modx->getObject(modSystemSetting::class, ['key' => $key])) {
