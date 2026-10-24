@@ -982,6 +982,8 @@
     this.root = root;
     this.api = root.getAttribute('data-bk-api');
     this.client = /MAX|max\.ru/i.test(navigator.userAgent) || /[?&]client=max/.test(location.search) ? 'max' : 'pwa';
+    // источник заявки гостя — из MAX или из приложения на телефоне (форма отрисована с client=pwa)
+    qsa(root, 'input[name=client]').forEach(function (i) { i.value = self.client; });
     qsa(root, '[data-app-tab]').forEach(function (b) {
       b.addEventListener('click', function () { self.tab(b.getAttribute('data-app-tab')); });
     });
@@ -1002,7 +1004,7 @@
     var back = qs(root, '[data-app-back]');
     if (back) back.addEventListener('click', function () { self.tab(self.prev || 'book'); window.scrollTo(0, 0); });
     qsa(root, '[data-help-jump]').forEach(function (a) {
-      a.addEventListener('click', function (e) { e.preventDefault(); var t = document.querySelector(a.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth' }); });
+      a.addEventListener('click', function (e) { e.preventDefault(); self.helpShow(a.getAttribute('href').slice(1)); });
     });
     this.install();
     var h = location.hash.replace('#', '');
@@ -1037,8 +1039,7 @@
           return;
         }
         if (self.current !== 'help') self.tab('help');
-        var t = document.getElementById('help-install');
-        if (t) t.scrollIntoView({ behavior: 'smooth' });
+        self.helpShow('help-install');
       });
     });
     qs(root, '[data-app-install-close]').addEventListener('click', function () {
@@ -1049,6 +1050,14 @@
     document.addEventListener('bk:installable', function () { show(false); });
     window.addEventListener('appinstalled', hideAll);
     if (ios) show(true);
+  };
+  /* Инструкция: один раздел на экране — «Гостям», «Администраторам» или «Установить» */
+  App.prototype.helpShow = function (id) {
+    this.helpPart = id;
+    qsa(this.root, '.bk-help[id]').forEach(function (a) { a.hidden = a.id !== id; });
+    qsa(this.root, '[data-help-jump]').forEach(function (a) {
+      if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
   };
   App.prototype.token = function () { try { return localStorage.getItem('bk-admin-token') || ''; } catch (e) { return ''; } };
   App.prototype.setToken = function (t) { try { if (t) localStorage.setItem('bk-admin-token', t); else localStorage.removeItem('bk-admin-token'); } catch (e) { /* хранилище недоступно */ } };
@@ -1063,6 +1072,7 @@
     qsa(this.root, '[data-app-tab]').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-app-tab') === name ? 'true' : 'false'); });
     qsa(this.root, '[data-app-pane]').forEach(function (p) { p.hidden = p.getAttribute('data-app-pane') !== name; });
     if (name === 'admin') this.admin();
+    if (name === 'help') this.helpShow(this.helpPart || (this.token() ? 'help-admin' : 'help-guest'));
   };
   /* Вкладка администратора — только с действующим токеном (ст. 3.4); без него — только гостевая часть */
   App.prototype.admin = function () {

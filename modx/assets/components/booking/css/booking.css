@@ -243,6 +243,8 @@
 .bk-help ol, .bk-help ul { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
 .bk-help__nav { display: flex; flex-wrap: wrap; gap: 8px; }
 .bk-help__nav a { padding: 8px 14px; border-radius: 999px; background: #fff; border: 1px solid #D3BFA8; color: #22140E; text-decoration: none; font-size: 14.5px; }
+.bk-help__nav a[aria-current] { background: #22140E; border-color: #22140E; color: #FFF8EE; }
+.bk-help[hidden] { display: none; }
 .bk-help-fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 20;
   width: 52px; height: 52px; border: 0; border-radius: 50%; background: #B04E09; color: #F6EEE3; font: 400 26px/1 "Prata", Georgia, serif; cursor: pointer;
   box-shadow: 0 10px 24px -10px rgba(20,11,7,.8); }
