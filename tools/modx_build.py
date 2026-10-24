@@ -245,7 +245,7 @@ CHUNKS["bn.head"] = ("Общие", """<meta charset="utf-8"><meta name="viewport
 [[+noindex:notempty=`<meta name="robots" content="noindex, nofollow">`]]
 [[*id:is=`[[++error_page]]`:then=`<meta name="robots" content="noindex, nofollow">`:else=``]]
 [[++bn_yandex_verification:notempty=`<meta name="yandex-verification" content="[[++bn_yandex_verification]]">`]]
-<meta name="theme-color" content="#22140E"><link rel="icon" href="[[++base_url]]assets/img/fox.svg" type="image/svg+xml">
+<meta name="theme-color" content="#22140E"><link rel="icon" href="[[++base_url]]favicon.ico" sizes="48x48"><link rel="icon" href="[[++base_url]]assets/img/fox.svg" type="image/svg+xml"><link rel="icon" href="[[++base_url]]assets/img/favicon-120.png" type="image/png" sizes="120x120"><link rel="apple-touch-icon" href="[[++base_url]]assets/img/apple-touch-icon.png">
 <link rel="alternate" type="application/rss+xml" title="Блог — [[++site_name:htmlent]]" href="[[~[[++bn_rss_id]]]]">
 """ + B.FONTS.replace('href="fonts/', 'href="[[++base_url]]assets/fonts/') + """
 <link rel="stylesheet" href="[[++base_url]]assets/css/styles.css?v=""" + VER + """">
@@ -640,5 +640,7 @@ with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
                 full = os.path.join(base, f)
                 z.write(full, PKG + "/site/assets/" + os.path.relpath(full, os.path.join(ROOT, "site")).replace("\\", "/"))
                 n_site += 1
+    if os.path.isfile(os.path.join(ROOT, "site", "favicon.ico")):   # значок — в корень сайта (/favicon.ico)
+        z.write(os.path.join(ROOT, "site", "favicon.ico"), PKG + "/site/favicon.ico"); n_site += 1
 print("Пакет MODX: modx/ — чанков %d, шаблонов %d, сниппетов %d, полей %d, страниц %d" % (len(chunk_list), len(templates), len(snippets), len(TVS), len(RES)))
 print("Архив: %s — %.1f МБ, файлов сайта %d" % (os.path.relpath(zpath, ROOT), os.path.getsize(zpath) / 1048576, n_site))
