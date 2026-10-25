@@ -37,6 +37,8 @@ class Booking
         'booking_manage_block' => \Booking\Processors\Block::class,
         'booking_issue_token' => \Booking\Processors\Token::class,
         'booking_migrate_leads' => \Booking\Processors\Migrate::class,
+        'booking_max_chats' => \Booking\Processors\MaxChats::class,
+        'booking_help' => \Booking\Processors\Help::class,
     ];
 
     /** Поля, которые гость не может передать: их считает или ставит только сервер (ст. 5.3, FR-026b) */

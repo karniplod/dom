@@ -102,6 +102,23 @@ return [
         $t->eq('группа «ТЕСТ Администраторы»', $chats[-200] ?? null, 'группа найдена по сообщению, с названием');
         $t->ok(!isset($chats[5]), 'личные чаты в список не попадают');
         $t->ok(!isset($calls[0]['query']['marker']), 'маркер не передаётся — события остаются для poll');
+
+        // вебхук (в том числе при выключенных ответах) запоминает группы и каналы — кнопка в админке их покажет
+        $opt = [\xPDO\xPDO::OPT_CACHE_KEY => 'booking'];
+        $was = $t->modx->cacheManager->get('bot/chats', $opt);
+        $t->modx->cacheManager->delete('bot/chats', $opt);
+        $bot->observe(['update_type' => 'bot_added', 'chat_id' => -300, 'is_channel' => false, 'user' => []]);
+        $bot->handle(['update_type' => 'message_created', 'message' => ['recipient' => ['chat_type' => 'channel', 'chat_id' => -400], 'body' => ['mid' => 'ch-' . uniqid(), 'text' => 'пост']]]);
+        $bot->observe(['update_type' => 'message_created', 'message' => ['recipient' => ['chat_type' => 'dialog', 'chat_id' => 7], 'body' => ['mid' => 'z', 'text' => 'х']]]);
+        $mem = (array)$t->modx->cacheManager->get('bot/chats', $opt);
+        $t->eq(['-300' => 'группа', '-400' => 'канал'], array_map('strval', array_combine(array_map('strval', array_keys($mem)), $mem)), 'запомнены группа и канал, личный чат — нет');
+        $t->ok(isset($bot->chats()[-300]), 'кнопка «Найти группы и каналы» показывает запомненные');
+        $was ? $t->modx->cacheManager->set('bot/chats', $was, 0, $opt) : $t->modx->cacheManager->delete('bot/chats', $opt);
+        $t->admin('cmp');
+        $r = $t->run('booking_max_chats');
+        $t->ok($r['status'] === 400 || $r['success'], 'booking_max_chats из админки отвечает (без токена — понятная ошибка): ' . $r['message']);
+        $t->admin('pwa');
+        $t->eq(403, $t->run('booking_max_chats')['status'], 'из приложения по токену — нельзя (только админка MODX)');
     },
 
     'бот: ответы только по данным сайта, «баня», а не «сауна»' => function (BookingTest $t) {

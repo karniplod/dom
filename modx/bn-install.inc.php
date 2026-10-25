@@ -156,7 +156,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-25 00:13",
+ "version": "2026-10-25 11:41",
  "chunks": [
   {
    "name": "bn.fox",
@@ -1749,13 +1749,45 @@ try {
         }
         // адреса новых страниц латиницей (дополнение Translit): только буквы, цифры и «-», сразу при вводе заголовка.
         // Готовые адреса не меняются — в том числе /Предоплата1/ старого сайта
-        if (is_dir(MODX_CORE_PATH . 'components/translit/') && $modx->getOption('friendly_alias_translit') === 'none') {
-            foreach (['friendly_alias_translit' => 'russian', 'friendly_alias_restrict_chars' => 'alphanumeric', 'friendly_alias_realtime' => '1'] as $k => $v) {
+        $tables = MODX_CORE_PATH . 'components/translit/model/modx/translit/tables/';
+        if (is_dir($tables) && is_file($dir . '/translit-bania.php') && !$dry) {
+            if (!is_file($tables . 'bania.php') || md5_file($tables . 'bania.php') !== md5_file($dir . '/translit-bania.php')) {
+                if (@copy($dir . '/translit-bania.php', $tables . 'bania.php')) say('upd', 'Translit: таблица «bania» — «шашлык» → shashlyk, «выбрать» → vybrat');
+                else say('error', 'не удалось записать таблицу Translit bania.php');
+            }
+        }
+        $pattern = '/[\0\x0B\t\n\r\f\a&=+%#<>"~:`@\?\[\]\{\}\|\^\'\\\\!,;()«»„“”№*$—–]/';
+        if (is_dir(MODX_CORE_PATH . 'components/translit/') && in_array($modx->getOption('friendly_alias_translit'), ['none', 'russian'], true)) {
+            foreach (['friendly_alias_translit' => is_file($tables . 'bania.php') ? 'bania' : 'russian', 'friendly_alias_restrict_chars' => 'pattern',
+                      'friendly_alias_restrict_chars_pattern' => $pattern, 'friendly_alias_realtime' => '1'] as $k => $v) {
                 if ($dry) { say('upd', "настройка $k = «{$v}»"); continue; }
                 if ($r = setting($k, $v, 'Доходные дома')) say($r, "настройка $k = «{$v}» (адреса новых страниц латиницей)");
             }
-        } elseif (!is_dir(MODX_CORE_PATH . 'components/translit/')) {
+        }
+        // прежняя версия ставила alphanumeric — он вырезает точку и у загружаемых файлов (foto.jpg → fotojpg)
+        if (!$dry && $modx->getOption('friendly_alias_restrict_chars') === 'alphanumeric' && ($r = setting('friendly_alias_restrict_chars', 'pattern', 'Доходные дома'))) {
+            say($r, 'настройка friendly_alias_restrict_chars = «pattern»: у загружаемых файлов сохраняется расширение');
+            setting('friendly_alias_restrict_chars_pattern', $pattern, 'Доходные дома');
+        }
+        if (!is_dir(MODX_CORE_PATH . 'components/translit/')) {
             say('warn', 'нет дополнения Translit — адреса новых статей будут русскими буквами; поставьте translit в «Пакеты → Установщик»');
+        }
+        if (is_dir(MODX_CORE_PATH . 'components/tinymcerte/')) {
+            foreach (['tinymcerte.entity_encoding' => 'raw'] as $k => $v) {
+                if (!$modx->getObject(modSystemSetting::class, $k) && !$dry) {
+                    $o = $modx->newObject(modSystemSetting::class);
+                    $o->fromArray(['key' => $k, 'xtype' => 'textfield', 'namespace' => 'tinymcerte', 'area' => 'tinymcerte.default'], '', true);
+                    $o->set('value', 'named'); $o->save();
+                }
+                if ($dry) { if ((string)$modx->getOption($k) !== $v) say('upd', "настройка $k = «{$v}»"); continue; }
+                if ($r = setting($k, $v, 'tinymcerte.default')) say($r, "редактор: кавычки, тире и буквы сохраняются как есть, без кодов вида &laquo; ($k = $v)");
+            }
+            $cfg = json_decode((string)$modx->getOption('tinymcerte.settings'), true) ?: [];
+            $plug = MODX_ASSETS_URL . 'js/tinymce-bnprotect.js';
+            if (($cfg['external_plugins']['bnprotect'] ?? '') !== $plug) {
+                $cfg['external_plugins']['bnprotect'] = $plug;
+                if (!$dry && ($r = setting('tinymcerte.settings', json_encode($cfg, JSON_UNESCAPED_SLASHES), 'tinymcerte.default'))) say($r, 'редактор: теги MODX [[…]] и Fenom {…} в тексте страницы не меняются (плагин bnprotect)');
+            }
         }
         $html = $modx->getObject(modContentType::class, ['mime_type' => 'text/html']);
         if ($html && $html->get('file_extensions') !== '') {
@@ -1770,8 +1802,11 @@ try {
             say('warn', 'в .htaccess нет правил MODX — адреса страниц могут не открываться; возьмите правила из ht.access');
         }
         // заголовки безопасности: свой блок между метками — повторный запуск его обновит, а не задублирует
-        $sec = "# BEGIN Bania security (bn-install.php)
-<IfModule mod_headers.c>
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
+            || stripos((string)$modx->getOption('site_url'), 'https://') === 0;
+        // http → https: только когда сайт уже открывается по https (сертификат есть), иначе переадресация заперла бы сайт
+        $toHttps = $isHttps ? "<IfModule mod_rewrite.c>\n  RewriteEngine On\n  RewriteCond %{HTTPS} off\n  RewriteCond %{HTTP:X-Forwarded-Proto} !https\n  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]\n</IfModule>\n" : '';
+        $sec = "# BEGIN Bania security (bn-install.php)\n" . $toHttps . "<IfModule mod_headers.c>
 "
              . "  Header always set X-Content-Type-Options \"nosniff\"
 "
@@ -1791,6 +1826,12 @@ try {
 ?~s', $cur) ? preg_replace('~# BEGIN Bania security.*?# END Bania security
 ?~s', $sec, $cur) : $sec . "
 " . $cur;
+        if ($isHttps) {   // cookie входа в админку — только по https и не уходят на чужие сайты
+            foreach (['session_cookie_secure' => '1', 'session_cookie_samesite' => 'Lax'] as $k => $v) {
+                if ($dry) { if ((string)$modx->getOption($k) !== $v) say('upd', "настройка $k = «{$v}»"); continue; }
+                if ($r = setting($k, $v, 'Доходные дома')) say($r, "настройка $k = «{$v}» (cookie админки только по https)");
+            }
+        }
         if ($next !== $cur && (is_file($ht) || $dry)) {
             say('upd', '.htaccess: заголовки безопасности (запрет встраивания сайта, HTTPS)');
             if (!$dry) { if ($cur !== '') backup('files', '.htaccess', $cur); if (@file_put_contents($ht, $next) === false) say('error', 'не удалось записать заголовки безопасности в .htaccess'); }
@@ -1863,6 +1904,19 @@ try {
         if (!$dry && ($r = setting($k, MODX_ASSETS_URL . $file, 'SendIt'))) say($r, "настройка {$k}: путь от корня сайта (" . MODX_ASSETS_URL . "…)");
         $modx->setOption($k, MODX_ASSETS_URL . $file);
     }
+    // страницы «Бронирования» (/booking, /booking/zayavka) — на шаблоне сайта: пакет, поставленный раньше установщика сайта,
+    // создаёт их на стандартном шаблоне MODX (шаблона bn-text ещё нет). Меняем только стандартный — выбранный владельцем не трогаем
+    $textTplId = (int)($tplIds['bn-text'] ?? 0);
+    $defTpl = (int)$modx->getOption('default_template');
+    foreach (['booking.form_page', 'booking.request_link_page'] as $key) {
+        $o = ($pid = (int)$modx->getOption($key)) ? $modx->getObject(modResource::class, $pid) : null;
+        if (!$o || !$textTplId || (int)$o->get('template') === $textTplId) continue;
+        $cur = $modx->getObject(modTemplate::class, (int)$o->get('template'));
+        $isBase = (int)$o->get('template') === $defTpl || ($cur && in_array($cur->get('templatename'), ['BaseTemplate', 'Base Template'], true));
+        if (!$isBase) continue;
+        say('upd', 'страница «' . $o->get('pagetitle') . '» — на шаблоне сайта bn-text (была на стандартном шаблоне MODX)');
+        if (!$dry) { $o->set('template', $textTplId); saved($o, 'шаблон страницы ' . $o->get('pagetitle')); }
+    }
     // страница бронирования компонента booking — в меню сайта между Домами и Блогом (один раз: потом решает владелец)
     if (($bk = (int)$modx->getOption('booking.form_page')) && ($o = $modx->getObject(modResource::class, $bk))
         && (int)$o->get('hidemenu') === 1 && (int)$o->get('menuindex') === 0) {
@@ -1872,6 +1926,55 @@ try {
     // ссылки [[~id]] — от корня сайта («/kontakty»): в разметке нет <base>, и относительные ссылки со статей блога вели бы в /blog/…
     if (!$dry && ($r = setting('link_tag_scheme', 'abs'))) say($r, 'настройка link_tag_scheme = abs (ссылки от корня сайта)');
     $modx->setOption('link_tag_scheme', 'abs');
+    // bnLoginGuard — вход в админку от роботов: с одного адреса не больше 10 попыток за 15 минут, после 3-й — пауза 1 с.
+    // MODX сам блокирует учётку после 5 неверных паролей (failed_login_attempts), но робот так запирает настоящего администратора;
+    // ограничение по адресу останавливает перебор раньше. Удачный вход сбрасывает счётчик адреса
+    $guardCode = <<<'PHP'
+/** bnLoginGuard — ограничение попыток входа в админку с одного IP (установщик сайта Доходных Домов) */
+$ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+if ($ip === '') return true;
+$key = 'login/' . md5($ip);
+$opt = [\xPDO\xPDO::OPT_CACHE_KEY => 'bn_guard'];
+$max = (int)$modx->getOption('bn_login_attempts', null, 10);
+$win = 60 * (int)$modx->getOption('bn_login_minutes', null, 15);
+if ($modx->event->name === 'OnManagerLogin') { $modx->cacheManager->delete($key, $opt); return; }
+$d = $modx->cacheManager->get($key, $opt);
+if (!is_array($d) || $d['t'] < time() - $win) $d = ['n' => 0, 't' => time()];
+if ($d['n'] >= $max) {
+    $modx->log(\MODX\Revolution\modX::LOG_LEVEL_WARN, '[bnLoginGuard] вход в админку закрыт для ' . $ip . ': ' . $d['n'] . ' попыток');
+    $modx->event->output('Слишком много попыток входа. Подождите ' . ceil(($d['t'] + $win - time()) / 60) . ' мин. и попробуйте снова.');   // MODX берёт ответ плагина из output(), не из return
+    return;
+}
+$d['n']++;
+$modx->cacheManager->set($key, $d, $win, $opt);
+if ($d['n'] > 3) sleep(1);   // робот перебирает медленнее, человеку незаметно
+return true;
+PHP;
+    if (!$dry) {
+        $gp = $modx->getObject(\MODX\Revolution\modPlugin::class, ['name' => 'bnLoginGuard']) ?: $modx->newObject(\MODX\Revolution\modPlugin::class);
+        $isNewGp = !$gp->get('id');
+        if ($isNewGp || $gp->get('plugincode') !== $guardCode) {
+            $gp->fromArray(['name' => 'bnLoginGuard', 'description' => 'Вход в админку: не больше 10 попыток за 15 минут с одного адреса (bn_login_attempts, bn_login_minutes)',
+                'plugincode' => $guardCode, 'category' => category('Доходные дома'), 'disabled' => 0]);
+            if (saved($gp, 'плагин bnLoginGuard')) say($isNewGp ? 'new' : 'upd', 'плагин bnLoginGuard: вход в админку — не больше 10 попыток за 15 минут с одного адреса');
+        }
+        foreach (['OnBeforeManagerLogin', 'OnManagerLogin'] as $ev) {
+            if ($gp->get('id') && !$modx->getObject(modPluginEvent::class, ['pluginid' => $gp->get('id'), 'event' => $ev])) {
+                $pe = $modx->newObject(modPluginEvent::class);
+                $pe->fromArray(['pluginid' => $gp->get('id'), 'event' => $ev, 'priority' => 0, 'propertyset' => 0], '', true, true);
+                saved($pe, "событие $ev плагина bnLoginGuard");
+            }
+        }
+        $modx->cacheManager->refresh(['events' => []]);
+    }
+    foreach (['bn_login_attempts' => '10', 'bn_login_minutes' => '15'] as $k => $v) {   // создаём, но значение владельца не трогаем
+        if (!$dry && !$modx->getObject(modSystemSetting::class, $k) && ($r = setting($k, $v))) say($r, "настройка $k = «{$v}» (bnLoginGuard)");
+    }
+    if (!$dry && (int)$modx->getOption('password_min_length') < 12 && ($r = setting('password_min_length', '12'))) say($r, 'настройка password_min_length = «12» (пароли не короче 12 знаков)');
+    foreach (['allow_manager_login_forgot_password' => '1', 'send_poweredby_header' => '0'] as $k => $v) {   // «забыли пароль» — письмом; не выдавать «MODX» в заголовках
+        if (!$dry && ($r = setting($k, $v))) say($r, "настройка $k = «{$v}»");
+    }
+
     // MaxNotify3 по умолчанию шлёт через посредника rumaxbot.ru; у владельца свой бот в «MAX для бизнеса» — переключаем на него,
     // если посредник не настроен (ключ api_key пуст). Токен бота и id группы вписывает владелец: в файлах их нет (ст. 7.4)
     if (is_dir(MODX_CORE_PATH . 'components/maxnotify3/') && $modx->getOption('maxnotify3.provider') === 'rumaxbot'
@@ -2170,6 +2273,13 @@ function selfCheck() {
         }
     }
     say(stripos($base, 'https://') === 0 ? 'ok' : 'warn', stripos($base, 'https://') === 0 ? 'сайт работает по https' : 'сайт открывается без https — выпустите SSL-сертификат в панели хостинга');
+    if (is_dir(MODX_BASE_PATH . 'setup')) say('warn', 'папка setup/ MODX не удалена — через неё можно переустановить сайт; удалите её файловым менеджером');
+    else say('ok', 'папка setup/ MODX удалена');
+    $corePath = str_replace('\\', '/', MODX_CORE_PATH); $basePath = str_replace('\\', '/', MODX_BASE_PATH);
+    if (stripos($corePath, $basePath) === 0 && is_file(MODX_CORE_PATH . 'docs/changelog.txt')) {   // core внутри сайта — должен быть закрыт от браузера
+        [$c] = httpGet($base . substr($corePath, strlen($basePath)) . 'docs/changelog.txt');
+        say($c === 200 ? 'error' : 'ok', $c === 200 ? 'служебная папка core/ открыта из браузера (видны настройки и журналы) — на nginx закройте её в настройках сервера или попросите поддержку хостинга' : 'служебная папка core/ закрыта из браузера');
+    }
     $hasSec = strpos($hdr, 'x-frame-options') !== false && strpos($hdr, 'x-content-type-options') !== false;
     say($hasSec ? 'ok' : 'warn', $hasSec ? 'заголовки безопасности включены' : 'заголовки безопасности не пришли — на хостинге выключен mod_headers или .htaccess не читается');
     if ($inside && is_dir($dir)) {

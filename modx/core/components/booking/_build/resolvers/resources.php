@@ -66,6 +66,20 @@ if (!$exists($reqPage)) {
     $setting('booking.request_link_page', $page->get('id'));
 }
 
+// пакет поставили раньше сайта — страницы на стандартном шаблоне MODX; шаблон сайта уже есть — переводим на него (выбор владельца не трогаем)
+if ($textTpl) {
+    $base = (int)$modx->getOption('default_template');
+    foreach ([(int)$modx->getOption('booking.form_page'), (int)$modx->getOption('booking.request_link_page')] as $pid) {
+        $p = $pid ? $modx->getObject(modResource::class, $pid) : null;
+        $cur = $p ? $modx->getObject(modTemplate::class, (int)$p->get('template')) : null;
+        $isBase = $p && ((int)$p->get('template') === $base || ($cur && in_array($cur->get('templatename'), ['BaseTemplate', 'Base Template'], true)));
+        if ($isBase && (int)$p->get('template') !== (int)$textTpl->get('id')) {
+            $p->set('template', $textTpl->get('id'));
+            $p->save();
+        }
+    }
+}
+
 $appTpl = $modx->getObject(modTemplate::class, ['templatename' => 'booking.app']);
 if ($appTpl && !$modx->getObject(modResource::class, ['alias' => 'app', 'parent' => $formPage, 'deleted' => 0])) {
     $make([

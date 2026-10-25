@@ -54,6 +54,10 @@ $actor = $booking->access()->fromBearer($client === 'site' ? 'api' : $client);
 $isAdmin = $actor !== null;
 if (!$isAdmin && (preg_match('~^Bearer\s~i', $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '')
         || !empty($_SERVER['HTTP_X_BOOKING_TOKEN']))) {
+    // неверный ключ — в общий лимит адреса: перебор ключей упирается в 429 (подобрать ключ из 40 случайных знаков и так нельзя)
+    if (!$booking->access()->rateLimit($_SERVER['REMOTE_ADDR'] ?? '')) {
+        booking_out($booking->reply(429, false, 'Слишком много запросов. Подождите минуту'));
+    }
     booking_out($booking->reply(401, false, 'Токен недействителен или отозван'));
 }
 $booking->setActor($actor ?? ['role' => 'guest', 'name' => 'гость', 'interface' => $client]);

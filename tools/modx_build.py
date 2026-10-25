@@ -565,7 +565,7 @@ RES += [
 # ---------------------------------------------------------------- пакет modx/
 # Чистим только своё: modx/core/ и modx/assets/ — компонент booking, его не трогаем
 OWN = ("chunks", "templates", "snippets", "component", "resources.json", "bn-install.php",
-       "bn-install.inc.php", "INSTALL.md", ".htaccess")
+       "bn-install.inc.php", "INSTALL.md", ".htaccess", "translit-bania.php")
 os.makedirs(OUT, exist_ok=True)
 for name in OWN:
     p = os.path.join(OUT, name)
@@ -619,7 +619,7 @@ manifest = {
 }
 tplsrc = io.open(os.path.join(SRC, "bn-install.inc.php.tpl"), encoding="utf-8").read()
 write("bn-install.inc.php", tplsrc.replace("%%MANIFEST%%", json.dumps(manifest, ensure_ascii=False, indent=1)))
-for f in ("bn-install.php", "INSTALL.md"):
+for f in ("bn-install.php", "INSTALL.md", "translit-bania.php"):
     shutil.copy(os.path.join(SRC, f), os.path.join(OUT, f))
 shutil.copy(os.path.join(SRC, "htaccess.txt"), os.path.join(OUT, ".htaccess"))
 

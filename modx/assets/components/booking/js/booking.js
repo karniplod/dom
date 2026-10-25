@@ -498,7 +498,7 @@
   // ---------------------------------------------------------------- администратор: сетка и карточки, справочники
   var TABS = {
     grid: 'Календарь', list: 'Заявки', houses: 'Дома и бани', prices: 'Цены', holidays: 'Праздники',
-    blocks: 'Закрытые даты', tokens: 'Токены', migrate: 'Перенос заявок'
+    blocks: 'Закрытые даты', tokens: 'Токены', migrate: 'Перенос заявок', help: 'Инструкция'
   };
 
   function Admin(root, client) {
@@ -575,18 +575,42 @@
   Admin.prototype.tab_grid = function () {
     var self = this;
     var to = addDays(this.gridFrom, this.gridDays);
-    this.pane.innerHTML = '<div class="bk-bar"><button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-g="-7">‹ неделя</button>'
+    var MAXD = 92;   // столько дней сервер отдаёт за раз (Bookings::MAX_RANGE_DAYS)
+    var spans = [[7, 'Неделя'], [14, '2 недели'], [31, 'Месяц'], [92, '3 месяца']];
+    // период: стрелки листают на его длину, «с» и «по» — любые даты, кнопки — длина одним нажатием
+    this.pane.innerHTML = '<div class="bk-bar bk-bar--period"><button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-g="-1" aria-label="Предыдущий период">‹ назад</button>'
       + '<button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-g="0">сегодня</button>'
-      + '<button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-g="7">неделя ›</button>'
-      + '<span class="bk-legend"><i class="bk-sw bk-sw--ok"></i>подтверждена <i class="bk-sw bk-sw--new"></i>новые заявки <i class="bk-sw bk-sw--cancel"></i>просят отмену <i class="bk-sw bk-sw--block"></i>закрыто</span></div>'
+      + '<button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-g="1" aria-label="Следующий период">вперёд ›</button>'
+      + '<label class="bk-period">с <input type="date" data-gfrom value="' + esc(this.gridFrom) + '"></label>'
+      + '<label class="bk-period">по <input type="date" data-gto value="' + esc(addDays(to, -1)) + '"></label>'
+      + '<span class="bk-seg" role="group" aria-label="Длина периода">' + spans.map(function (s) {
+        return '<button type="button" class="bk-btn bk-btn--sm ' + (s[0] === self.gridDays ? '' : 'bk-btn--ghost') + '" data-gd="' + s[0] + '" aria-pressed="' + (s[0] === self.gridDays) + '">' + s[1] + '</button>';
+      }).join('') + '</span></div>'
+      + '<div class="bk-bar"><span class="bk-legend"><i class="bk-sw bk-sw--ok"></i>подтверждена <i class="bk-sw bk-sw--new"></i>новые заявки <i class="bk-sw bk-sw--cancel"></i>просят отмену <i class="bk-sw bk-sw--block"></i>закрыто</span></div>'
       + '<div class="bk-gridwrap"><p class="bk-muted">Загружаем…</p></div>';
     qsa(this.pane, '[data-g]').forEach(function (b) {
       b.addEventListener('click', function () {
         var n = +b.getAttribute('data-g');
         if (n === 0) { var t = new Date(); self.gridFrom = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() - 2, 12)); }
-        else self.gridFrom = addDays(self.gridFrom, n);
+        else self.gridFrom = addDays(self.gridFrom, n * self.gridDays);
         self.tab_grid();
       });
+    });
+    qsa(this.pane, '[data-gd]').forEach(function (b) {
+      b.addEventListener('click', function () { self.gridDays = +b.getAttribute('data-gd'); self.tab_grid(); });
+    });
+    qs(this.pane, '[data-gfrom]').addEventListener('change', function (e) {
+      if (!e.target.value) return;
+      self.gridFrom = e.target.value;
+      self.tab_grid();
+    });
+    qs(this.pane, '[data-gto]').addEventListener('change', function (e) {
+      if (!e.target.value) return;
+      var days = Math.round((parse(e.target.value) - parse(self.gridFrom)) / 864e5) + 1;
+      if (days < 1) { self.gridFrom = e.target.value; days = 1; }   // «по» раньше «с» — период с этого дня
+      if (days > MAXD) { window.alert('За один раз — не больше ' + MAXD + ' дней (3 месяца). Показываю первые ' + MAXD + '.'); days = MAXD; }
+      self.gridDays = days;
+      self.tab_grid();
     });
     this.api.call('booking_grid', { from: this.gridFrom, to: to }).then(function (res) {
       var wrap = qs(self.pane, '.bk-gridwrap');
@@ -962,6 +986,10 @@
         + '. Откройте его на телефоне, вкладка «Администратор», вставьте токен. Тот же адрес — для кнопки мини-приложения в боте MAX.</p>'
         + '<form class="bk-inline" data-issue><label class="bk-field"><span>Чей телефон</span><input name="label" required maxlength="100" placeholder="Телефон Ольги"></label><button class="bk-btn" type="submit">Выпустить токен</button></form>'
         + '<div data-new-token></div></section>'
+        // номер (chat_id) группы администраторов и канала — для maxnotify3.max_recipient_ids и поста в канал, без SSH
+        + '<section class="bk-box"><h3>MAX: группы и каналы бота</h3><p class="bk-muted">Добавьте бота в группу или канал администратором, напишите там любое сообщение и нажмите кнопку. '
+        + 'Номер со знаком минус впишите в системную настройку <code>maxnotify3.max_recipient_ids</code> (несколько — через запятую).</p>'
+        + '<p><button type="button" class="bk-btn bk-btn--ghost" data-maxchats>Найти группы и каналы</button></p><div data-maxout></div></section>'
         + (res.data.items.length ? '<table class="bk-table"><thead><tr><th>Подпись</th><th>Пользователь</th><th>Выпущен</th><th>Последний вход</th><th></th></tr></thead><tbody>'
           + res.data.items.map(function (t) {
             return '<tr><td>' + esc(t.label) + '</td><td>' + esc(t.user) + '</td><td><small>' + esc(t.created_at) + '</small></td><td><small>' + esc(t.last_used_at || '—') + '</small></td>'
@@ -974,10 +1002,52 @@
           qs(self.pane, '[data-new-token]').innerHTML = '<p class="bk-note-orange">Токен показывается один раз — скопируйте сейчас:</p><p><code class="bk-token">' + esc(r.data.token) + '</code></p>';
         });
       });
+      qs(self.pane, '[data-maxchats]').addEventListener('click', function (e) {
+        var btn = e.currentTarget, out = qs(self.pane, '[data-maxout]');
+        btn.disabled = true;
+        out.innerHTML = '<p class="bk-muted">Спрашиваем MAX…</p>';
+        self.api.call('booking_max_chats', {}).then(function (r) {
+          btn.disabled = false;
+          if (!r.success) { out.innerHTML = '<p class="bk-warn">' + esc(r.message) + '</p>'; return; }
+          var d = r.data, now = String(d.recipients || '').split(/[\s,;]+/);
+          out.innerHTML = '<p>Бот: <b>' + esc(d.bot) + '</b>' + (d.recipients ? '. Сейчас уведомления уходят в: <code>' + esc(d.recipients) + '</code>' : '. Номер для уведомлений ещё не вписан') + '</p>'
+            + (d.items.length ? '<table class="bk-table"><thead><tr><th>Номер (chat_id)</th><th>Что это</th><th></th></tr></thead><tbody>' + d.items.map(function (c) {
+                return '<tr><td><code class="bk-token">' + esc(c.id) + '</code></td><td>' + esc(c.title) + '</td><td>' + (now.indexOf(c.id) >= 0 ? 'уже получает уведомления' : '') + '</td></tr>';
+              }).join('') + '</tbody></table>'
+              : '<p class="bk-note-orange">' + (d.webhook ? 'Пока пусто. Напишите сообщение в группе или канале, где бот администратор, и нажмите ещё раз — бот запомнит номер.'
+                : 'Групп не найдено. Бот добавлен в группу администратором? Напишите в группе сообщение и нажмите ещё раз.') + '</p>');
+        });
+      });
       qsa(self.pane, '[data-revoke]').forEach(function (b) {
         b.addEventListener('click', function () {
           if (!window.confirm('Отозвать токен? Телефон потеряет доступ администратора.')) return;
           self.api.call('booking_issue_token', { op: 'revoke', id: b.getAttribute('data-revoke') }).then(function (r) { r.success ? self.tab_tokens() : self.fail(r); });
+        });
+      });
+    });
+  };
+
+  // --- инструкция для администраторов: с сервера, только вошедшим (в коде страниц для гостей её нет)
+  Admin.prototype.tab_help = function () {
+    var self = this;
+    this.pane.innerHTML = '<p class="bk-muted">Загружаем…</p>';
+    this.api.call('booking_help', {}).then(function (r) {
+      if (!r.success) { self.fail(r); return; }
+      self.pane.innerHTML = r.data.html;
+      qsa(self.pane, '.bk-help__toc a').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          var t = self.pane.querySelector(a.getAttribute('href'));
+          if (!t) return;
+          // в админке MODX прокручивается своя область, а не страница: scrollIntoView сдвинул бы всю админку
+          for (var p = t.parentElement; p && p !== document.body; p = p.parentElement) {
+            var o = getComputedStyle(p).overflowY;
+            if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight) {
+              p.scrollTo({ top: p.scrollTop + t.getBoundingClientRect().top - p.getBoundingClientRect().top - 12, behavior: 'smooth' });
+              return;
+            }
+          }
+          t.scrollIntoView({ behavior: 'smooth' });
         });
       });
     });
@@ -1110,7 +1180,7 @@
     qsa(this.root, '[data-app-tab]').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-app-tab') === name ? 'true' : 'false'); });
     qsa(this.root, '[data-app-pane]').forEach(function (p) { p.hidden = p.getAttribute('data-app-pane') !== name; });
     if (name === 'admin') this.admin();
-    if (name === 'help') this.helpShow(this.helpPart || (this.token() ? 'help-admin' : 'help-guest'));
+    if (name === 'help') this.helpShow(this.helpPart || 'help-guest');
   };
   /* Вкладка администратора — только с действующим токеном (ст. 3.4); без него — только гостевая часть */
   App.prototype.admin = function () {

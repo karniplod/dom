@@ -29,12 +29,13 @@ $bot = $booking->maxBot();
 if (!$bot->checkSecret((string)($_SERVER['HTTP_X_MAX_BOT_API_SECRET'] ?? ''))) {
     $done(403, 'secret');
 }
-if (!$bot->enabled()) {
-    $done(200, 'off');
-}
 $update = json_decode((string)file_get_contents('php://input'), true);
 if (!is_array($update)) {
     $done(200, 'empty');
+}
+if (!$bot->enabled()) {   // ответы выключены — только запоминаем группы и каналы бота (для «Найти группы и каналы»)
+    $bot->observe($update);
+    $done(200, 'off');
 }
 $booking->setActor(['role' => 'guest', 'name' => 'гость', 'interface' => 'max']);
 try {

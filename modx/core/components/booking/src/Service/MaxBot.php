@@ -14,7 +14,7 @@ use MODX\Revolution\modX;
 class MaxBot
 {
     public const API = 'https://platform-api2.max.ru';
-    public const UPDATE_TYPES = ['message_created', 'bot_started', 'message_callback'];
+    public const UPDATE_TYPES = ['message_created', 'bot_started', 'message_callback', 'bot_added'];
 
     protected Booking $booking;
 
@@ -43,6 +43,10 @@ class MaxBot
         $type = (string)($u['update_type'] ?? '');
         if (!in_array($type, self::UPDATE_TYPES, true)) {
             return 'skip:type';
+        }
+        if ($type === 'bot_added') {   // бота добавили в группу или канал — запомним номер (кнопка «Найти группы и каналы»)
+            $this->remember((int)($u['chat_id'] ?? 0), !empty($u['is_channel']) ? 'канал' : 'группа');
+            return 'skip:added';
         }
         // повтор того же события (MAX повторяет вебхук, если ответ задержался) — не отвечаем дважды
         $id = $type === 'message_callback' ? (string)($u['callback']['callback_id'] ?? '')
@@ -73,6 +77,7 @@ class MaxBot
         // message_created: только личный чат с ботом, не от ботов
         $m = $u['message'] ?? [];
         if (($m['recipient']['chat_type'] ?? '') !== 'dialog') {
+            $this->remember((int)($m['recipient']['chat_id'] ?? 0), ($m['recipient']['chat_type'] ?? '') === 'channel' ? 'канал' : 'группа');
             return 'skip:group';
         }
         if (!empty($m['sender']['is_bot'])) {
@@ -114,11 +119,12 @@ class MaxBot
      */
     public function chats(): array
     {
+        // запомненные вебхуком и запасным режимом + ещё не забранные события (если вебхука нет)
+        $out = (array)$this->booking->modx->cacheManager->get('bot/chats', [\xPDO\xPDO::OPT_CACHE_KEY => 'booking']);
         [$code, $data] = $this->call('GET', '/updates', ['timeout' => 1, 'limit' => 100, 'types' => 'bot_added,message_created,user_added']);
         if ($code !== 200) {
-            return [];
+            $data = [];
         }
-        $out = [];
         foreach ($data['updates'] ?? [] as $u) {
             if (($u['update_type'] ?? '') === 'bot_added' && isset($u['chat_id'])) {
                 $out[(int)$u['chat_id']] = !empty($u['is_channel']) ? 'канал' : 'группа';
@@ -134,6 +140,31 @@ class MaxBot
             if ($c === 200 && !empty($chat['title'])) $out[$id] = $kind . ' «' . $chat['title'] . '»';
         }
         return $out;
+    }
+
+    /** Только запомнить группу или канал из события (вебхук при выключенных ответах бота) */
+    public function observe(array $u): void
+    {
+        $type = (string)($u['update_type'] ?? '');
+        if ($type === 'bot_added') {
+            $this->remember((int)($u['chat_id'] ?? 0), !empty($u['is_channel']) ? 'канал' : 'группа');
+        } elseif ($type === 'message_created' && in_array($u['message']['recipient']['chat_type'] ?? '', ['chat', 'channel'], true)) {
+            $this->remember((int)($u['message']['recipient']['chat_id'] ?? 0), $u['message']['recipient']['chat_type'] === 'channel' ? 'канал' : 'группа');
+        }
+    }
+
+    /** Номер группы или канала, где бот, — для кнопки «Найти группы и каналы» (вебхук забирает события сам) */
+    protected function remember(int $chatId, string $kind): void
+    {
+        if ($chatId === 0) {
+            return;
+        }
+        $opt = [\xPDO\xPDO::OPT_CACHE_KEY => 'booking'];
+        $list = (array)$this->booking->modx->cacheManager->get('bot/chats', $opt);
+        if (!isset($list[$chatId])) {
+            $list[$chatId] = $kind;
+            $this->booking->modx->cacheManager->set('bot/chats', $list, 0, $opt);
+        }
     }
 
     protected function body(array $reply): array
