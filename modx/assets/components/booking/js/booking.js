@@ -212,11 +212,39 @@
     this.el.addon.forEach(function (r) { r.addEventListener('change', function () { self.onKind(); }); });
     if (this.el.tf) this.el.tf.addEventListener('change', function () { self.fitTimes(); self.quote(); });   // «До» — по новому «С»
     if (this.el.phone) this.el.phone.addEventListener('input', function () { maskPhone(self.el.phone); });
+    /* Проверка полей сразу при нажатии — до SendIt: он сначала решает задачу защиты от ботов (секунды на телефоне)
+       и только потом показывает ошибки сервера. Обработчик формы срабатывает раньше обработчика SendIt на document. */
+    var btn = qs(form, '[type=submit]'), btnText = btn ? btn.textContent : '';
+    this.busy = function (on) {
+      self.sending = on;
+      clearTimeout(self.busyT);
+      if (on) self.busyT = setTimeout(function () { self.busy(false); }, 30000);   // нет связи — SendIt ответа не дождался
+      if (!btn) return;
+      btn.disabled = on;
+      btn.textContent = on ? 'Отправляем…' : btnText;
+    };
+    form.addEventListener('submit', function (e) {
+      var bad = self.sending ? null : self.check();
+      if (self.sending || bad) {
+        e.preventDefault();
+        e.stopPropagation();   // SendIt не запускаем: ошибка уже видна (или отправка уже идёт)
+        if (bad) { bad.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (bad.focus) bad.focus({ preventScroll: true }); }
+        return;
+      }
+      self.busy(true);
+    });
+    qsa(form, 'input, select, textarea').forEach(function (i) {
+      i.addEventListener(i.type === 'checkbox' || i.tagName === 'SELECT' ? 'change' : 'input', function () { self.fieldError(i.name, ''); });
+    });
+    ['si:send:finish', 'si:send:success', 'si:send:error'].forEach(function (n) {
+      document.addEventListener(n, function (e) { if (self.owns(e)) self.busy(false); });
+    });
     // перед отправкой SendIt: даты выбраны?
     document.addEventListener('si:send:before', function (e) {
       if (!self.owns(e)) return;
       if (!self.el.from.value || (!self.isBath() && !self.el.to.value)) {
         e.preventDefault();
+        self.busy(false);
         self.error(self.isBath() ? 'Выберите дату и время бани' : 'Выберите даты заезда и выезда');
       }
     });
@@ -235,6 +263,30 @@
   GuestForm.prototype.isBath = function () {
     var r = this.el.addon.filter(function (x) { return x.checked; })[0];
     return !!(r && r.value === '1');
+  };
+  GuestForm.prototype.fieldError = function (name, msg) {
+    var b = qs(this.form, '[data-si-error="' + name + '"]'), f = qs(this.form, '[name="' + name + '"]');
+    if (b) b.textContent = msg;
+    if (f) { if (msg) f.setAttribute('aria-invalid', 'true'); else f.removeAttribute('aria-invalid'); }
+  };
+  /* Те же правила, что у пресета SendIt и сервера (окончательно проверяет сервер); возвращает первое неверное поле */
+  GuestForm.prototype.check = function () {
+    var self = this, first = null, f = this.form;
+    var bad = function (name, msg, el) { self.fieldError(name, msg); first = first || el || qs(f, '[name="' + name + '"]'); };
+    if (!this.el.house.value) bad('house', 'Выберите Дом');
+    if (!this.el.from.value || (!this.isBath() && !this.el.to.value)) {
+      this.error(this.isBath() ? 'Выберите дату и время бани' : 'Выберите даты заезда и выезда');
+      first = first || this.el.dates || this.el.cal;
+    } else this.error('');
+    var g = this.el.guests;
+    if (g && !(+g.value >= 1)) bad('guests', 'Укажите, сколько будет гостей');
+    else if (g && g.max && +g.value > +g.max) bad('guests', 'В этом Доме — до ' + g.max + ' гостей');
+    var name = qs(f, '[name=name]');
+    if (name && !name.value.trim()) bad('name', 'Как к вам обращаться?');
+    if (this.el.phone && this.el.phone.value.replace(/\D/g, '').length < 10) bad('phone', 'Укажите телефон: администратор перезвонит');
+    var agree = qs(f, '[name=agree]');
+    if (agree && !agree.checked) bad('agree', 'Нужно согласие на обработку данных');
+    return first;
   };
   GuestForm.prototype.error = function (msg) {
     if (this.el.dateErr) { this.el.dateErr.textContent = msg || ''; }
