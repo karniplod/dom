@@ -81,7 +81,14 @@ if ($textTpl) {
 }
 
 $appTpl = $modx->getObject(modTemplate::class, ['templatename' => 'booking.app']);
-if ($appTpl && !$modx->getObject(modResource::class, ['alias' => 'app', 'parent' => $formPage, 'deleted' => 0])) {
+$app = $modx->getObject(modResource::class, ['alias' => 'app', 'parent' => $formPage, 'deleted' => 0]);
+if ($appTpl && $app) {
+    // пакет удаляли и ставили заново: шаблон booking.app создан с новым номером, страница смотрит на удалённый — и открывается пустой
+    if (!$modx->getObject(modTemplate::class, (int)$app->get('template'))) {
+        $app->set('template', $appTpl->get('id'));
+        $app->save();
+    }
+} elseif ($appTpl) {
     $make([
         'pagetitle' => 'Приложение', 'longtitle' => 'Бронирование — приложение', 'alias' => 'app', 'parent' => $formPage,
         'template' => $appTpl->get('id'), 'searchable' => 0, 'cacheable' => 0, 'content' => '',
