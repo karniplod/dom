@@ -38,6 +38,7 @@ class Booking
         'booking_issue_token' => \Booking\Processors\Token::class,
         'booking_migrate_leads' => \Booking\Processors\Migrate::class,
         'booking_max_chats' => \Booking\Processors\MaxChats::class,
+        'booking_max_webhook' => \Booking\Processors\MaxWebhook::class,
         'booking_help' => \Booking\Processors\Help::class,
     ];
 

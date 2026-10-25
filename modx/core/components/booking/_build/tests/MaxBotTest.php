@@ -163,4 +163,72 @@ return [
         $t->modx->cacheManager->refresh(['system_settings' => []]);
         $t->ok(!array_intersect(array_map('intval', array_keys($t->booking->maxBot()->known())), [-77, -100, -200, -300, -400]), 'тестовых номеров не осталось');
     },
+    'бот: «Подключить бота» в админке — адрес сайта в MAX, прежняя подписка снята, бот включён' => function (BookingTest $t) {
+        $modx = $t->modx;
+        $bot = $t->booking->maxBot();
+        $subs = [['url' => 'https://example.ru/assets/components/booking/bot.php'], ['url' => 'https://other.ru/hook']];
+        $calls = [];
+        $bot->transport = function ($method, $path, $query, $body) use (&$calls, &$subs) {
+            $calls[] = $method . ' ' . $path . ' ' . ($query['url'] ?? ($body['url'] ?? ''));
+            if ($method === 'GET') return [200, ['subscriptions' => $subs]];
+            if ($method === 'DELETE') { $subs = array_values(array_filter($subs, fn($s) => $s['url'] !== $query['url'])); return [200, ['success' => true]]; }
+            $subs[] = ['url' => $body['url']];
+            return [200, ['success' => true]];
+        };
+        $keys = ['maxnotify3.max_token', 'site_url', 'booking.bot_enabled'];
+        $was = [];
+        foreach ($keys as $k) $was[$k] = $modx->getOption($k);
+        $st = $modx->getObject(\MODX\Revolution\modSystemSetting::class, ['key' => 'booking.bot_enabled']);
+        $wasDb = $st ? $st->get('value') : null;
+        try {
+            $modx->setOption('maxnotify3.max_token', 't');
+            $modx->setOption('site_url', 'https://example.ru/');
+            $t->admin('cmp');
+            $r = $t->run('booking_max_webhook', ['op' => 'on']);
+            $t->ok($r['success'], 'подключено: ' . $r['message']);
+            $t->eq('https://example.ru/assets/components/booking/bot.php', $r['data']['url'] ?? null, 'адрес приёма — bot.php сайта');
+            $t->ok(in_array('DELETE /subscriptions https://example.ru/assets/components/booking/bot.php', $calls, true), 'прежняя подписка сайта снята (старый секрет)');
+            $t->ok(!in_array('DELETE /subscriptions https://other.ru/hook', $calls, true), 'чужие подписки не трогаем');
+            $t->ok($r['data']['webhook'] && $r['data']['enabled'], 'бот включён и адрес подключён');
+            $r = $t->run('booking_max_webhook', ['op' => 'off']);
+            $t->ok($r['success'] && !$r['data']['webhook'] && !$r['data']['enabled'], 'отключено');
+            $modx->setOption('site_url', 'http://example.ru/');
+            $t->eq(400, $t->run('booking_max_webhook', ['op' => 'on'])['status'], 'без https — понятная ошибка');
+            $t->admin('pwa');
+            $t->eq(403, $t->run('booking_max_webhook', ['op' => 'status'])['status'], 'из приложения по токену — нельзя');
+        } finally {
+            foreach ($was as $k => $v) $modx->setOption($k, $v);
+            $st = $modx->getObject(\MODX\Revolution\modSystemSetting::class, ['key' => 'booking.bot_enabled']);
+            if ($st && $wasDb !== null) { $st->set('value', $wasDb); $st->save(); }
+            $modx->cacheManager->refresh(['system_settings' => []]);
+            $bot->transport = [$bot, 'http'];
+        }
+    },
+    'бот: вопросы своими словами, в разных формах — нужная тема' => function (BookingTest $t) {
+        $faq = $t->booking->faq();
+        $m = new \ReflectionMethod($faq, 'intents');
+        $m->setAccessible(true);
+        $cases = [
+            'почём сутки' => 'prices', 'во что обойдётся ночь' => 'prices', 'прайс скиньте' => 'prices',
+            'когда можно заехать' => 'times', 'до скольки выезжать' => 'times', 'можно пораньше заселиться' => 'times',
+            'как к вам доехать' => 'address', 'далеко от центра?' => 'address', 'куда подъехать на такси' => 'address', 'есть на яндекс картах?' => 'address',
+            'как с вами связаться' => 'contacts', 'есть ватсап?' => 'contacts', 'хочу поговорить с живым человеком' => 'contacts',
+            'нас 15 человек, разместимся?' => 'capacity', 'хотим отметить др' => 'capacity', 'девичник' => 'capacity',
+            'можно арендовать дом' => 'book', 'есть свободные даты на выходные' => 'book',
+            'какие у вас коттеджи' => 'houses', 'покажите фотки' => 'houses',
+            'можно попариться пару часов' => 'bath', 'баньку на 3 часа' => 'bath',
+            'есть скидочки?' => 'discount', 'можно заказать шашлык' => 'cook', 'есть мангал?' => 'cook',
+            'с котом можно?' => 'rules', 'какой залог' => 'rules', 'здрасьте' => 'start', 'доброе утро' => 'start',
+        ];
+        foreach ($cases as $q => $want) {
+            $got = $m->invoke($faq, $faq->norm($q));
+            $t->eq($want, $got[0] ?? null, "«{$q}» — тема {$want}");
+        }
+        $t->ok(strpos($faq->answer('отлично спасибо')['text'], 'Пожалуйста') === 0, '«отлично спасибо» — «Пожалуйста», а не «не нашёл ответа»');
+        $w = $faq->welcome();
+        $t->ok(strpos($w['text'], 'Что я умею') !== false && strpos($faq->answer('/start')['text'], 'Что я умею') !== false, 'приветствие для новых: что умеет бот, и на /start');
+        $t->ok(mb_stripos($w['text'], 'саун') === false, 'в приветствии нет «сауна»');
+        $last = end($w['buttons']);
+        $t->eq('Сайт', $last[0]['text'] ?? null, 'последняя кнопка приветствия — «Сайт»');
+    },
 ];

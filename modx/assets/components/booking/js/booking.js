@@ -990,6 +990,9 @@
         + '<section class="bk-box"><h3>MAX: группы и каналы бота</h3><p class="bk-muted">Добавьте бота в группу или канал администратором, напишите там любое сообщение и нажмите кнопку. '
         + 'Номер со знаком минус впишите в системную настройку <code>maxnotify3.max_recipient_ids</code> (несколько — через запятую).</p>'
         + '<p><button type="button" class="bk-btn bk-btn--ghost" data-maxchats>Найти группы и каналы</button></p><div data-maxout></div></section>'
+        // бот отвечает гостям: MAX шлёт ему сообщения только на подключённый адрес сайта
+        + '<section class="bk-box"><h3>MAX: бот отвечает гостям</h3><p class="bk-muted">Гости пишут боту в личные сообщения — он отвечает по ценам, заезду, бане, правилам и адресам с сайта. '
+        + 'Чтобы MAX передавал боту сообщения, подключите адрес сайта. Нужны токен бота и https.</p><div data-botout><p class="bk-muted">Спрашиваем MAX…</p></div></section>'
         + (res.data.items.length ? '<table class="bk-table"><thead><tr><th>Подпись</th><th>Пользователь</th><th>Выпущен</th><th>Последний вход</th><th></th></tr></thead><tbody>'
           + res.data.items.map(function (t) {
             return '<tr><td>' + esc(t.label) + '</td><td>' + esc(t.user) + '</td><td><small>' + esc(t.created_at) + '</small></td><td><small>' + esc(t.last_used_at || '—') + '</small></td>'
@@ -1018,6 +1021,25 @@
                 : 'Групп не найдено. Бот добавлен в группу администратором? Напишите в группе сообщение и нажмите ещё раз.') + '</p>');
         });
       });
+      var botOut = qs(self.pane, '[data-botout]');
+      var bot = function (op) {
+        qsa(botOut, 'button').forEach(function (b) { b.disabled = true; });
+        self.api.call('booking_max_webhook', { op: op }).then(function (r) {
+          if (!r.success) { botOut.innerHTML = '<p class="bk-warn">' + esc(r.message) + '</p>'; return; }
+          var on = r.data.webhook && r.data.enabled;
+          botOut.innerHTML = '<p>' + (on ? '<b>Бот отвечает гостям.</b> Адрес: <code>' + esc(r.data.url) + '</code>'
+              : (r.data.webhook ? 'Адрес подключён, но бот выключен.' : 'Бот не подключён — гостям он не отвечает.')) + '</p>'
+            + '<p>' + (on ? '<button type="button" class="bk-btn bk-btn--ghost" data-bot="off">Отключить</button> <button type="button" class="bk-btn bk-btn--ghost" data-bot="on">Подключить заново</button>'
+              : '<button type="button" class="bk-btn" data-bot="on">Подключить бота</button>') + '</p>';
+          qsa(botOut, '[data-bot]').forEach(function (b) {
+            b.addEventListener('click', function () {
+              if (b.getAttribute('data-bot') === 'off' && !window.confirm('Отключить бота? Гости перестанут получать ответы.')) return;
+              bot(b.getAttribute('data-bot'));
+            });
+          });
+        });
+      };
+      bot('status');
       qsa(self.pane, '[data-revoke]').forEach(function (b) {
         b.addEventListener('click', function () {
           if (!window.confirm('Отозвать токен? Телефон потеряет доступ администратора.')) return;
@@ -1123,6 +1145,8 @@
   App.prototype.install = function () {
     var self = this, root = this.root, bar = qs(root, '[data-app-install]'), txt = qs(root, '[data-app-install-text]');
     if (!bar) return;
+    // внутри MAX страница не ставится на телефон (нет окна установки) — предлагаем открыть её в браузере
+    if (this.client === 'max') { this.installMax(bar, txt); return; }
     var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     var ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     var hidden = false;
@@ -1158,6 +1182,34 @@
     document.addEventListener('bk:installable', function () { show(false); });
     window.addEventListener('appinstalled', hideAll);
     if (ios) show(true);
+  };
+  /* MAX: ссылка открывается во внешнем браузере через мост MAX (st.max.ru, подключается только в MAX); нет моста — копируем адрес */
+  App.prototype.installMax = function (bar, txt) {
+    var root = this.root, url = location.origin + location.pathname, hidden = false;
+    try { hidden = localStorage.getItem('bk-install-hide') === '1'; } catch (e) { /* хранилище недоступно */ }
+    if (!window.WebApp) {
+      var s = document.createElement('script');
+      s.src = 'https://st.max.ru/js/max-web-app.js';
+      s.async = true;
+      document.head.appendChild(s);
+    }
+    txt.textContent = 'В MAX приложение не ставится на экран. Откройте страницу в браузере телефона — там будет кнопка «Установить».';
+    var btns = qsa(root, '[data-app-install-btn]');
+    btns.forEach(function (b) {
+      b.hidden = false;
+      b.textContent = 'Открыть в браузере';
+      b.addEventListener('click', function () {
+        if (window.WebApp && window.WebApp.openLink) { window.WebApp.openLink(url); return; }
+        var done = function () { txt.textContent = 'Адрес скопирован: вставьте его в браузер телефона — ' + url; };
+        if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, function () { txt.textContent = 'Откройте в браузере: ' + url; });
+        else txt.textContent = 'Откройте в браузере: ' + url;
+      });
+    });
+    qs(root, '[data-app-install-close]').addEventListener('click', function () {
+      bar.hidden = true;
+      try { localStorage.setItem('bk-install-hide', '1'); } catch (e) { /* хранилище недоступно */ }
+    });
+    if (!hidden) bar.hidden = false;
   };
   /* Инструкция: один раздел на экране — «Гостям», «Администраторам» или «Установить» */
   App.prototype.helpShow = function (id) {

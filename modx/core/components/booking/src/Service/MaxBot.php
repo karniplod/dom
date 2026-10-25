@@ -58,7 +58,7 @@ class MaxBot
 
         if ($type === 'bot_started') {
             $userId = (int)($u['user']['user_id'] ?? 0);
-            return $userId > 0 && $this->send($userId, $faq->greeting()) ? 'answered' : 'skip:user';
+            return $userId > 0 && $this->send($userId, $faq->welcome()) ? 'answered' : 'skip:user';
         }
         if ($type === 'message_callback') {
             $cb = $u['callback'] ?? [];
