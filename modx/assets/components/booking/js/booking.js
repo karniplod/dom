@@ -1124,7 +1124,11 @@
       self.tryToken(t, true);
     });
     var out = qs(root, '[data-app-logout]');
-    if (out) out.addEventListener('click', function () { self.setToken(''); self.tab('admin'); });
+    if (out) out.addEventListener('click', function () {
+      if (!window.confirm('Выйти из режима администратора? Для входа снова понадобится токен.')) return;
+      self.setToken('');
+      self.tab('admin');
+    });
     window.addEventListener('online', function () { self.net(); });
     window.addEventListener('offline', function () { self.net(); });
     this.net();
@@ -1233,12 +1237,19 @@
     qsa(this.root, '[data-app-pane]').forEach(function (p) { p.hidden = p.getAttribute('data-app-pane') !== name; });
     if (name === 'admin') this.admin();
     if (name === 'help') this.helpShow(this.helpPart || 'help-guest');
+    this.adminShown();
+  };
+  /* Вход администратора: форма токена или панель; «Выйти» в шапке — только при открытой панели */
+  App.prototype.adminShown = function (on) {
+    var login = qs(this.root, '[data-app-login]'), box = qs(this.root, '[data-app-admin]'), out = qs(this.root, '[data-app-logout]');
+    if (on !== undefined) { login.hidden = on; box.hidden = !on; }
+    if (out) out.hidden = !(this.current === 'admin' && !box.hidden);
   };
   /* Вкладка администратора — только с действующим токеном (ст. 3.4); без него — только гостевая часть */
   App.prototype.admin = function () {
     var t = this.token();
     var login = qs(this.root, '[data-app-login]'), box = qs(this.root, '[data-app-admin]');
-    if (!t) { login.hidden = false; box.hidden = true; return; }
+    if (!t) { this.adminShown(false); return; }
     this.tryToken(t, false);
   };
   App.prototype.tryToken = function (t, fresh) {
@@ -1247,21 +1258,21 @@
     if (!/^[A-Za-z0-9_-]{20,128}$/.test(t)) {
       self.setToken('');
       err.textContent = 'Токен не подошёл: скопируйте его из админки целиком';
-      login.hidden = false; box.hidden = true;
+      self.adminShown(false);
       return;
     }
     var client = new Client(this.api, { token: t, client: this.client });
     client.call('booking_manage_house', { op: 'list' }).then(function (res) {
-      if (res.offline) { err.textContent = res.message; login.hidden = false; box.hidden = true; return; }
+      if (res.offline) { err.textContent = res.message; self.adminShown(false); return; }
       if (!res.success) {
         self.setToken('');
         err.textContent = res.status === 401 ? 'Токен не подошёл или отозван' : res.message;
-        login.hidden = false; box.hidden = true;
+        self.adminShown(false);
         return;
       }
       err.textContent = '';
       if (fresh) self.setToken(t);
-      login.hidden = true; box.hidden = false;
+      self.adminShown(true);
       var mount = qs(box, '[data-bk-admin-mount]');
       if (!self.adminView) self.adminView = new Admin(mount, client);
     });

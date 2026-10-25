@@ -17,7 +17,11 @@
 <body class="bk-appbody">
 <div class="bk-app" data-bk="app" data-bk-api="[[++assets_url]]components/booking/api.php">
   <header class="bk-app__head">
-    <a class="bk-app__brand" href="[[++site_url]]">[[++site_name]]</a>
+    <div class="bk-app__top">
+      <a class="bk-app__brand" href="[[++site_url]]">[[++site_name]]</a>
+      <!-- «Выйти» — в шапке, подальше от вкладок администратора: видна только вошедшему, на вкладке «Администратор» -->
+      <button type="button" class="bk-app__logout" data-app-logout hidden>Выйти</button>
+    </div>
     <nav class="bk-tabs bk-tabs--app" role="tablist">
       <button type="button" class="bk-tab" role="tab" data-app-tab="book">Забронировать</button>
       <button type="button" class="bk-tab" role="tab" data-app-tab="request">Моя заявка</button>
@@ -48,7 +52,6 @@
         <button class="bk-btn" type="submit">Войти</button>
       </form>
       <div data-app-admin hidden>
-        <div class="bk-bar bk-bar--end"><button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-app-logout>Выйти</button></div>
         <div class="bk-admin" data-bk-admin-mount data-bk-tabs="grid,list,blocks,prices,holidays,houses,help"></div>
       </div>
     </section>

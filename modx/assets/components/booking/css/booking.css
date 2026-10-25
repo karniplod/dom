@@ -222,7 +222,11 @@
 .bk-appbody { margin: 0; background: #F4EBDF; color: #22140E; font: 400 16px/1.55 "Golos Text", "Segoe UI", Roboto, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
 .bk-app { min-height: 100dvh; display: grid; grid-template-rows: auto auto 1fr; }
 .bk-app__head { position: sticky; top: 0; z-index: 5; background: #22140E; color: #F6EEE3; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 0; }
-.bk-app__brand { display: block; color: inherit; text-decoration: none; font: 400 18px/1.2 "Prata", Georgia, serif; margin-bottom: 6px; }
+.bk-app__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.bk-app__brand { display: block; color: inherit; text-decoration: none; font: 400 18px/1.2 "Prata", Georgia, serif; }
+.bk-app__logout { flex: none; min-height: 32px; padding: 4px 12px; border: 1px solid rgba(246, 238, 227, .35); border-radius: 8px; background: transparent; color: #DCCAB5; font: 500 13px/1 "Golos Text", system-ui, sans-serif; cursor: pointer; }
+.bk-app__logout:hover, .bk-app__logout:focus-visible { color: #fff; border-color: #fff; }
+.bk-app__logout[hidden] { display: none; }
 .bk-tabs--app { border-bottom: 0; }
 .bk-tabs--app .bk-tab { color: #DCCAB5; }
 .bk-tabs--app .bk-tab[aria-selected="true"] { color: #fff; }
