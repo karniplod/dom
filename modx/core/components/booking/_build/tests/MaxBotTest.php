@@ -79,8 +79,12 @@ return [
     'бот: пост в канал с закреплением, поиск групп и каналов' => function (BookingTest $t) {
         $bot = $t->booking->maxBot();
         $calls = [];
-        $bot->transport = function ($method, $path, $query, $body) use (&$calls) {
+        $drained = false;   // MAX отдаёт событие один раз: второй запрос — пустой
+        $wasChats = (string)$t->modx->getOption('booking.bot_chats', null, '');
+        $t->modx->setOption('booking.bot_chats', '');
+        $bot->transport = function ($method, $path, $query, $body) use (&$calls, &$drained) {
             $calls[] = compact('method', 'path', 'query', 'body');
+            if ($path === '/updates' && $drained) return [200, ['updates' => [], 'marker' => 2]];
             if ($path === '/updates') return [200, ['updates' => [
                 ['update_type' => 'bot_added', 'chat_id' => -100, 'is_channel' => true, 'user' => []],
                 ['update_type' => 'message_created', 'message' => ['recipient' => ['chat_type' => 'chat', 'chat_id' => -200], 'body' => ['mid' => 'x', 'text' => 'проверка']]],
@@ -102,18 +106,29 @@ return [
         $t->eq('группа «ТЕСТ Администраторы»', $chats[-200] ?? null, 'группа найдена по сообщению, с названием');
         $t->ok(!isset($chats[5]), 'личные чаты в список не попадают');
         $t->ok(!isset($calls[0]['query']['marker']), 'маркер не передаётся — события остаются для poll');
+        $drained = true;
+        $again = $bot->chats();
+        $t->ok(isset($again[-100], $again[-200]), 'второе нажатие: MAX событий уже не отдаёт, а группа и канал в списке остаются');
+        $st = $t->modx->getObject(\MODX\Revolution\modSystemSetting::class, ['key' => 'booking.bot_chats']);
+        if ($st) { if ($wasChats === '') { $st->remove(); } else { $st->set('value', $wasChats); $st->save(); } }
+        $t->modx->setOption('booking.bot_chats', $wasChats);
+        $t->modx->cacheManager->refresh(['system_settings' => []]);
 
         // вебхук (в том числе при выключенных ответах) запоминает группы и каналы — кнопка в админке их покажет
         $opt = [\xPDO\xPDO::OPT_CACHE_KEY => 'booking'];
-        $was = $t->modx->cacheManager->get('bot/chats', $opt);
-        $t->modx->cacheManager->delete('bot/chats', $opt);
+        $was = (string)$t->modx->getOption('booking.bot_chats', null, '');
+        $t->modx->setOption('booking.bot_chats', '');
         $bot->observe(['update_type' => 'bot_added', 'chat_id' => -300, 'is_channel' => false, 'user' => []]);
         $bot->handle(['update_type' => 'message_created', 'message' => ['recipient' => ['chat_type' => 'channel', 'chat_id' => -400], 'body' => ['mid' => 'ch-' . uniqid(), 'text' => 'пост']]]);
         $bot->observe(['update_type' => 'message_created', 'message' => ['recipient' => ['chat_type' => 'dialog', 'chat_id' => 7], 'body' => ['mid' => 'z', 'text' => 'х']]]);
-        $mem = (array)$t->modx->cacheManager->get('bot/chats', $opt);
+        $mem = $bot->known();
         $t->eq(['-300' => 'группа', '-400' => 'канал'], array_map('strval', array_combine(array_map('strval', array_keys($mem)), $mem)), 'запомнены группа и канал, личный чат — нет');
         $t->ok(isset($bot->chats()[-300]), 'кнопка «Найти группы и каналы» показывает запомненные');
-        $was ? $t->modx->cacheManager->set('bot/chats', $was, 0, $opt) : $t->modx->cacheManager->delete('bot/chats', $opt);
+        // вернуть, как было до теста (в базе и в памяти)
+        $st = $t->modx->getObject(\MODX\Revolution\modSystemSetting::class, ['key' => 'booking.bot_chats']);
+        if ($st) { $was === '' ? $st->remove() : ($st->set('value', $was) || true) && $st->save(); }
+        $t->modx->setOption('booking.bot_chats', $was);
+        $t->modx->cacheManager->refresh(['system_settings' => []]);
         $t->admin('cmp');
         $r = $t->run('booking_max_chats');
         $t->ok($r['status'] === 400 || $r['success'], 'booking_max_chats из админки отвечает (без токена — понятная ошибка): ' . $r['message']);
@@ -137,5 +152,15 @@ return [
         $t->ok(strpos($faq->answer('свободно на новый год?')['text'], 'бронировании') !== false, 'свободные даты — не обещаем, ведём в бронирование');
         $card = $faq->answer('', 'house:ru')['text'];
         $t->ok(strpos($card, 'Русский Дом') === 0 && strpos($card, 'заезд') === false && strpos($card, 'Заезд с 17:00') !== false, 'карточка Русского Дома: часы из «Дома и бани»');
+    },
+
+    'бот: уборка — тестовые номера групп убраны из booking.bot_chats' => function (BookingTest $t) {
+        $list = $t->booking->maxBot()->known();
+        foreach ([-77, -100, -200, -300, -400] as $id) unset($list[$id], $list[(string)$id]);
+        $st = $t->modx->getObject(\MODX\Revolution\modSystemSetting::class, ['key' => 'booking.bot_chats']);
+        if ($st) { if (!$list) { $st->remove(); } else { $st->set('value', json_encode($list, JSON_UNESCAPED_UNICODE)); $st->save(); } }
+        $t->modx->setOption('booking.bot_chats', $list ? json_encode($list, JSON_UNESCAPED_UNICODE) : '');
+        $t->modx->cacheManager->refresh(['system_settings' => []]);
+        $t->ok(!array_intersect(array_map('intval', array_keys($t->booking->maxBot()->known())), [-77, -100, -200, -300, -400]), 'тестовых номеров не осталось');
     },
 ];

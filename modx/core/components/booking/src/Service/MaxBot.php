@@ -120,7 +120,7 @@ class MaxBot
     public function chats(): array
     {
         // запомненные вебхуком и запасным режимом + ещё не забранные события (если вебхука нет)
-        $out = (array)$this->booking->modx->cacheManager->get('bot/chats', [\xPDO\xPDO::OPT_CACHE_KEY => 'booking']);
+        $out = $this->known();
         [$code, $data] = $this->call('GET', '/updates', ['timeout' => 1, 'limit' => 100, 'types' => 'bot_added,message_created,user_added']);
         if ($code !== 200) {
             $data = [];
@@ -134,6 +134,10 @@ class MaxBot
                     $out[(int)$r['chat_id']] = $r['chat_type'] === 'channel' ? 'канал' : 'группа';
                 }
             }
+        }
+        // MAX отдаёт событие один раз — запоминаем, иначе при следующем нажатии группа пропадёт из списка
+        foreach ($out as $id => $kind) {
+            $this->remember((int)$id, strpos($kind, 'канал') === 0 ? 'канал' : 'группа');
         }
         foreach ($out as $id => $kind) {   // название — из сведений о чате
             [$c, $chat] = $this->call('GET', '/chats/' . $id);
@@ -156,15 +160,27 @@ class MaxBot
     /** Номер группы или канала, где бот, — для кнопки «Найти группы и каналы» (вебхук забирает события сам) */
     protected function remember(int $chatId, string $kind): void
     {
-        if ($chatId === 0) {
+        $list = $this->known();
+        if ($chatId === 0 || isset($list[$chatId])) {
             return;
         }
-        $opt = [\xPDO\xPDO::OPT_CACHE_KEY => 'booking'];
-        $list = (array)$this->booking->modx->cacheManager->get('bot/chats', $opt);
-        if (!isset($list[$chatId])) {
-            $list[$chatId] = $kind;
-            $this->booking->modx->cacheManager->set('bot/chats', $list, 0, $opt);
-        }
+        $list[$chatId] = $kind;
+        // в системной настройке, а не в кэше: «Очистить кэш» не стирает найденные группы
+        $modx = $this->booking->modx;
+        $json = json_encode($list, JSON_UNESCAPED_UNICODE);
+        $s = $modx->getObject(\MODX\Revolution\modSystemSetting::class, ['key' => 'booking.bot_chats']) ?: $modx->newObject(\MODX\Revolution\modSystemSetting::class);
+        $s->fromArray(['key' => 'booking.bot_chats', 'xtype' => 'textfield', 'namespace' => 'booking', 'area' => 'booking'], '', true);
+        $s->set('value', $json);
+        $s->save();
+        $modx->setOption('booking.bot_chats', $json);
+        $modx->cacheManager->refresh(['system_settings' => []]);
+    }
+
+    /** Запомненные группы и каналы бота: chat_id => «группа» | «канал» (настройка booking.bot_chats) */
+    public function known(): array
+    {
+        $list = json_decode((string)$this->booking->modx->getOption('booking.bot_chats', null, ''), true);
+        return is_array($list) ? $list : [];
     }
 
     protected function body(array $reply): array

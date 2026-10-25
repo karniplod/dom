@@ -156,7 +156,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-25 11:54",
+ "version": "2026-10-25 12:24",
  "chunks": [
   {
    "name": "bn.fox",
@@ -2248,11 +2248,11 @@ function selfCheck() {
     foreach ($M['id_settings'] as $key => $alias) {
         if (strpos($key, 'bn_house_') !== 0) continue;
         $id = (int)$modx->getOption($key);
-        if ($id) $page(ltrim($modx->makeUrl($id), '/'), 'страница дома', ['class="dhero', 'class="gal', 'class="price-days']);
+        if ($id) $page(ltrim($modx->makeUrl($id, "", "", "abs"), '/'), 'страница дома', ['class="dhero', 'class="gal', 'class="price-days']);
     }
     foreach (['Предоплата1/', 'Предоплата2/', 'Предоплата3/'] as $u) $page(rawurlencode(rtrim($u, '/')) . '/', 'страница предоплаты', ['qr.nspk.ru', 'noindex']);
-    if ($id = (int)$modx->getOption('bn_contacts_id')) $page(ltrim($modx->makeUrl($id), '/'), 'контакты', ['class="cgrid']);
-    if ($id = (int)$modx->getOption('bn_blog_id')) $page(ltrim($modx->makeUrl($id), '/'), 'блог', ['class="pcard']);
+    if ($id = (int)$modx->getOption('bn_contacts_id')) $page(ltrim($modx->makeUrl($id, "", "", "abs"), '/'), 'контакты', ['class="cgrid']);
+    if ($id = (int)$modx->getOption('bn_blog_id')) $page(ltrim($modx->makeUrl($id, "", "", "abs"), '/'), 'блог', ['class="pcard']);
     $page('robots.txt', 'robots.txt', ['Sitemap:']);
     $page('sitemap.xml', 'карта сайта', ['<urlset']);
     $page('rss.xml', 'лента блога', ['<rss']);
@@ -2263,7 +2263,7 @@ function selfCheck() {
     }
     // приём заявок: запрос без защитного кода должен вежливо отказать (400), а не упасть
     if ($id = (int)$modx->getOption('bn_lead_id')) {
-        $u = $base . ltrim($modx->makeUrl($id), '/');
+        $u = $base . ltrim($modx->makeUrl($id, "", "", "abs"), '/');
         $ch = function_exists('curl_init') ? curl_init($u) : null;
         if ($ch) {
             curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => 'name=test', CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0]);
