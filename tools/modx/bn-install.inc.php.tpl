@@ -987,7 +987,7 @@ function httpGet($url, $follow = false) {   // [код, заголовки (ст
     return [$code, $hdr, (string)$body];
 }
 function selfCheck() {
-    global $modx, $dir, $inside, $staticPrefix, $M;
+    global $modx, $dir, $inside, $staticPrefix, $M, $dry, $checkOnly;
     say('skip', '— самопроверка сайта —');
     $base = rtrim((string)$modx->getOption('site_url'), '/') . '/';
     [$code, $hdr, $body] = httpGet($base);
@@ -1046,6 +1046,33 @@ function selfCheck() {
     say($notWritable ? 'error' : 'ok', $notWritable
         ? 'PHP не может писать в папки: ' . implode(', ', $notWritable) . ' — дополнения не установятся; поставьте папкам права 755 (файловый менеджер хостинга → «Права») или спросите поддержку'
         : 'папки дополнений доступны для записи');
+    // файлы дополнений: «Пакеты → Установщик» перезаписывает их при обновлении — каждый должен быть доступен для записи PHP.
+    // Удалить файл можно и без права на него (хватает права на папку), поэтому «удаление + установка» проходит, а обновление — нет
+    $euid = function_exists('posix_geteuid') ? posix_geteuid() : null;
+    $who = function ($uid) { return $uid === null ? '?' : ((function_exists('posix_getpwuid') && ($p = @posix_getpwuid($uid))) ? $p['name'] : (string)$uid); };
+    foreach (['booking' => MODX_CORE_PATH . 'components/booking', 'booking (assets)' => MODX_ASSETS_PATH . 'components/booking'] as $label => $root) {
+        if (!is_dir($root)) continue;
+        $bad = []; $fixed = 0; $foreign = [];
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $f) {
+            $path = $f->getPathname();
+            if (is_writable($path)) continue;
+            $owner = @fileowner($path);
+            if ($euid !== null && $owner !== false && $owner !== $euid) { $foreign[$who($owner)] = true; $bad[] = $path; continue; }
+            if (!$dry && empty($checkOnly) && @chmod($path, $f->isDir() ? 0755 : 0644) && (clearstatcache(true, $path) || true) && is_writable($path)) { $fixed++; continue; }
+            $bad[] = $path;
+        }
+        if ($fixed) say('upd', "$label: права исправлены у $fixed файлов и папок (папки 755, файлы 644) — обновление дополнения пройдёт");
+        if ($bad) {
+            $first = str_replace(str_replace('\\', '/', MODX_BASE_PATH), '', str_replace('\\', '/', $bad[0]));
+            $perm = substr(sprintf('%o', @fileperms($bad[0])), -4);
+            say('error', "$label: " . count($bad) . " файлов нельзя перезаписать (например, $first, права $perm"
+                . ($foreign ? ', владелец ' . implode(', ', array_keys($foreign)) . ', а PHP работает от ' . $who($euid) : '') . ') — обновление в «Пакеты → Установщик» не пройдёт. '
+                . ($foreign ? 'Файлы принадлежат другому пользователю: попросите поддержку хостинга сделать владельцем ' . $who($euid) . ' папки core/components/booking и assets/components/booking.'
+                    : 'Поставьте рекурсивно: папкам 755, файлам 644 (файловый менеджер хостинга → «Права» → «для вложенных»).'));
+        } elseif (!$fixed) {
+            say('ok', "$label: все файлы доступны для записи — обновление дополнения пройдёт");
+        }
+    }
     $free = @disk_free_space(MODX_BASE_PATH);
     if ($free !== false) {
         $mb = (int)round($free / 1048576);

@@ -30,7 +30,7 @@ $modx->setLogLevel(modX::LOG_LEVEL_INFO);
 $modx->setLogTarget('ECHO');
 
 const PKG = 'booking';
-const PKG_VERSION = '1.2.1';
+const PKG_VERSION = '1.2.2';
 const PKG_RELEASE = 'pl';
 
 $root = dirname(__DIR__, 4) . '/';                       // modx/
@@ -103,6 +103,8 @@ $vehicle = $builder->createVehicle($category, [
         'Templates' => [xPDOTransport::PRESERVE_KEYS => false, xPDOTransport::UPDATE_OBJECT => true, xPDOTransport::UNIQUE_KEY => 'templatename'],
     ],
 ]);
+// до копирования файлов: права на запись у прежних файлов (иначе обновление падает на каждом файле)
+$vehicle->validate('php', ['source' => __DIR__ . '/validators/permissions.php']);
 // файлы: каталог booking копируется в components/ (имя каталога в копии — booking)
 $vehicle->resolve('file', ['source' => $stage . 'core/booking', 'target' => "return MODX_CORE_PATH . 'components/';"]);
 $vehicle->resolve('file', ['source' => $stage . 'assets/booking', 'target' => "return MODX_ASSETS_PATH . 'components/';"]);
@@ -158,7 +160,7 @@ if ($install) {
     $pkg->fromArray([
         'created' => date('Y-m-d H:i:s'), 'updated' => null, 'state' => 1, 'workspace' => 1,
         'provider' => $provider ? $provider->get('id') : 0, 'source' => $signature . '.transport.zip', 'package_name' => PKG,
-        'version_major' => 1, 'version_minor' => 2, 'version_patch' => 1, 'release' => PKG_RELEASE,
+        'version_major' => 1, 'version_minor' => 2, 'version_patch' => 2, 'release' => PKG_RELEASE,
     ]);
     $pkg->save();
     $ok = $pkg->install();
