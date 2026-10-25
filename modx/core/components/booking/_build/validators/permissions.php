@@ -7,9 +7,15 @@
  * @var \xPDO\Transport\xPDOTransport $transport
  * @var array $options
  */
+use xPDO\Transport\xPDOTransport;
 use xPDO\xPDO;
 
 $modx = $transport->xpdo;
+// только при установке и обновлении и один раз: xPDO вызывает валидатор для каждого элемента категории
+if (($options[xPDOTransport::PACKAGE_ACTION] ?? null) === xPDOTransport::ACTION_UNINSTALL || !empty($GLOBALS['booking_permissions_checked'])) {
+    return true;
+}
+$GLOBALS['booking_permissions_checked'] = true;
 $fixed = 0;
 $bad = [];
 $foreign = [];
