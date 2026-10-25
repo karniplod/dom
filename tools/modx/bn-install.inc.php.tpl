@@ -1036,6 +1036,22 @@ function selfCheck() {
         }
     }
     say(stripos($base, 'https://') === 0 ? 'ok' : 'warn', stripos($base, 'https://') === 0 ? 'сайт работает по https' : 'сайт открывается без https — выпустите SSL-сертификат в панели хостинга');
+    // запись в папки дополнений и свободное место: без них «Пакеты → Установщик» не обновит дополнение
+    // (MODX уберёт старые файлы и не сможет записать новые — «could not create directory»)
+    $notWritable = [];
+    foreach ([MODX_CORE_PATH . 'components', MODX_CORE_PATH . 'components/booking', MODX_CORE_PATH . 'packages', MODX_CORE_PATH . 'cache',
+              MODX_ASSETS_PATH . 'components', MODX_ASSETS_PATH . 'components/booking'] as $d) {
+        if (is_dir($d) && !is_writable($d)) $notWritable[] = str_replace(MODX_BASE_PATH, '', str_replace('\\', '/', $d));
+    }
+    say($notWritable ? 'error' : 'ok', $notWritable
+        ? 'PHP не может писать в папки: ' . implode(', ', $notWritable) . ' — дополнения не установятся; поставьте папкам права 755 (файловый менеджер хостинга → «Права») или спросите поддержку'
+        : 'папки дополнений доступны для записи');
+    $free = @disk_free_space(MODX_BASE_PATH);
+    if ($free !== false) {
+        $mb = (int)round($free / 1048576);
+        say($mb < 300 ? 'warn' : 'ok', $mb < 300 ? "на диске хостинга свободно всего $mb МБ — установка дополнений может не пройти; удалите core/cache/bn-install-backup/ старых дат и архивы в core/packages/"
+            : "свободно на диске: $mb МБ");
+    }
     if (is_dir(MODX_BASE_PATH . 'setup')) say('warn', 'папка setup/ MODX не удалена — через неё можно переустановить сайт; удалите её файловым менеджером');
     else say('ok', 'папка setup/ MODX удалена');
     $corePath = str_replace('\\', '/', MODX_CORE_PATH); $basePath = str_replace('\\', '/', MODX_BASE_PATH);
