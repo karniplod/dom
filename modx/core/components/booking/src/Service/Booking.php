@@ -13,6 +13,20 @@ class Booking
 {
     public const VERSION = '1.0.0-pl';
 
+    /**
+     * Метка версии статики (booking.js, booking.css, sw.js) для ?v= и кеша приложения: меняется с каждым обновлением файлов.
+     * Приложение (и мини-приложение в MAX) берёт статику из кеша Service Worker — без новой метки там остался бы старый скрипт.
+     */
+    public function assetVersion(): string
+    {
+        $dir = $this->modx->getOption('assets_path') . 'components/booking/';
+        $sum = '';
+        foreach (['js/booking.js', 'css/booking.css', 'app/sw.js'] as $f) {
+            $sum .= is_file($dir . $f) ? filemtime($dir . $f) . filesize($dir . $f) : '';
+        }
+        return substr(md5($sum), 0, 10);
+    }
+
     /** action => класс процессора; роль задаёт сам процессор (Base::$role) */
     public const ACTIONS = [
         'booking_get_availability' => \Booking\Processors\Availability\Get::class,

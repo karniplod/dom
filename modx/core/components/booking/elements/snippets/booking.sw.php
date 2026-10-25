@@ -12,4 +12,4 @@ if (!$booking) {
 header('Cache-Control: no-cache');
 $file = $modx->getOption('assets_path') . 'components/booking/app/sw.js';
 $code = is_file($file) ? file_get_contents($file) : '';
-return str_replace(['{{assets}}', '{{version}}'], [$booking->config['assetsUrl'], \Booking\Service\Booking::VERSION], $code);
+return str_replace(['{{assets}}', '{{version}}'], [$booking->config['assetsUrl'], $booking->assetVersion()], $code);

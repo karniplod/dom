@@ -504,7 +504,7 @@
   function Admin(root, client) {
     this.root = root;
     this.api = client || new Client(root.getAttribute('data-bk-endpoint'), { modauth: root.getAttribute('data-bk-modauth') });
-    this.tabs = (root.getAttribute('data-bk-tabs') || 'grid,list').split(',');
+    this.tabs = (root.getAttribute('data-bk-tabs') || 'grid,list').split(',').filter(function (t) { return TABS[t]; });   // неизвестную вкладку не показываем
     this.houses = [];
     var t = new Date();
     this.gridFrom = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() - 2, 12));

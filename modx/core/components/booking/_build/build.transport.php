@@ -30,7 +30,7 @@ $modx->setLogLevel(modX::LOG_LEVEL_INFO);
 $modx->setLogTarget('ECHO');
 
 const PKG = 'booking';
-const PKG_VERSION = '1.2.5';
+const PKG_VERSION = '1.2.6';
 const PKG_RELEASE = 'pl';
 
 $root = dirname(__DIR__, 4) . '/';                       // modx/
@@ -160,7 +160,7 @@ if ($install) {
     $pkg->fromArray([
         'created' => date('Y-m-d H:i:s'), 'updated' => null, 'state' => 1, 'workspace' => 1,
         'provider' => $provider ? $provider->get('id') : 0, 'source' => $signature . '.transport.zip', 'package_name' => PKG,
-        'version_major' => 1, 'version_minor' => 2, 'version_patch' => 5, 'release' => PKG_RELEASE,
+        'version_major' => 1, 'version_minor' => 2, 'version_patch' => 6, 'release' => PKG_RELEASE,
     ]);
     $pkg->save();
     $ok = $pkg->install();

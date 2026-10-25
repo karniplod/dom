@@ -19,7 +19,7 @@ class BookingIndexManagerController extends \MODX\Revolution\modExtraManagerCont
     {
         /** @var \Booking\Service\Booking $booking */
         $booking = $this->modx->services->get('booking');
-        $v = '?v=' . \Booking\Service\Booking::VERSION;
+        $v = '?v=' . $booking->assetVersion();
         $this->addCss($booking->config['assetsUrl'] . 'css/booking.css' . $v);
         $this->addHtml('<script src="' . $booking->config['assetsUrl'] . 'js/booking.js' . $v . '" defer></script>');
     }

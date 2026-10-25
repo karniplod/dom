@@ -13,7 +13,7 @@ if (!$booking) {
 static $bookingAssets = false;
 if (!$bookingAssets) {
     $bookingAssets = true;
-    $v = '?v=' . \Booking\Service\Booking::VERSION;
+    $v = '?v=' . $booking->assetVersion();
     $modx->regClientCSS($booking->config['assetsUrl'] . 'css/booking.css' . $v);
     $modx->regClientScript('<script src="' . $booking->config['assetsUrl'] . 'js/booking.js' . $v . '" defer></script>', true);
 }
