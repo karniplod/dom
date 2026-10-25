@@ -2,7 +2,7 @@
 /**
  * booking.hook — хук SendIt/FormIt пресета booking_request.
  * Проверяет и сохраняет заявку процессором booking_create_request. Ошибка — у поля формы, отправка останавливается.
- * Успех — номер и код гостя в сессию (booking.last) и значения для письма и MAX.
+ * Успех — номер и код гостя в сессию (booking.last), значения для письма и сообщение в MAX.
  * @var \MODX\Revolution\modX $modx
  * @var \FormIt\Hook $hook
  */
@@ -29,4 +29,6 @@ $row = $modx->getObject(\Booking\Model\Booking::class, (int)$d['id']);
 $ph = $booking->bookings()->placeholders($row);
 $ph['guest_link'] = $d['link'];
 $hook->setValues($ph);
+// MAX — своё короткое сообщение (хук maxNotify3SendIt присылал все поля формы подряд)
+$booking->notify()->request($row);
 return true;

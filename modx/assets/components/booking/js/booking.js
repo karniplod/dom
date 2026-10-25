@@ -1115,7 +1115,7 @@
       a.addEventListener('click', function (e) { e.preventDefault(); self.helpShow(a.getAttribute('href').slice(1)); });
     });
     this.install();
-    var h = location.hash.replace('#', '');
+    var h = location.hash.replace('#', '').split('&')[0];   // #admin&id=3 — из сообщения MAX о заявке
     this.tab(['admin', 'request', 'help'].indexOf(h) >= 0 ? h : 'book');
   }
   /* Установка на телефон: Android/Chrome — системное окно (beforeinstallprompt), iPhone — подсказка «На экран „Домой“».

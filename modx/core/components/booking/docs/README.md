@@ -76,7 +76,7 @@
 ## Уведомления
 
 - **Письмо администратору** — хук `email` пресета SendIt `booking_request`, шаблон — чанк `booking.email.request`. Запрос отмены гостем — чанк `booking.email.cancel`.
-- **MAX** — хук `maxNotify3SendIt`. Настройки MaxNotify3 (`maxnotify3.*`):
+- **MAX** — своё сообщение из `booking.hook`: номер, Дом, даты, гости, сумма по строкам, имя и телефон, кнопки «Открыть в приложении» и «Открыть в админке». Хук `maxNotify3SendIt` не подключается — он присылал все поля формы подряд, включая служебные. Настройки MaxNotify3 (`maxnotify3.*`):
   - `provider` = `maxbusiness`;
   - `max_api_url` = `https://platform-api2.max.ru/messages`;
   - `max_token` — токен бота;

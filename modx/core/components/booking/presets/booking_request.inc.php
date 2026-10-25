@@ -3,13 +3,11 @@
  * Пресет SendIt booking_request — отправка формы бронирования (ст. 8.1–8.3).
  * Подключается сниппетом booking.form в сессию посетителя (как штатный RenderForm SendIt),
  * поэтому файл пресетов сайта и настройка si_path_to_presets не меняются.
- * Хуки: booking.hook (проверка и сохранение заявки) → email (письмо администратору) → maxNotify3SendIt (MAX).
+ * Хуки: booking.hook (проверка, сохранение заявки, сообщение в MAX) → email (письмо администратору).
+ * Хук maxNotify3SendIt не подключаем: он шлёт в MAX все поля формы подряд, включая служебные.
  * @var \MODX\Revolution\modX $modx
  */
 $hooks = ['booking.hook', 'email'];
-if ($modx->getCount(\MODX\Revolution\modSnippet::class, ['name' => 'maxNotify3SendIt'])) {
-    $hooks[] = 'maxNotify3SendIt';
-}
 // почта для заявок: своя бронирования → «Почта для заявок» из «Конфигурации» → системный адрес MODX (как Notify::adminEmail)
 $to = $modx->services->has('booking') ? $modx->services->get('booking')->notify()->adminEmail()
     : (trim((string)$modx->getOption('booking.admin_email', null, '')) ?: (string)$modx->getOption('emailsender'));
@@ -35,6 +33,5 @@ return [
         'minFillTime' => 3,
         'pauseBetweenSending' => 15,
         'sendingPerSession' => 6,
-        'maxnotify3_title' => 'Новая заявка на бронирование',
     ],
 ];
