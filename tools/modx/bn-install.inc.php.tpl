@@ -787,6 +787,31 @@ PHP;
         }
         $modx->cacheManager->refresh(['events' => []]);
     }
+    // bnPicture — WebP для фото из шаблонов списков (меню «Дома», статьи, адреса, туры): <img data-bn-sizes> → <picture> по файлам этого фото
+    $picCode = <<<'PHP'
+/** bnPicture — фото из шаблонов списков получают <picture> с копиями WebP (Bania::picturize); трогает только <img data-bn-sizes> (установщик сайта Доходных Домов) */
+if ($modx->event->name !== 'OnWebPagePrerender' || !$modx->resource || $modx->context->get('key') === 'mgr') return;
+$out = &$modx->resource->_output;
+if (!is_string($out) || strpos($out, 'data-bn-sizes=') === false) return;
+require_once MODX_CORE_PATH . 'components/bania/Bania.php';
+Bania::init($modx);
+$out = Bania::picturize($out);
+PHP;
+    if (!$dry) {
+        $pp = $modx->getObject(\MODX\Revolution\modPlugin::class, ['name' => 'bnPicture']) ?: $modx->newObject(\MODX\Revolution\modPlugin::class);
+        $isNewPp = !$pp->get('id');
+        if ($isNewPp || $pp->get('plugincode') !== $picCode) {
+            $pp->fromArray(['name' => 'bnPicture', 'description' => 'WebP для фото в меню «Дома», карточках статей, адресах и турах',
+                'plugincode' => $picCode, 'category' => category('Доходные дома'), 'disabled' => 0]);
+            if (saved($pp, 'плагин bnPicture')) say($isNewPp ? 'new' : 'upd', 'плагин bnPicture: WebP для фото в меню, карточках статей, адресах и турах');
+        }
+        if ($pp->get('id') && !$modx->getObject(modPluginEvent::class, ['pluginid' => $pp->get('id'), 'event' => 'OnWebPagePrerender'])) {
+            $pe = $modx->newObject(modPluginEvent::class);
+            $pe->fromArray(['pluginid' => $pp->get('id'), 'event' => 'OnWebPagePrerender', 'priority' => 0, 'propertyset' => 0], '', true, true);
+            saved($pe, 'событие OnWebPagePrerender плагина bnPicture');
+        }
+        $modx->cacheManager->refresh(['events' => []]);
+    }
     // фото с телефона после уменьшения — до 1–2 МБ; меньше 5 МБ «Медиа» не пропустит крупные PNG-скриншоты
     if (!$dry && (int)$modx->getOption('upload_maxsize') < 5242880 && ($r = setting('upload_maxsize', '5242880'))) say($r, 'настройка upload_maxsize = 5 МБ (загрузка фото)');
     foreach (['bn_login_attempts' => '10', 'bn_login_minutes' => '15'] as $k => $v) {   // создаём, но значение владельца не трогаем

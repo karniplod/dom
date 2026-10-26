@@ -156,7 +156,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-26 11:25",
+ "version": "2026-10-26 11:47",
  "chunks": [
   {
    "name": "bn.fox",
@@ -2021,6 +2021,31 @@ PHP;
             $pe = $modx->newObject(modPluginEvent::class);
             $pe->fromArray(['pluginid' => $up->get('id'), 'event' => 'OnDocFormRender', 'priority' => 0, 'propertyset' => 0], '', true, true);
             saved($pe, 'событие OnDocFormRender плагина bnUpload');
+        }
+        $modx->cacheManager->refresh(['events' => []]);
+    }
+    // bnPicture — WebP для фото из шаблонов списков (меню «Дома», статьи, адреса, туры): <img data-bn-sizes> → <picture> по файлам этого фото
+    $picCode = <<<'PHP'
+/** bnPicture — фото из шаблонов списков получают <picture> с копиями WebP (Bania::picturize); трогает только <img data-bn-sizes> (установщик сайта Доходных Домов) */
+if ($modx->event->name !== 'OnWebPagePrerender' || !$modx->resource || $modx->context->get('key') === 'mgr') return;
+$out = &$modx->resource->_output;
+if (!is_string($out) || strpos($out, 'data-bn-sizes=') === false) return;
+require_once MODX_CORE_PATH . 'components/bania/Bania.php';
+Bania::init($modx);
+$out = Bania::picturize($out);
+PHP;
+    if (!$dry) {
+        $pp = $modx->getObject(\MODX\Revolution\modPlugin::class, ['name' => 'bnPicture']) ?: $modx->newObject(\MODX\Revolution\modPlugin::class);
+        $isNewPp = !$pp->get('id');
+        if ($isNewPp || $pp->get('plugincode') !== $picCode) {
+            $pp->fromArray(['name' => 'bnPicture', 'description' => 'WebP для фото в меню «Дома», карточках статей, адресах и турах',
+                'plugincode' => $picCode, 'category' => category('Доходные дома'), 'disabled' => 0]);
+            if (saved($pp, 'плагин bnPicture')) say($isNewPp ? 'new' : 'upd', 'плагин bnPicture: WebP для фото в меню, карточках статей, адресах и турах');
+        }
+        if ($pp->get('id') && !$modx->getObject(modPluginEvent::class, ['pluginid' => $pp->get('id'), 'event' => 'OnWebPagePrerender'])) {
+            $pe = $modx->newObject(modPluginEvent::class);
+            $pe->fromArray(['pluginid' => $pp->get('id'), 'event' => 'OnWebPagePrerender', 'priority' => 0, 'propertyset' => 0], '', true, true);
+            saved($pe, 'событие OnWebPagePrerender плагина bnPicture');
         }
         $modx->cacheManager->refresh(['events' => []]);
     }

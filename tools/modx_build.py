@@ -164,6 +164,9 @@ def templatize(s, k, P):
     """Значения дома k → P(ключ): плейсхолдер [[+ключ]] в чанке или вызов сниппета на странице"""
     h, vals, ctx = house_values(k)
     # фото образца-дома в <picture>: WebP-копии — файлы этого дома, в общий шаблон не годятся; остаётся <img> (его src — из поля дома)
+    # размеры <source> — в data-bn-sizes: <picture> с WebP фото этого дома соберёт Bania::picturize (плагин bnPicture)
+    s = re.sub(r'<picture><source[^>]*img/%s/[^>]*\bsizes="([^"]*)"[^>]*><img' % re.escape(k), r'<img data-bn-sizes="\1"', s)
+    s = re.sub(r'(<img data-bn-sizes="[^"]*"[^>]*>)</picture>', r"\1", s)
     s = re.sub(r'<picture><source[^>]*img/%s/[^>]*>(<img[^>]*>)</picture>' % re.escape(k), r"\1", s)
     for a, key in vals:
         s = s.replace(a, P(key))
@@ -573,14 +576,20 @@ for name in OWN:
         shutil.rmtree(p)
     elif os.path.exists(p):
         os.remove(p)
-PIC = re.compile(r'<picture><source[^>]*>(<img[^>]*\bsrc="([^"]*)"[^>]*>)</picture>')
+PIC = re.compile(r'<picture><source([^>]*)>(<img[^>]*\bsrc="([^"]*)"[^>]*>)</picture>')
 
 
 def unpicture(text):
     """Фото, путь к которому подставляет MODX (поле, плейсхолдер), — без <picture>: WebP-копии в образце — файлы образца
-    (обложка первой статьи, фото образца-дома), для других страниц они чужие. WebP таким фото даёт Bania::img / bnImg"""
+    (обложка первой статьи, фото образца-дома), для других страниц они чужие. Размеры <source> остаются в data-bn-sizes:
+    <picture> с WebP этого фото соберёт Bania::picturize (плагин bnPicture)"""
     # «[[++base_url]]» в начале пути — просто адрес сайта; поле или плейсхолдер — тег MODX дальше в пути
-    return PIC.sub(lambda m: m.group(1) if "[[" in m.group(2).replace("[[++base_url]]", "", 1) else m.group(0), text)
+    def one(m):
+        if "[[" not in m.group(3).replace("[[++base_url]]", "", 1):
+            return m.group(0)
+        sz = re.search(r'\bsizes="([^"]*)"', m.group(1))
+        return m.group(2).replace("<img", '<img data-bn-sizes="%s"' % sz.group(1), 1) if sz else m.group(2)
+    return PIC.sub(one, text)
 
 
 chunk_list = []

@@ -87,8 +87,12 @@ class Bania
     /** Фото: <picture> с WebP-копиями (<имя>-<ширина>.webp рядом с JPEG, их готовит tools/make_webp.py); копий нет — просто <img> */
     public static function img($src, $alt, $cls = '', $lazy = true, $sizes = '(max-width: 760px) 100vw, 420px') {   // 420px — как img() в build.py
         $tag = '<img src="' . self::e($src) . '" alt="' . self::e($alt) . '"' . ($cls ? ' class="' . $cls . '"' : '') . ($lazy ? ' loading="lazy"' : ' fetchpriority="high"') . ' decoding="async">';
+        return self::picture($tag, $src, $sizes);
+    }
+    /** Копии WebP фото: «/assets/img/ru/x.jpg» → «/assets/img/ru/x-480.webp 480w, …» (файлы рядом, tools/make_webp.py или bnUpload); нет копий — '' */
+    public static function webpSet($src) {
         $base = (string)self::opt('base_url', '/');
-        if (!preg_match('~\.jpe?g$~i', $src) || strpos($src, $base) !== 0) return $tag;
+        if (!preg_match('~\.jpe?g$~i', $src) || strpos($src, $base) !== 0) return '';
         $stem = preg_replace('~\.jpe?g$~i', '', $src);
         $file = MODX_BASE_PATH . substr($stem, strlen($base));
         $ws = [];
@@ -97,8 +101,23 @@ class Bania
             if (preg_match('~^' . $name . '-(\d+)\.webp$~', basename($f), $m)) $ws[] = (int)$m[1];
         }
         sort($ws);
-        $set = array_map(function ($w) use ($stem) { return $stem . '-' . $w . '.webp ' . $w . 'w'; }, $ws);
-        return $set ? '<picture><source type="image/webp" srcset="' . self::e(implode(', ', $set)) . '" sizes="' . $sizes . '">' . $tag . '</picture>' : $tag;
+        return implode(', ', array_map(function ($w) use ($stem) { return $stem . '-' . $w . '.webp ' . $w . 'w'; }, $ws));
+    }
+    public static function picture($tag, $src, $sizes) {
+        $set = self::webpSet($src);
+        return $set !== '' ? '<picture><source type="image/webp" srcset="' . self::e($set) . '" sizes="' . self::e($sizes) . '">' . $tag . '</picture>' : $tag;
+    }
+    /**
+     * Фото из шаблонов списков (меню «Дома», карточки статей, адреса, туры): там <img data-bn-sizes="…" src="[[+photo]]"> —
+     * путь подставляет MODX, поэтому <picture> с WebP собираем здесь, по файлам этого фото (плагин bnPicture, OnWebPagePrerender).
+     * Только размеченные <img>: остальную страницу не трогаем.
+     */
+    public static function picturize($html) {
+        if (strpos($html, 'data-bn-sizes=') === false) return $html;
+        return preg_replace_callback('~<img\b([^>]*?)\sdata-bn-sizes="([^"]*)"([^>]*)>~', function ($m) {
+            $tag = '<img' . $m[1] . $m[3] . '>';
+            return preg_match('~\bsrc="([^"]+)"~', $tag, $s) ? self::picture($tag, html_entity_decode($s[1]), html_entity_decode($m[2])) : $tag;
+        }, $html);
     }
     public static function chunk($name, array $ph) { return self::$modx->getChunk($name, $ph); }
     public static function url($id, $scheme = '') { return $id ? self::$modx->makeUrl((int)$id, '', '', $scheme ?: 'abs') : ''; }
