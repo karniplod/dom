@@ -170,6 +170,11 @@
 .bk-inline .bk-field { flex: 1 1 200px; }
 .bk-actions { display: grid; gap: 12px; padding-top: 6px; border-top: 1px solid var(--bk-line); }
 .bk-actions > .bk-btn { justify-self: start; }
+.bk-guestlink { display: grid; gap: 8px; margin: 12px 0; padding: 12px; border: 1px dashed var(--bk-fox); border-radius: 6px; background: #fff; }
+.bk-guestlink p { margin: 0; }
+.bk-guestlink__url { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--bk-line); border-radius: 4px; font: 14px/1.3 ui-monospace, Consolas, monospace; }
+.bk-guestlink__btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.bk-guestlink__btns a { text-decoration: none; }
 .bk-overlaps ul, .bk-log ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
 .bk-log time { color: var(--bk-soft); font-variant-numeric: tabular-nums; }
 .bk-edit summary, .bk-log summary { cursor: pointer; font-weight: 500; }

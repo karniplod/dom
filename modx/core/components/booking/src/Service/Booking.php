@@ -43,6 +43,7 @@ class Booking
         'booking_complete' => \Booking\Processors\Booking\Complete::class,
         'booking_set_deposit' => \Booking\Processors\Booking\SetDeposit::class,
         'booking_create_manual' => \Booking\Processors\Booking\CreateManual::class,
+        'booking_guest_link' => \Booking\Processors\Booking\GuestLink::class,
         'booking_update' => \Booking\Processors\Booking\Update::class,
         'booking_manage_house' => \Booking\Processors\House::class,
         'booking_manage_addon' => \Booking\Processors\Addon::class,

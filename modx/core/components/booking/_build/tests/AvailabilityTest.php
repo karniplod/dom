@@ -107,6 +107,40 @@ return [
         $t->ok($u['success'], 'продление брони на свободные даты: ' . $u['message']);
         $t->eq(4, $t->modx->getCount(\Booking\Model\Night::class, ['booking_id' => $m['data']['id']]), 'после продления 4 ночи');
     },
+    'заявка за гостя: даты не заняты, ссылка гостю, подтверждение после предоплаты' => function (BookingTest $t) {
+        $t->admin();
+        $m = $t->run('booking_create_manual', ['status' => 'new', 'house' => 'ru', 'date_from' => '2031-09-10', 'date_to' => '2031-09-12', 'guests' => 4,
+            'guest_name' => 'ТЕСТ Бабушка', 'guest_phone' => '89001112235', 'deposit_amount' => 5000]);
+        $t->ok($m['success'], 'создана: ' . $m['message']);
+        $id = (int)($m['data']['id'] ?? 0);
+        $t->eq('new', $m['data']['status'] ?? null, 'статус «новая»');
+        $t->eq('admin', $m['data']['source'] ?? null, 'источник — администратор');
+        $t->eq(null, $m['data']['deposit_amount'] ?? null, 'залог у заявки не назначается');
+        $t->eq(0, $t->modx->getCount(\Booking\Model\Night::class, ['booking_id' => $id]), 'даты не заняты');
+        $link = (string)($m['data']['link'] ?? '');
+        parse_str((string)parse_url($link, PHP_URL_QUERY), $q);
+        $t->ok(($q['id'] ?? '') == $id && strlen($q['t'] ?? '') === 32, 'в ответе личная ссылка гостя');
+
+        $t->guest();
+        $g = $t->run('booking_get_request', ['id' => $id, 't' => $q['t']]);
+        $t->ok($g['success'] && ($g['data']['status'] ?? '') === 'new', 'гость открывает заявку по ссылке');
+        $t->ok(!isset($g['data']['admin_note']) && !isset($g['data']['source']), 'гостю — без служебных полей');
+        $p = $t->run('booking_get_request', ['id' => $id, 'phone' => '+79001112235']);
+        $t->ok($p['success'], 'и по номеру и телефону — «Моя заявка»');
+
+        $t->admin();
+        $c = $t->run('booking_confirm', ['id' => $id, 'deposit_amount' => 5000]);
+        $t->ok($c['success'] && $c['data']['status'] === 'confirmed', 'подтверждена после предоплаты: ' . $c['message']);
+        $t->eq(2, $t->modx->getCount(\Booking\Model\Night::class, ['booking_id' => $id]), 'после подтверждения 2 ночи заняты');
+
+        $n = $t->run('booking_guest_link', ['id' => $id]);
+        parse_str((string)parse_url((string)($n['data']['link'] ?? ''), PHP_URL_QUERY), $q2);
+        $t->ok($n['success'] && strlen($q2['t'] ?? '') === 32 && $q2['t'] !== $q['t'], 'новая ссылка гостя');
+        $t->guest();
+        $t->ok(!$t->run('booking_get_request', ['id' => $id, 't' => $q['t']])['success'], 'прежняя ссылка больше не открывает');
+        $t->ok($t->run('booking_get_request', ['id' => $id, 't' => $q2['t']])['success'], 'новая ссылка открывает');
+        $t->eq(401, $t->run('booking_guest_link', ['id' => $id])['status'], 'гость ссылку выдать не может');
+    },
     'баня отдельно: буфер 30 минут, ночь брони дома' => function (BookingTest $t) {
         $t->admin();
         $houses = $t->run('booking_manage_house', ['op' => 'list'])['data']['items'];

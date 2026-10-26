@@ -709,13 +709,38 @@
   };
 
   // --- карточка брони
-  Admin.prototype.card = function (id) {
+  Admin.prototype.card = function (id, link) {
     var self = this, box = qs(this.dialog, '.bk-dialog__body');
     box.innerHTML = '<p class="bk-muted">Загружаем…</p>';
     if (!this.dialog.open) this.dialog.showModal();
     this.api.call('booking_get', { id: id }).then(function (res) {
       if (!res.success) { box.innerHTML = '<p class="bk-warn">' + esc(res.message) + '</p>'; return; }
-      self.renderCard(res.data);
+      self.renderCard(Object.assign(res.data, link ? { link: link } : {}));
+    });
+  };
+  // личная ссылка гостя: показывается один раз (в базе только хеш); отправить — копией, через «Поделиться» или СМС
+  Admin.prototype.linkBox = function (d) {
+    var text = (d.status === 'new' ? 'Ваша заявка' : 'Ваша бронь') + ' №' + d.id + ': ' + d.link;
+    var phone = String(d.guest_phone || '').replace(/[^\d+]/g, '');
+    return '<div class="bk-guestlink"><b>Ссылка для гостя</b><p class="bk-muted">Отправьте гостю: по ней он видит заявку, её статус и может попросить отмену. Ссылка показывается один раз — отправьте её сейчас.</p>'
+      + '<input class="bk-guestlink__url" readonly value="' + esc(d.link) + '" aria-label="Ссылка для гостя">'
+      + '<div class="bk-guestlink__btns"><button type="button" class="bk-btn bk-btn--sm" data-link-copy>Копировать</button>'
+      + (navigator.share ? '<button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-link-share>Отправить…</button>' : '')
+      + (phone ? '<a class="bk-btn bk-btn--sm bk-btn--ghost" href="sms:' + esc(phone) + '?&body=' + encodeURIComponent(text) + '">СМС гостю</a>' : '')
+      + '</div></div>';
+  };
+  Admin.prototype.bindLinkBox = function (box, d) {
+    var inp = qs(box, '.bk-guestlink__url');
+    if (!inp) return;
+    var copy = qs(box, '[data-link-copy]'), share = qs(box, '[data-link-share]');
+    copy.addEventListener('click', function () {
+      var done = function () { copy.textContent = 'Скопировано'; };
+      inp.select();
+      if (navigator.clipboard) navigator.clipboard.writeText(d.link).then(done, function () { document.execCommand('copy'); done(); });
+      else { document.execCommand('copy'); done(); }
+    });
+    if (share) share.addEventListener('click', function () {
+      navigator.share({ title: 'Доходные дома Ефремовых', text: (d.status === 'new' ? 'Ваша заявка' : 'Ваша бронь') + ' №' + d.id, url: d.link }).catch(function () {});
     });
   };
   Admin.prototype.renderCard = function (d) {
@@ -741,9 +766,11 @@
       + '<dt>Источник</dt><dd>' + esc(SOURCE[d.source] || d.source) + (d.legacy_lead_id ? ' (прежняя заявка №' + d.legacy_lead_id + ')' : '') + '</dd></dl>'
       + '<table class="bk-quote__t"><tbody>' + lines + '</tbody><tfoot><tr><th>Итого</th><th>' + money(d.total) + '</th></tr></tfoot></table>'
       + (overlaps ? '<div class="bk-overlaps"><b>На эти даты ещё:</b><ul>' + overlaps + '</ul></div>' : '')
+      + (d.link ? this.linkBox(d) : '')
       + '<div class="bk-actions">'
       + (d.status === 'new' ? '<form data-act="confirm" class="bk-inline"><label class="bk-field"><span>Залог, ₽ (5 000–20 000, необязательно)</span><input name="deposit_amount" type="number" min="5000" max="20000" step="500" inputmode="numeric"></label><button class="bk-btn" type="submit">Подтвердить</button></form>' : '')
       + (d.status === 'confirmed' ? '<button type="button" class="bk-btn bk-btn--ghost" data-act="complete">Гости уехали — завершить</button>' : '')
+      + (active && !d.link ? '<button type="button" class="bk-btn bk-btn--ghost" data-act="link">Ссылка для гостя</button>' : '')
       + (d.status !== 'new' ? '<form data-act="deposit" class="bk-inline"><label class="bk-field"><span>Залог, ₽</span><input name="deposit_amount" type="number" min="5000" max="20000" step="500" value="' + (d.deposit_amount || '') + '"' + (d.status !== 'confirmed' ? ' readonly' : '') + '></label>'
         + '<label class="bk-field"><span>Статус залога</span><select name="deposit_status">' + Object.keys(DEPOSIT).map(function (k) { return '<option value="' + k + '"' + (k === d.deposit_status ? ' selected' : '') + '>' + DEPOSIT[k] + '</option>'; }).join('') + '</select></label>'
         + '<button class="bk-btn bk-btn--ghost" type="submit">Сохранить залог</button></form>' : '')
@@ -794,6 +821,15 @@
     });
     var c = qs(box, '[data-act=complete]');
     if (c) c.addEventListener('click', function () { act('booking_complete', {}, 'Бронь №' + d.id + ' завершена'); });
+    var l = qs(box, '[data-act=link]');
+    if (l) l.addEventListener('click', function () {
+      if (!window.confirm('Выдать гостю новую ссылку на №' + d.id + '? Прежняя ссылка, если её отправляли, перестанет работать.')) return;
+      self.api.call('booking_guest_link', { id: d.id }).then(function (res) {
+        if (!res.success) { window.alert(res.message); return; }
+        self.card(d.id, res.data.link);
+      });
+    });
+    this.bindLinkBox(box, d);
   };
 
   // --- список заявок и бронь по телефону
@@ -865,24 +901,34 @@
   };
   Admin.prototype.manual = function () {
     var self = this, box = qs(this.dialog, '.bk-dialog__body');
-    box.innerHTML = '<h3>Бронь по телефону</h3><p class="bk-muted">Сразу подтверждённая: даты займутся. Те же проверки пересечений, что и при подтверждении.</p>'
-      + '<form class="bk-formgrid" data-manual-form><label class="bk-field"><span>Дом</span><select name="house" required>' + this.houseOptions('') + '</select></label>'
+    box.innerHTML = '<h3>Бронь по телефону</h3><p class="bk-muted">Заявка за гостя, который не может оформить её сам. После создания появится ссылка — отправьте её гостю, по ней он увидит свою заявку.</p>'
+      + '<form class="bk-formgrid" data-manual-form><label class="bk-field bk-full"><span>Что создать</span><select name="status" data-manual-status>'
+      + '<option value="new">Заявку — даты не заняты, подтвердить после предоплаты</option>'
+      + '<option value="confirmed">Подтверждённую бронь — даты займутся сразу</option></select></label>'
+      + '<label class="bk-field"><span>Дом</span><select name="house" required>' + this.houseOptions('') + '</select></label>'
       + '<label class="bk-field"><span>Только баня</span><select name="addon"><option value="0">нет, Дом на сутки</option><option value="1">да, баня по часам</option></select></label>'
       + '<label class="bk-field"><span>Заезд / дата</span><input name="date_from" type="date" required></label><label class="bk-field"><span>Выезд</span><input name="date_to" type="date"></label>'
       + '<label class="bk-field"><span>Баня с</span><input name="time_from" type="time" step="1800"></label><label class="bk-field"><span>Баня до</span><input name="time_to" type="time" step="1800"></label>'
       + '<label class="bk-field"><span>Гостей</span><input name="guests" type="number" min="1" required></label><label class="bk-field"><span>Питомцев</span><input name="pets" type="number" min="0" value="0"></label>'
       + '<label class="bk-field"><span>Имя гостя</span><input name="guest_name" required></label><label class="bk-field"><span>Телефон</span><input name="guest_phone" type="tel" required></label>'
-      + '<label class="bk-field"><span>Залог, ₽ (необязательно)</span><input name="deposit_amount" type="number" min="5000" max="20000" step="500"></label>'
+      + '<label class="bk-field" data-manual-deposit hidden><span>Залог, ₽ (необязательно)</span><input name="deposit_amount" type="number" min="5000" max="20000" step="500"></label>'
       + '<label class="bk-check"><input type="checkbox" name="apply_discount"> скидка 5% — гость из группы ВКонтакте</label>'
       + '<label class="bk-field bk-full"><span>Комментарий гостя</span><textarea name="guest_comment" rows="2"></textarea></label>'
       + '<label class="bk-field bk-full"><span>Заметка администратора</span><textarea name="admin_note" rows="2"></textarea></label>'
-      + '<div class="bk-full"><button class="bk-btn" type="submit">Создать подтверждённую бронь</button></div></form>';
+      + '<div class="bk-full"><button class="bk-btn" type="submit" data-manual-submit>Создать заявку</button></div></form>';
     if (!this.dialog.open) this.dialog.showModal();
+    var st = qs(box, '[data-manual-status]');
+    st.addEventListener('change', function () {
+      var conf = st.value === 'confirmed';
+      qs(box, '[data-manual-deposit]').hidden = !conf;   // залог у заявки назначают при подтверждении
+      qs(box, '[data-manual-submit]').textContent = conf ? 'Создать подтверждённую бронь' : 'Создать заявку';
+    });
     this.form(qs(box, '[data-manual-form]'), function (data) {
+      if (data.status !== 'confirmed') delete data.deposit_amount;
       return self.api.call('booking_create_manual', data).then(function (res) {
         if (!res.success) { window.alert(res.message); return; }
-        self.msg('Бронь №' + res.data.id + ' создана и подтверждена');
-        self.card(res.data.id);
+        self.msg(res.data.status === 'new' ? 'Заявка №' + res.data.id + ' создана — подтвердите после предоплаты' : 'Бронь №' + res.data.id + ' создана и подтверждена');
+        self.card(res.data.id, res.data.link);
         if (self.current === 'grid' || self.current === 'list') self.show(self.current);
       });
     });
