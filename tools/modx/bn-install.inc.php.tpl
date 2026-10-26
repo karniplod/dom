@@ -734,6 +734,61 @@ PHP;
         }
         $modx->cacheManager->refresh(['events' => []]);
     }
+    // bnUpload — фото пачкой в «Галерею» Дома, «Ленту фото» главной и скриншоты отзывов Дома (assets/js/bn-upload.js).
+    // Загрузка — штатным Browser/File/Upload: права file_upload, типы файлов и размер — как у «Медиа»
+    $upCode = <<<'PHP'
+/** bnUpload — кнопка «Загрузить фото — можно сразу несколько» под «Галереей» Дома и «Лентой фото» главной, скриншоты отзывов Дома (установщик сайта Доходных Домов) */
+if ($modx->event->name !== 'OnDocFormRender' || empty($resource) || !$resource->get('id') || !$modx->hasPermission('file_upload') || !$modx->controller) return;
+$tpl = $modx->getObject(\MODX\Revolution\modTemplate::class, (int)$resource->get('template'));
+$tname = $tpl ? $tpl->get('templatename') : '';
+if (!in_array($tname, ['bn-house', 'bn-home'], true)) return;
+$src = \MODX\Revolution\Sources\modMediaSource::getDefaultSource($modx);
+if (!$src || !$src->initialize()) return;
+// путь папки для «Медиа»: от корня источника файлов (обычно — корень сайта)
+$base = rtrim(str_replace('\\', '/', (string)$src->getBasePath()), '/') . '/';
+$root = str_replace('\\', '/', MODX_BASE_PATH);
+if (strpos($root . 'assets/img/', $base) !== 0) return;
+$rel = function ($p) use ($root, $base) { return substr($root . $p, strlen($base)); };
+$tvId = function ($name) use ($modx) { $t = $modx->getObject(\MODX\Revolution\modTemplateVar::class, ['name' => $name]); return $t ? (int)$t->get('id') : 0; };
+$cfg = ['connector' => $modx->getOption('connectors_url') . 'index.php', 'auth' => $modx->user->getUserToken('mgr'), 'source' => (int)$src->get('id'),
+    'base' => $modx->getOption('base_url'), 'fields' => []];
+if ($tname === 'bn-house') {
+    $code = preg_replace('~[^a-z0-9_-]~', '', (string)$resource->getTVValue('bn_code'));
+    if ($code === '' || !$tvId('bn_gallery')) return;
+    foreach (['assets/img/' . $code . '/', 'assets/img/reviews/'] as $d) if (!is_dir($root . $d)) @mkdir($root . $d, 0755, true);
+    $cfg['fields'][] = ['tv' => $tvId('bn_gallery'), 'title' => 'Фото в галерею Дома (папка assets/img/' . $code . '/)', 'dir' => $rel('assets/img/' . $code . '/'), 'url' => 'assets/img/' . $code . '/', 'reviewsAfter' => true];
+    $cfg['reviews'] = ['code' => $code, 'dir' => $rel('assets/img/reviews/'), 'url' => 'assets/img/reviews/'];
+} elseif ($tvId('bn_strip')) {
+    $houses = [];
+    $ht = $modx->getObject(\MODX\Revolution\modTemplate::class, ['templatename' => 'bn-house']);
+    foreach ($ht ? $modx->getIterator(\MODX\Revolution\modResource::class, ['template' => $ht->get('id'), 'deleted' => 0]) : [] as $h) {
+        $c = preg_replace('~[^a-z0-9_-]~', '', (string)$h->getTVValue('bn_code'));
+        if ($c !== '') $houses[] = ['code' => $c, 'name' => $h->get('pagetitle')];
+    }
+    if (!$houses) return;
+    $cfg['fields'][] = ['tv' => $tvId('bn_strip'), 'title' => 'Фото в ленту «Посмотрите дома изнутри»', 'houses' => $houses, 'root' => $rel('assets/img/'), 'url' => 'assets/img/'];
+}
+$js = 'assets/js/bn-upload.js';
+$modx->controller->addHtml('<script>window.bnUpload = ' . json_encode($cfg, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) . ';</script>');
+$modx->controller->addLastJavascript($modx->getOption('base_url') . $js . '?v=' . (is_file($root . $js) ? filemtime($root . $js) : 0));
+PHP;
+    if (!$dry) {
+        $up = $modx->getObject(\MODX\Revolution\modPlugin::class, ['name' => 'bnUpload']) ?: $modx->newObject(\MODX\Revolution\modPlugin::class);
+        $isNewUp = !$up->get('id');
+        if ($isNewUp || $up->get('plugincode') !== $upCode) {
+            $up->fromArray(['name' => 'bnUpload', 'description' => 'Фото пачкой: «Галерея» Дома, «Лента фото» главной, скриншоты отзывов Дома',
+                'plugincode' => $upCode, 'category' => category('Доходные дома'), 'disabled' => 0]);
+            if (saved($up, 'плагин bnUpload')) say($isNewUp ? 'new' : 'upd', 'плагин bnUpload: фото пачкой в галерею Дома, ленту главной и скриншоты отзывов');
+        }
+        if ($up->get('id') && !$modx->getObject(modPluginEvent::class, ['pluginid' => $up->get('id'), 'event' => 'OnDocFormRender'])) {
+            $pe = $modx->newObject(modPluginEvent::class);
+            $pe->fromArray(['pluginid' => $up->get('id'), 'event' => 'OnDocFormRender', 'priority' => 0, 'propertyset' => 0], '', true, true);
+            saved($pe, 'событие OnDocFormRender плагина bnUpload');
+        }
+        $modx->cacheManager->refresh(['events' => []]);
+    }
+    // фото с телефона после уменьшения — до 1–2 МБ; меньше 5 МБ «Медиа» не пропустит крупные PNG-скриншоты
+    if (!$dry && (int)$modx->getOption('upload_maxsize') < 5242880 && ($r = setting('upload_maxsize', '5242880'))) say($r, 'настройка upload_maxsize = 5 МБ (загрузка фото)');
     foreach (['bn_login_attempts' => '10', 'bn_login_minutes' => '15'] as $k => $v) {   // создаём, но значение владельца не трогаем
         if (!$dry && !$modx->getObject(modSystemSetting::class, $k) && ($r = setting($k, $v))) say($r, "настройка $k = «{$v}» (bnLoginGuard)");
     }

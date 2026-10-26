@@ -833,6 +833,7 @@ def main():
     open(f"{SITE_DIR}/js/app.js", "w", encoding="utf8", newline="\n").write(js)
     open(f"{SITE_DIR}/js/cookies.js", "w", encoding="utf8", newline="\n").write(rd("cookies.js"))
     open(f"{SITE_DIR}/js/tinymce-bnprotect.js", "w", encoding="utf8", newline="\n").write(rd("tinymce-bnprotect.js"))   # для редактора в админке MODX
+    open(f"{SITE_DIR}/js/bn-upload.js", "w", encoding="utf8", newline="\n").write(rd("bn-upload.js"))   # фото пачкой в админке MODX (плагин bnUpload)
     open(f"{SITE_DIR}/img/fox.svg", "w", encoding="utf8", newline="\n").write(rd("fox.svg").replace("<path ", '<path fill="#D8650F" '))
     pages = [home()] + [house_page(k) for k in H] + [contacts_page(), blog_index()] + [post_page(p) for p in POSTS] + [prepay_page(k) for k in H] + [legal_page(s) for s in DOCS] + [notfound_page()]
     def og_image(pg):
