@@ -375,12 +375,12 @@ def house_review_panel(k):
     links = HOUSE_REVIEW_LINKS.get(k, {})
     shots = REVIEW_SHOTS.get(k, [])
     shots_html = "".join(f'<a class="rshot" href="img/reviews/{esc(s)}" data-lb="rev-{k}"><img src="img/reviews/{esc(s)}" alt="Отзыв гостя: {esc(h["name"])}" loading="lazy"></a>' for s in shots) \
-        or "".join(f'<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с {p}</span></div>' for p in ("Яндекс Карт", "2ГИС", "Авито"))
+        or ""   # скриншотов ещё нет — ленты нет совсем (заглушки «Здесь будет скриншот…» видели гости и поисковики)
     # QR «оставить отзыв» — по коду на каждую площадку со ссылкой (tools/make_qr.py); на телефоне код — просто ссылка
     qrs = "".join(review_qr(k, n, links[n]) for n in REVIEW_PLATFORMS if links.get(n))
     qr = (f'<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код или нажмите на площадку</p><div class="hrev__qrrow">{qrs}</div></div>') if qrs else ""
     return (f'<div class="hrev h-{k}"><div class="hrev__head"><h3>{h["name"]}</h3></div>'
-            f'<div class="hrev__body">{rail(shots_html, "Скриншоты отзывов: " + h["name"], "rail--dark rail--shots")}{qr}</div></div>')
+            f'<div class="hrev__body">{rail(shots_html, "Скриншоты отзывов: " + h["name"], "rail--dark rail--shots") if shots_html else ""}{qr}</div></div>')
 
 def reviews_block(house=None):
     """Отзывы гостей: карусель и по каждому Дому — площадки, QR-код и скриншоты отзывов."""
@@ -390,7 +390,7 @@ def reviews_block(house=None):
     panels = mark("houseReviewPanels", "".join(house_review_panel(k) for k in ([house] if house else H)))
     if not items:
         return f'''<section class="band band--dark" id="reviews" aria-labelledby="rev-title"><div class="wrap">
-  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей{"" if not house else " об этом Доме"}</h2><p class="lead">Отзывы о каждом Доме — в 2ГИС, Яндекс Картах и на Авито. Показываем их как есть, скриншотами.</p></div>
+  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей{"" if not house else " об этом Доме"}</h2><p class="lead">Отзывы о каждом Доме — в 2ГИС, Яндекс Картах и на Авито. Оставить свой — по QR-коду или ссылке площадки ниже.</p></div>
   <div class="hrevs">{panels}</div>
   {cta}
 </div></section>'''
@@ -807,6 +807,21 @@ FAV = ('<link rel="icon" href="favicon.ico" sizes="48x48"><link rel="icon" href=
 HJS = {"_discount": 0} | {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"], base=v["base"], extra=v["extra"]) for k, v in H.items()}
 RSS_LINK = f'<link rel="alternate" type="application/rss+xml" title="Блог — {BRAND}" href="rss.xml">'
 
+def min_css(s):
+    """Сжатие CSS без смены смысла: комментарии, переносы и пробелы у { } ; , > — вон; строки в кавычках не трогаем.
+    Пробелы у «:», «+», «-», «(» остаются: «a :hover», calc(100% - 8px) и условия @media от них зависят."""
+    parts = re.split(r'("(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\')', s)
+    out = []
+    for i, x in enumerate(parts):
+        if i % 2:
+            out.append(x)
+            continue
+        x = re.sub(r"/\*.*?\*/", "", x, flags=re.S)
+        x = re.sub(r"\s+", " ", x)
+        x = re.sub(r"\s*([{};,>])\s*", r"\1", x)
+        out.append(x.replace(";}", "}"))
+    return "".join(out).strip() + "\n"
+
 def main():
     global css, js, data_js
     css, js = rd("styles.css"), rd("app.js")
@@ -814,7 +829,7 @@ def main():
     data_js = "window.HOUSES = " + json.dumps(HJS, ensure_ascii=False) + ";"
     for d in (SITE_DIR + "/css", SITE_DIR + "/js", ART):
         os.makedirs(d, exist_ok=True)
-    open(f"{SITE_DIR}/css/styles.css", "w", encoding="utf8", newline="\n").write(css)
+    open(f"{SITE_DIR}/css/styles.css", "w", encoding="utf8", newline="\n").write(min_css(css))   # сжатый: меньше байт до первого экрана
     open(f"{SITE_DIR}/js/app.js", "w", encoding="utf8", newline="\n").write(js)
     open(f"{SITE_DIR}/js/cookies.js", "w", encoding="utf8", newline="\n").write(rd("cookies.js"))
     open(f"{SITE_DIR}/js/tinymce-bnprotect.js", "w", encoding="utf8", newline="\n").write(rd("tinymce-bnprotect.js"))   # для редактора в админке MODX

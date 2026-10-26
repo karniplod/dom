@@ -9,7 +9,7 @@ except ImportError:   # без Pillow (например, сборка на GitHu
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMG = os.path.join(ROOT, "site", "img")
 WIDTHS = (480, 800, 1200, 1600)
-QUALITY = 78
+QUALITY = 72   # 78 → 72: копии на 14% легче, на глаз без разницы (Google PageSpeed: «Улучшите загрузку изображений»)
 
 
 def widths_for(w):

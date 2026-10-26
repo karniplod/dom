@@ -52,7 +52,16 @@ static $bookingAssets = false;
 if (!$bookingAssets) {
     $bookingAssets = true;
     $v = '?v=' . $booking->assetVersion();
-    $modx->regClientCSS($booking->config['assetsUrl'] . 'css/booking.css' . $v);
+    $css = $booking->config['assetsUrl'] . 'css/booking.css' . $v;
+    // static между вызовами сниппета не сохраняется — «уже подключено» помним меткой страницы
+    if ($mode === 'compact' && !$modx->getPlaceholder('booking.css')) {
+        $modx->setPlaceholder('booking.css', 'async');
+        // главная: форма внизу страницы — стили не задерживают первый экран (грузятся параллельно и применяются по готовности)
+        $modx->regClientStartupHTMLBlock('<link rel="stylesheet" href="' . $css . '" media="print" onload="this.media=\'all\'"><noscript><link rel="stylesheet" href="' . $css . '"></noscript>');
+    } elseif ($mode === 'full') {
+        $modx->setPlaceholder('booking.css', 'full');
+        $modx->regClientCSS($css);   // /booking: форма на первом экране — стили сразу
+    }
     $modx->regClientScript('<script src="' . $booking->config['assetsUrl'] . 'js/booking.js' . $v . '" defer></script>', true);
     // SendIt строит карту защиты только из файловых пресетов; наш пресет — сессионный, добавляем его в карту,
     // чтобы браузер посчитал доказательство вычислений и подпись, которые сервер проверяет по пресету

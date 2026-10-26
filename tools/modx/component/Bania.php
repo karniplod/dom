@@ -341,7 +341,7 @@ class Bania
     // ------------------------------------------------------------------ отзывы
     const REVIEW_PLATFORMS = ['2ГИС' => ['#137A18', '2Г', '2gis'], 'Яндекс Карты' => ['#C8290B', 'Я', 'yandex'], 'Авито' => ['#006FB3', 'A', 'avito']];   // как PLATFORM_BADGE в build.py
 
-    /** По Дому: площадки (ссылки — настройки bn_rev_<код>_2gis|yandex|avito), QR «оставить отзыв», заглушки скриншотов */
+    /** По Дому: площадки (ссылки — настройки bn_rev_<код>_2gis|yandex|avito), QR «оставить отзыв», скриншоты отзывов из assets/img/reviews/ */
     public static function reviewPanels($house = 0) {
         $out = '';
         foreach (self::houses() as $h) {
@@ -357,11 +357,17 @@ class Bania
                         . '<span class="hrev__qrimg"><img src="' . self::$modx->getOption('base_url') . $qrFile . '" alt="" width="140" height="140" loading="lazy"></span></a>';
                 }
             }
+            // скриншоты отзывов: файлы assets/img/reviews/<код Дома>-*.jpg|png|webp (по имени); нет файлов — ленты нет
             $shots = '';
-            foreach (['Яндекс Карт', '2ГИС', 'Авито'] as $p) $shots .= '<div class="rshot rshot--empty"><span>Здесь будет скриншот отзыва с ' . $p . '</span></div>';
+            $files = array_merge(...array_map(function ($x) use ($h) { return glob(MODX_BASE_PATH . 'assets/img/reviews/' . $h['code'] . '-*.' . $x) ?: []; }, ['jpg', 'jpeg', 'png', 'webp']));
+            sort($files);
+            foreach ($files as $f) {
+                $src = self::$modx->getOption('base_url') . 'assets/img/reviews/' . rawurlencode(basename($f));
+                $shots .= '<a class="rshot" href="' . self::e($src) . '" data-lb="rev-' . $h['code'] . '"><img src="' . self::e($src) . '" alt="Отзыв гостя: ' . self::e($h['name']) . '" loading="lazy"></a>';
+            }
             $qr = $qrs === '' ? '' : '<div class="hrev__qrs"><p class="hrev__qrlab">Оставить отзыв: наведите камеру телефона на код или нажмите на площадку</p><div class="hrev__qrrow">' . $qrs . '</div></div>';
             $out .= '<div class="hrev h-' . $h['code'] . '"><div class="hrev__head"><h3>' . self::e($h['name']) . '</h3></div>'
-                . '<div class="hrev__body">' . self::rail($shots, 'Скриншоты отзывов: ' . self::e($h['name']), 'rail--dark rail--shots') . $qr . '</div></div>';
+                . '<div class="hrev__body">' . ($shots !== '' ? self::rail($shots, 'Скриншоты отзывов: ' . self::e($h['name']), 'rail--dark rail--shots') : '') . $qr . '</div></div>';
         }
         return $out;
     }
@@ -387,7 +393,7 @@ class Bania
         $panels = self::reviewPanels($house);
         if (!$items) {
             return '<section class="band band--dark" id="reviews" aria-labelledby="rev-title"><div class="wrap">' . "\n"
-                . '  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей' . ($house ? ' об этом Доме' : '') . '</h2><p class="lead">Отзывы о каждом Доме — в 2ГИС, Яндекс Картах и на Авито. Показываем их как есть, скриншотами.</p></div>' . "\n"
+                . '  <div class="sec-head"><h2 class="h-sec" id="rev-title">Отзывы гостей' . ($house ? ' об этом Доме' : '') . '</h2><p class="lead">Отзывы о каждом Доме — в 2ГИС, Яндекс Картах и на Авито. Оставить свой — по QR-коду или ссылке площадки ниже.</p></div>' . "\n"
                 . '  <div class="hrevs">' . $panels . '</div>' . "\n"
                 . '  ' . $cta . "\n" . '</div></section>';
         }

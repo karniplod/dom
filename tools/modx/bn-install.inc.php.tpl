@@ -569,7 +569,11 @@ try {
             || stripos((string)$modx->getOption('site_url'), 'https://') === 0;
         // http → https: только когда сайт уже открывается по https (сертификат есть), иначе переадресация заперла бы сайт
         $toHttps = $isHttps ? "<IfModule mod_rewrite.c>\n  RewriteEngine On\n  RewriteCond %{HTTPS} off\n  RewriteCond %{HTTP:X-Forwarded-Proto} !https\n  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]\n</IfModule>\n" : '';
-        $sec = "# BEGIN Bania security (bn-install.php)\n" . $toHttps . "<IfModule mod_headers.c>
+        // www → адрес без www (одна страница — один адрес для поисковиков); только если сам сайт без www и www уже открывается
+        $siteHost = strtolower((string)parse_url((string)$modx->getOption('site_url'), PHP_URL_HOST));
+        $toBare = $siteHost !== '' && strpos($siteHost, 'www.') !== 0
+            ? "<IfModule mod_rewrite.c>\n  RewriteEngine On\n  RewriteCond %{HTTP_HOST} ^www\\.(.+)$ [NC]\n  RewriteRule ^ " . ($isHttps ? 'https' : 'http') . "://%1%{REQUEST_URI} [L,R=301]\n</IfModule>\n" : '';
+        $sec = "# BEGIN Bania security (bn-install.php)\n" . $toBare . $toHttps . "<IfModule mod_headers.c>
 "
              . "  Header always set X-Content-Type-Options \"nosniff\"
 "
