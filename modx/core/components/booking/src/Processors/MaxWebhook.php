@@ -18,11 +18,14 @@ class MaxWebhook extends Base
     protected function handle(): array
     {
         $bot = $this->booking->maxBot();
-        if ($bot->token() === '') {
-            throw new BookingError('Нет токена бота: впишите его в системную настройку maxnotify3.max_token', 400);
-        }
         $url = $this->url();
         $op = $this->str('op', 10) ?: 'status';
+        if ($bot->token() === '') {
+            if ($op === 'status') {   // вкладка «Токены» открывается и без бота — это не ошибка
+                return ['url' => $url, 'webhook' => false, 'enabled' => false, 'no_token' => true];
+            }
+            throw new BookingError('Нет токена бота: впишите его в системную настройку maxnotify3.max_token', 400);
+        }
         if ($op === 'on') {
             if (strpos($url, 'https://') !== 0) {
                 throw new BookingError('MAX принимает только адрес https: включите https на сайте (site_url начинается с https://)', 400);

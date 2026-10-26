@@ -66,6 +66,12 @@ class Notify
         }
     }
 
+    /** Слова гостя для MAX — без разметки: MaxNotify3 шлёт markdown, «[текст](ссылка)» стал бы в группе ссылкой-приманкой */
+    public static function plain($s): string
+    {
+        return strtr((string)$s, ['[' => '(', ']' => ')', '`' => "'", '*' => '·', '_' => ' ', '~' => '-']);
+    }
+
     /** Новая заявка в MAX: коротко, без служебных полей формы, с кнопками «Открыть» (приложение и админка) */
     public function request(BookingRow $row): bool
     {
@@ -82,11 +88,12 @@ class Notify
         if ($a['quote_discount']) {
             $t[] = 'Скидка: ' . $money($a['quote_discount']);
         }
+        $plain = [self::class, 'plain'];
         $t[] = '';
-        $t[] = 'Гость: ' . $a['guest_name'];
+        $t[] = 'Гость: ' . $plain($a['guest_name']);
         $t[] = 'Телефон: ' . $a['guest_phone'];
         if ($a['guest_comment'] !== '') {
-            $t[] = 'Комментарий: ' . $a['guest_comment'];
+            $t[] = 'Комментарий: ' . $plain($a['guest_comment']);
         }
         $modx = $this->booking->modx;
         $links = [];

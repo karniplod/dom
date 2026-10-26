@@ -68,6 +68,9 @@ return [
         $t->eq(403, $t->run('booking_get_request', ['id' => $id, 'phone' => '89005554400'])['status'], 'чужой телефон — 403');
         $t->eq(403, $t->run('booking_get_request', ['id' => $id, 't' => str_repeat('a', 32)])['status'], 'чужой код — 403');
         $t->eq(403, $t->run('booking_get_request', ['id' => $id + 100000, 'phone' => '89005554433'])['status'], 'нет такой — тот же 403');
+        $byPhone = $t->run('booking_request_cancel', ['id' => $id, 'phone' => '89005554433', 'reason' => 'чужой']);
+        $t->eq(403, $byPhone['status'], 'отмена по номеру и телефону — нельзя (телефон знают и чужие): только по ссылке с кодом');
+        $t->ok(!$t->modx->getObject(\Booking\Model\Booking::class, $id)->get('cancellation_requested'), 'запрос отмены не поставлен');
         $c = $t->run('booking_request_cancel', ['id' => $id, 't' => $r['data']['code'], 'reason' => 'заболели']);
         $t->ok($c['success'] && $c['data']['cancellation_requested'], 'запрос отмены отмечен');
         $t->eq('new', $c['data']['status'], 'статус не изменился');

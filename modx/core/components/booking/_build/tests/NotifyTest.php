@@ -44,6 +44,7 @@ return [
             foreach (['Английский Дом', '07.12.2031', 'Гостей: 3', 'Сумма:', 'ТЕСТ Гость'] as $s) {
                 $t->ok(strpos($text, $s) !== false, 'в тексте есть «' . $s . '»');
             }
+            $t->eq('(Открыть)(https://evil.example) ·жирный·', \Booking\Service\Notify::plain('[Открыть](https://evil.example) *жирный*'), 'слова гостя без разметки markdown: ссылку-приманку не вставить');
             foreach (['_behavior_signature', '_pow_nonce', 'fields', '<tr>', 'client:'] as $s) {
                 $t->ok(strpos($text, $s) === false, 'в тексте нет «' . $s . '»');
             }

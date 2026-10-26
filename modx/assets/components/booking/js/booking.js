@@ -519,7 +519,8 @@
   };
   RequestPage.prototype.render = function (d) {
     var self = this, out = qs(this.root, '[data-bk-result]');
-    var canCancel = (d.status === 'new' || d.status === 'confirmed') && !d.cancellation_requested;
+    var active = (d.status === 'new' || d.status === 'confirmed') && !d.cancellation_requested;
+    var canCancel = active && !!d.code;   // отмена — только по личной ссылке (код); найденную по телефону заявку можно лишь посмотреть
     out.innerHTML = '<div class="bk-card">'
       + '<h3>Заявка №' + esc(d.id) + ' <span class="bk-badge bk-badge--' + esc(d.status) + '">' + esc(d.status_label) + '</span></h3>'
       + '<dl class="bk-dl"><dt>Дом</dt><dd>' + esc(d.house_name) + (d.addon ? ', баня' : '') + '</dd>'
@@ -532,6 +533,7 @@
       + (d.cancellation_requested ? '<p class="bk-note-orange">Вы попросили отменить бронь — администратор свяжется с вами.</p>' : '')
       + (canCancel ? '<form class="bk-cancel" data-bk-cancel><label class="bk-field"><span>Почему отменяете (необязательно)</span><textarea name="reason" rows="2" maxlength="1000"></textarea></label>'
         + '<button class="bk-btn bk-btn--ghost" type="submit">Попросить отменить</button></form>' : '')
+      + (active && !canCancel ? '<p class="bk-muted">Отменить бронь можно по ссылке на заявку из письма или сообщения — или позвоните администратору.</p>' : '')
       + '</div>';
     var f = qs(out, '[data-bk-cancel]');
     if (f) f.addEventListener('submit', function (e) {
@@ -1078,6 +1080,7 @@
         qsa(botOut, 'button').forEach(function (b) { b.disabled = true; });
         self.api.call('booking_max_webhook', { op: op }).then(function (r) {
           if (!r.success) { botOut.innerHTML = '<p class="bk-warn">' + esc(r.message) + '</p>'; return; }
+          if (r.data.no_token) { botOut.innerHTML = '<p class="bk-muted">Сначала впишите токен бота в системную настройку <code>maxnotify3.max_token</code> и откройте вкладку снова.</p>'; return; }
           var on = r.data.webhook && r.data.enabled;
           botOut.innerHTML = '<p>' + (on ? '<b>Бот отвечает гостям.</b> Адрес: <code>' + esc(r.data.url) + '</code>'
               : (r.data.webhook ? 'Адрес подключён, но бот выключен.' : 'Бот не подключён — гостям он не отвечает.')) + '</p>'
