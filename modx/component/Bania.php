@@ -114,9 +114,9 @@ class Bania
      */
     public static function picturize($html) {
         if (strpos($html, 'data-bn-sizes=') === false) return $html;
-        return preg_replace_callback('~<img([^>]*?)\sdata-bn-sizes="([^"]*)"([^>]*)>~', function ($m) {
+        return preg_replace_callback('~<img\b([^>]*?)\sdata-bn-sizes="([^"]*)"([^>]*)>~', function ($m) {
             $tag = '<img' . $m[1] . $m[3] . '>';
-            return preg_match('~src="([^"]+)"~', $tag, $s) ? self::picture($tag, html_entity_decode($s[1]), html_entity_decode($m[2])) : $tag;
+            return preg_match('~\bsrc="([^"]+)"~', $tag, $s) ? self::picture($tag, html_entity_decode($s[1]), html_entity_decode($m[2])) : $tag;
         }, $html);
     }
     public static function chunk($name, array $ph) { return self::$modx->getChunk($name, $ph); }

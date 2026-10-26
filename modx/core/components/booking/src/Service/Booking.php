@@ -54,6 +54,7 @@ class Booking
         'booking_migrate_leads' => \Booking\Processors\Migrate::class,
         'booking_max_chats' => \Booking\Processors\MaxChats::class,
         'booking_max_webhook' => \Booking\Processors\MaxWebhook::class,
+        'booking_stats' => \Booking\Processors\Stats::class,
         'booking_help' => \Booking\Processors\Help::class,
     ];
 

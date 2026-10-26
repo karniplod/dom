@@ -35,7 +35,7 @@ class BookingIndexManagerController extends \MODX\Revolution\modExtraManagerCont
             . '<div class="bk-admin" data-bk="admin"'
             . ' data-bk-endpoint="' . $e($booking->config['connectorUrl']) . '"'
             . ' data-bk-modauth="' . $e($this->modx->user->getUserToken('mgr')) . '"'
-            . ' data-bk-tabs="grid,list,houses,prices,holidays,blocks,tokens,migrate,help"'
+            . ' data-bk-tabs="grid,list,stats,houses,prices,holidays,blocks,tokens,migrate,help"'
             . ' data-bk-app="' . $e($app ? rtrim($app, '/') . '/app' : '') . '"'
             . '><p class="bk-muted">Загрузка…</p></div></div>';
     }

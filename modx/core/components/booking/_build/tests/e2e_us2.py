@@ -145,7 +145,7 @@ with sync_playwright() as pw:
     page.wait_for_timeout(1200)
     scroll = page.evaluate("(() => { const c = document.querySelector('.bk-cmp'); c.scrollTop = 99999; return c.scrollTop > 0; })()")
     check(scroll, "страница админки прокручивается (вкладка «Цены»)")
-    for tab in ["houses", "holidays", "blocks", "tokens", "migrate"]:
+    for tab in ["stats", "houses", "holidays", "blocks", "tokens", "migrate"]:
         page.click(f'[data-tab="{tab}"]')
         page.wait_for_timeout(900)
         check(page.locator(".bk-warn").count() == 0 and page.locator(".bk-msg.is-bad").count() == 0, f"вкладка «{tab}» без ошибок")

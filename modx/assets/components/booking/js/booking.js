@@ -551,12 +551,13 @@
 
   // ---------------------------------------------------------------- администратор: сетка и карточки, справочники
   var TABS = {
-    grid: 'Календарь', list: 'Заявки', houses: 'Дома и бани', prices: 'Цены', holidays: 'Праздники',
+    grid: 'Календарь', list: 'Заявки', stats: 'Статистика', houses: 'Дома и бани', prices: 'Цены', holidays: 'Праздники',
     blocks: 'Закрытые даты', tokens: 'Токены', migrate: 'Перенос заявок', help: 'Инструкция'
   };
 
   function Admin(root, client) {
     this.root = root;
+    (Admin.all = Admin.all || []).push(this);
     this.api = client || new Client(root.getAttribute('data-bk-endpoint'), { modauth: root.getAttribute('data-bk-modauth') });
     this.tabs = (root.getAttribute('data-bk-tabs') || 'grid,list').split(',').filter(function (t) { return TABS[t]; });   // неизвестную вкладку не показываем
     this.houses = [];
@@ -932,6 +933,273 @@
         if (self.current === 'grid' || self.current === 'list') self.show(self.current);
       });
     });
+  };
+
+  // --- статистика для владельца и директора
+  // Цвета Домов — по порядку Домов (проверены на различимость, в т. ч. при дальтонизме); общий показатель — фирменный.
+  var SERIES = ['#2a78d6', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948', '#eb6834'];
+  var ONE = '#B04E09';
+  var MONTHS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+  var MONTHS_FULL = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+  var WEEK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  var WEEK_FULL = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'];
+  function num(n, d) { return String(d ? Math.round(n * 10) / 10 : Math.round(n)).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function pct(n) { return num(n, 1) + '%'; }
+  function rub(n) {   // компактно: 6,3 млн ₽ / 314 тыс ₽
+    var a = Math.abs(n);
+    if (a >= 1e6) return num(n / 1e6, 1) + ' млн ₽';
+    if (a >= 1e4) return num(n / 1e3) + ' тыс ₽';
+    return money(n);
+  }
+  function ticks(max) {   // 0 и 3–4 круглых деления
+    if (max <= 0) return [0, 1];
+    var step = Math.pow(10, Math.floor(Math.log10(max / 3)));
+    [1, 2, 2.5, 5, 10].some(function (m) { if (max / (step * m) <= 4) { step *= m; return true; } return false; });
+    var out = [];
+    for (var v = 0; v < max + step * 0.999; v += step) out.push(v);
+    return out;
+  }
+  function monthLabel(m, i, all) {
+    var mm = +m.slice(5, 7) - 1;
+    return MONTHS[mm] + (i === 0 || mm === 0 || all.length <= 1 ? ' ' + m.slice(2, 4) : '');
+  }
+
+  Admin.prototype.tab_stats = function () {
+    var self = this;
+    var f = this.statsFilter || (this.statsFilter = { preset: '12m', from: '', to: '' });
+    var t = new Date();
+    var P = {
+      '12m': ['Последние 12 месяцев', new Date(t.getFullYear(), t.getMonth() - 11, 1), new Date(t.getFullYear(), t.getMonth() + 1, 0)],
+      year: ['Этот год', new Date(t.getFullYear(), 0, 1), new Date(t.getFullYear(), 11, 31)],
+      prev: ['Прошлый год', new Date(t.getFullYear() - 1, 0, 1), new Date(t.getFullYear() - 1, 11, 31)],
+      month: ['Этот месяц', new Date(t.getFullYear(), t.getMonth(), 1), new Date(t.getFullYear(), t.getMonth() + 1, 0)],
+      next: ['Следующие 3 месяца', new Date(t.getFullYear(), t.getMonth(), t.getDate()), new Date(t.getFullYear(), t.getMonth() + 3, t.getDate())],
+      custom: ['Свой период']
+    };
+    if (P[f.preset] && P[f.preset][1]) { f.from = iso(P[f.preset][1]); f.to = iso(P[f.preset][2]); }
+    this.pane.innerHTML = '<form class="bk-bar" data-stats-filter><select name="preset" aria-label="Период">'
+      + Object.keys(P).map(function (k) { return '<option value="' + k + '"' + (k === f.preset ? ' selected' : '') + '>' + P[k][0] + '</option>'; }).join('') + '</select>'
+      + '<label class="bk-period">с <input name="from" type="date" value="' + esc(f.from) + '" aria-label="Заезд с"></label>'
+      + '<label class="bk-period">по <input name="to" type="date" value="' + esc(f.to) + '" aria-label="Заезд по"></label>'
+      + '<button class="bk-btn bk-btn--sm bk-btn--ghost" type="submit">Показать</button>'
+      + '<button class="bk-btn bk-btn--sm bk-btn--ghost" type="button" data-stats-export>Выгрузить в Excel</button></form>'
+      + '<div class="bk-stats"><p class="bk-muted">Считаем…</p></div>';
+    var ff = qs(this.pane, '[data-stats-filter]');
+    qs(ff, '[name=preset]').addEventListener('change', function (e) { f.preset = e.target.value; if (f.preset !== 'custom') self.tab_stats(); });
+    qsa(ff, 'input[type=date]').forEach(function (i) { i.addEventListener('change', function () { qs(ff, '[name=preset]').value = 'custom'; }); });
+    this.form(ff, function (data) { f.preset = data.preset; f.from = data.from; f.to = data.to; return self.loadStats(); });
+    qs(this.pane, '[data-stats-export]').addEventListener('click', function () { if (self.stats) self.statsCsv(self.stats); });
+    this.loadStats();
+  };
+  Admin.prototype.loadStats = function () {
+    var self = this, f = this.statsFilter, box = qs(this.pane, '.bk-stats');
+    if (!box) return;
+    box.classList.add('is-loading');   // прежние графики остаются, пока считаем новые
+    return this.api.call('booking_stats', { from: f.from, to: f.to }).then(function (res) {
+      if (self.current !== 'stats') return;
+      box.classList.remove('is-loading');
+      if (!res.success) { self.fail(res); return; }
+      self.stats = res.data;
+      self.renderStats(box, res.data);
+    });
+  };
+  // поворот телефона или окно шире/уже — перерисовать подписи графиков
+  window.addEventListener('resize', function () {
+    clearTimeout(Admin.resizeT);
+    Admin.resizeT = setTimeout(function () {
+      (Admin.all || []).forEach(function (a) {
+        var box = a.current === 'stats' && a.stats && qs(a.pane, '.bk-stats');
+        if (box && (box.clientWidth < 560) !== a.statsNarrow) a.renderStats(box, a.stats);
+      });
+    }, 250);
+  });
+
+  Admin.prototype.renderStats = function (box, d) {
+    var self = this, k = d.kpi, p = d.prev;
+    var color = {}, tips = [];
+    var narrow = box.clientWidth < 560;   // телефон: подписи через одну, без чисел над столбцами (они в подсказке и таблице)
+    this.statsNarrow = narrow;
+    d.houses.forEach(function (h, i) { color[h.code] = SERIES[i % SERIES.length]; });
+    var tip = function (title, rows) { tips.push({ title: title, rows: rows }); return ' tabindex="0" data-tip="' + (tips.length - 1) + '"'; };
+    var dfmt = function (s) { return s.slice(8, 10) + '.' + s.slice(5, 7) + '.' + s.slice(0, 4); };
+
+    // сравнение с прошлым таким же периодом: стрелка и слова, цвет — хорошо/плохо
+    var delta = function (cur, old, upGood, isPct) {
+      if (old === null || old === undefined || (!old && !cur)) return '';
+      var diff = isPct ? cur - old : (old ? (cur - old) * 100 / old : null);
+      if (diff === null) return '<span class="bk-kpi__d">прошлый период — 0</span>';
+      if (Math.abs(diff) < 0.5) return '<span class="bk-kpi__d">как в прошлом периоде</span>';
+      var good = (diff > 0) === upGood;
+      return '<span class="bk-kpi__d ' + (good ? 'is-good' : 'is-bad') + '">' + (diff > 0 ? '▲ +' : '▼ −') + num(Math.abs(diff), isPct) + (isPct ? ' п.п.' : '%') + ' <span>к прошлому периоду</span></span>';
+    };
+    var tile = function (label, value, sub, dl) {
+      return '<div class="bk-kpi"><span class="bk-kpi__l">' + label + '</span><b class="bk-kpi__v">' + value + '</b>' + (sub ? '<span class="bk-kpi__s">' + sub + '</span>' : '') + (dl || '') + '</div>';
+    };
+    var legend = function () {
+      return d.houses.length < 2 ? '' : '<ul class="bk-legend2">' + d.houses.map(function (h) { return '<li><i style="background:' + color[h.code] + '"></i>' + esc(h.name) + '</li>'; }).join('') + '</ul>';
+    };
+    var table = function (head, rows) {
+      return '<details class="bk-tview"><summary>Таблицей</summary><div class="bk-tview__w"><table class="bk-table"><thead><tr>' + head.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>'
+        + rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div></details>';
+    };
+    // столбцы: categories — подписи, stacks[i] — [{code|null, value}], fmt — подпись значения
+    var columns = function (cats, stacks, fmt, tipTitles, opt) {
+      opt = opt || {};
+      var totals = stacks.map(function (s) { return s.reduce(function (a, x) { return a + x.value; }, 0); });
+      var tk = ticks(Math.max.apply(null, totals.concat([opt.min || 0])));
+      var top = tk[tk.length - 1];
+      var every = cats.length > 18 ? 3 : (cats.length > 12 || (narrow && cats.length > 7) ? 2 : 1);
+      return '<div class="bk-cc"><div class="bk-cc__plot">'
+        + tk.map(function (v) { return '<div class="bk-cc__grid" style="bottom:' + (v * 100 / top) + '%"><span>' + (opt.tick ? opt.tick(v) : num(v)) + '</span></div>'; }).join('')
+        + '<div class="bk-cc__cols">' + cats.map(function (c, i) {
+          var s = stacks[i], tot = totals[i];
+          var rows = s.length > 1 ? s.map(function (x) { return { color: color[x.code], name: (d.houses.filter(function (h) { return h.code === x.code; })[0] || {}).name, value: fmt(x.value) }; }).concat([{ name: 'Всего', value: fmt(tot) }])
+            : [{ color: ONE, name: opt.series || '', value: fmt(tot) }];
+          return '<div class="bk-cc__col"' + tip(tipTitles[i], rows) + '>'
+            + (tot && cats.length <= (narrow ? 7 : 14) ? '<span class="bk-cc__cap">' + (opt.cap ? opt.cap(tot) : fmt(tot)) + '</span>' : '')
+            + '<div class="bk-cc__stack" style="height:' + (tot * 100 / top) + '%">'
+            + s.filter(function (x) { return x.value > 0; }).map(function (x) { return '<i style="flex-grow:' + x.value + ';background:' + (x.code ? color[x.code] : ONE) + '"></i>'; }).join('')
+            + '</div></div>';
+        }).join('') + '</div></div>'
+        + '<div class="bk-cc__x">' + cats.map(function (c, i) { return '<span>' + (i % every ? '' : esc(c)) + '</span>'; }).join('') + '</div></div>';
+    };
+    // горизонтальные полосы: rows — [{label, value, color?, text?}]
+    var bars = function (rows, fmt, max) {
+      max = max || Math.max.apply(null, rows.map(function (r) { return r.value; }).concat([1]));
+      return '<div class="bk-hb">' + rows.map(function (r) {
+        return '<div class="bk-hb__r"' + tip(r.label, [{ color: r.color || ONE, name: r.tipName || '', value: r.text || fmt(r.value) }]) + '><span class="bk-hb__l">' + esc(r.label) + '</span>'
+          + '<span class="bk-hb__t"><i style="width:' + (r.value * 100 / max) + '%;background:' + (r.color || ONE) + '"></i></span><span class="bk-hb__v">' + (r.text || fmt(r.value)) + '</span></div>';
+      }).join('') + '</div>';
+    };
+    var card = function (title, sub, body, wide) {
+      return '<section class="bk-box bk-sc' + (wide ? ' bk-sc--wide' : '') + '"><h3>' + title + '</h3>' + (sub ? '<p class="bk-muted bk-sc__sub">' + sub + '</p>' : '') + body + '</section>';
+    };
+
+    var short = function (v) { return v ? rub(v).replace(/\s₽$/, '') : '0'; };
+    var mcats = d.months.map(function (m, i, all) { return monthLabel(m.month, i, all); });
+    var mfull = d.months.map(function (m) { return MONTHS_FULL[+m.month.slice(5, 7) - 1] + ' ' + m.month.slice(0, 4); });
+    var stackBy = function (field) {
+      return d.months.map(function (m) { return d.houses.map(function (h) { return { code: h.code, value: m[field][h.code] || 0 }; }); });
+    };
+    var byHouse = d.by_house.slice().sort(function (a, b) { return b.occupancy - a.occupancy; });
+    var top = byHouse[0], peak = d.months.slice().sort(function (a, b) { return b.occupancy - a.occupancy; })[0];
+    var wk = d.weekdays, wkdays = wk.slice(0, 4).map(function (w) { return w.occupancy; }), wkend = [wk[4].occupancy, wk[5].occupancy];
+    var leadHalf = k.lead_median;
+
+    // главное словами — только факты из цифр
+    var facts = [];
+    if (k.bookings) {
+      if (top && byHouse.length > 1) facts.push('Больше всего спрос — <b>' + esc(top.name) + '</b>: занято ' + pct(top.occupancy) + ' ночей, ' + top.bookings + ' ' + pword(top.bookings, 'бронь', 'брони', 'броней') + '.');
+      if (peak && d.months.length > 2) facts.push('Пик сезона — <b>' + MONTHS_FULL[+peak.month.slice(5, 7) - 1] + ' ' + peak.month.slice(0, 4) + '</b>: занято ' + pct(peak.occupancy) + ' ночей.');
+      facts.push('Ночи пятницы и субботы заняты на ' + pct(Math.min.apply(null, wkend)) + '–' + pct(Math.max.apply(null, wkend)) + ', будни (пн–чт) — на ' + pct(Math.min.apply(null, wkdays)) + '–' + pct(Math.max.apply(null, wkdays)) + '.');
+      if (leadHalf !== null) facts.push('Половина гостей бронирует за <b>' + leadHalf + ' ' + pword(leadHalf, 'день', 'дня', 'дней') + '</b> до заезда и меньше.');
+      if (k.repeat_guests) facts.push('Повторные гости — ' + k.repeat_guests + ' из ' + k.unique_guests + ' (бывали у вас раньше или приезжали снова).');
+    }
+
+    var houseRows = d.by_house.map(function (h) {
+      return ['<i class="bk-sw2" style="background:' + color[h.code] + '"></i>' + esc(h.name), h.bookings, h.nights, pct(h.occupancy), money(h.revenue), money(h.avg_check), num(h.avg_guests, 1), h.cancelled,
+        h.bath_sessions ? h.bath_sessions + ' / ' + num(h.bath_hours, 1) + ' ч / ' + money(h.bath_revenue) : '—'];
+    });
+    var SRC = { site: 'Сайт', pwa: 'Приложение', max: 'MAX', admin: 'По телефону', migrated: 'Прежние заявки' };
+
+    box.innerHTML = '<p class="bk-muted bk-stats__note">Заезды с ' + dfmt(d.from) + ' по ' + dfmt(d.to) + ' · сравнение с ' + dfmt(d.prev_from) + ' – ' + dfmt(d.prev_to)
+      + '. Брони — подтверждённые и завершённые; сумма — по расчёту брони (предоплата в системе не ведётся).</p>'
+      + '<div class="bk-kpis">'
+      + '<div class="bk-kpi bk-kpi--hero"><span class="bk-kpi__l">Сумма броней</span><b class="bk-kpi__v">' + money(k.revenue) + '</b>' + delta(k.revenue, p.revenue, true)
+      + (k.bath_revenue ? '<span class="bk-kpi__s">из них баня по часам — ' + money(k.bath_revenue) + '</span>' : '') + '</div>'
+      + tile('Броней Домов', num(k.bookings), k.nights + ' ' + pword(k.nights, 'ночь', 'ночи', 'ночей'), delta(k.bookings, p.bookings, true))
+      + tile('Загрузка', pct(k.occupancy), 'занятых ночей из всех', delta(k.occupancy, p.occupancy, true, true))
+      + tile('Средний чек', money(k.avg_check), money(k.avg_night) + ' за ночь', delta(k.avg_check, p.avg_check, true))
+      + tile('Гостей в брони', num(k.avg_guests, 1), 'в среднем, ' + num(k.avg_stay, 1) + ' ' + pword(Math.round(k.avg_stay), 'ночь', 'ночи', 'ночей'), delta(k.avg_guests, p.avg_guests, true))
+      + tile('Заявки → брони', pct(k.conversion), k.requests + ' ' + pword(k.requests, 'заявка', 'заявки', 'заявок') + (k.pending ? ', ещё не решено ' + k.pending : ''), delta(k.conversion, p.conversion, true, true))
+      + tile('Отмены', pct(k.cancel_rate), k.cancelled + ' из решённых', delta(k.cancel_rate, p.cancel_rate, false, true))
+      + (k.bath_sessions || p.bath_sessions ? tile('Баня по часам', num(k.bath_sessions), num(k.bath_hours, 1) + ' ч', delta(k.bath_sessions, p.bath_sessions, true)) : '')
+      + tile('Уже вперёд', money(d.ahead.revenue), d.ahead.bookings + ' ' + pword(d.ahead.bookings, 'бронь', 'брони', 'броней') + ' · ближайшие 30 ночей заняты на ' + pct(d.ahead.occupancy30))
+      + '</div>'
+      + (facts.length ? '<section class="bk-box bk-facts"><h3>Главное</h3><ul>' + facts.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul></section>' : '')
+      + (!k.bookings && !k.requests ? '<p class="bk-muted">За этот период заездов нет — выберите другой период.</p>' : '')
+      + '<div class="bk-sgrid">'
+      + card('Сезонность: занятые ночи по месяцам', 'Сколько ночей Домов занято в каждом месяце; загрузка — в подсказке и таблице.', legend()
+        + columns(mcats, stackBy('nights'), function (v) { return num(v) + ' ' + pword(v, 'ночь', 'ночи', 'ночей'); }, mfull, { cap: function (v) { return v; }, min: 1 })
+        + table(['Месяц'].concat(d.houses.map(function (h) { return esc(h.name); })).concat(['Всего ночей', 'Загрузка', 'Броней']), d.months.map(function (m, i) {
+          return [mfull[i]].concat(d.houses.map(function (h) { return m.nights[h.code] || 0; })).concat([Object.keys(m.nights).reduce(function (a, c) { return a + m.nights[c]; }, 0), pct(m.occupancy), m.bookings]);
+        })), true)
+      + card('Сумма броней по месяцам', 'По месяцу заезда, Дома и баня по часам.', legend()
+        + columns(mcats, stackBy('revenue'), money, mfull, { cap: short, tick: short })
+        + table(['Месяц'].concat(d.houses.map(function (h) { return esc(h.name); })).concat(['Всего']), d.months.map(function (m, i) {
+          return [mfull[i]].concat(d.houses.map(function (h) { return money(m.revenue[h.code] || 0); })).concat([money(Object.keys(m.revenue).reduce(function (a, c) { return a + m.revenue[c]; }, 0))]);
+        })), true)
+      + card('Какие Дома больше берут', 'Загрузка — доля занятых ночей за период.', bars(byHouse.map(function (h) { return { label: h.name, value: h.occupancy, color: color[h.code], tipName: h.bookings + ' ' + pword(h.bookings, 'бронь', 'брони', 'броней') + ', ' + money(h.revenue) }; }), pct, 100)
+        + '<h4 class="bk-sc__h4">Сумма броней</h4>' + bars(byHouse.map(function (h) { return { label: h.name, value: h.revenue + h.bath_revenue, color: color[h.code], text: rub(h.revenue + h.bath_revenue) }; }), rub)
+        + table(['Дом', 'Броней', 'Ночей', 'Загрузка', 'Сумма', 'Средний чек', 'Гостей в среднем', 'Отмен', 'Баня по часам: сеансов / часов / сумма'], houseRows))
+      + card('Загрузка по дням недели', 'Доля занятых ночей: ночь пятницы — с пятницы на субботу.',
+        columns(WEEK, wk.map(function (w) { return [{ code: null, value: w.occupancy }]; }), pct, WEEK_FULL.map(function (w) { return 'Ночь, ' + w; }), { cap: function (v) { return Math.round(v) + '%'; }, tick: function (v) { return v + '%'; }, min: 10, series: 'занято ночей' })
+        + table(['День', 'Занято ночей', 'Загрузка', 'Заездов в этот день'], wk.map(function (w, i) { return [WEEK_FULL[i], w.nights, pct(w.occupancy), w.checkins]; })))
+      + card('За сколько дней до заезда бронируют', 'От заявки до заезда; без перенесённых прежних заявок.', bars(d.lead.map(function (x) { return { label: x.label, value: x.count, tipName: 'броней' }; }), num)
+        + table(['Срок', 'Броней'], d.lead.map(function (x) { return [x.label, x.count]; })))
+      + card('На сколько ночей', '', bars(d.stay.map(function (x) { return { label: x.label, value: x.count, tipName: 'броней' }; }), num)
+        + '<h4 class="bk-sc__h4">Сколько гостей</h4>' + bars(d.group.map(function (x) { return { label: x.label, value: x.count, tipName: 'броней' }; }), num)
+        + table(['', 'Броней'], d.stay.concat(d.group).map(function (x) { return [x.label + (d.group.indexOf(x) >= 0 ? ' гостей' : ''), x.count]; })))
+      + card('Откуда заявки', 'Заявки — все, брони — подтверждённые и завершённые.', bars(d.sources.map(function (s) { return { label: SRC[s.source] || s.source, value: s.bookings, text: s.bookings + ' из ' + s.requests, tipName: 'броней из заявок, ' + money(s.revenue) }; }), num)
+        + table(['Откуда', 'Заявок', 'Броней', 'Сумма'], d.sources.map(function (s) { return [SRC[s.source] || esc(s.source), s.requests, s.bookings, money(s.revenue)]; })))
+      + '</div><div class="bk-tip" role="tooltip" hidden></div>';
+
+    // подсказка при наведении и при фокусе с клавиатуры; текст — через textContent
+    var tipEl = qs(box, '.bk-tip');
+    var showTip = function (el, x, y) {
+      var tdat = tips[+el.getAttribute('data-tip')];
+      if (!tdat) return;
+      tipEl.textContent = '';
+      var h = document.createElement('b'); h.textContent = tdat.title; tipEl.appendChild(h);
+      tdat.rows.forEach(function (r) {
+        var row = document.createElement('div'); row.className = 'bk-tip__r';
+        if (r.color) { var key = document.createElement('i'); key.style.background = r.color; row.appendChild(key); }
+        var v = document.createElement('strong'); v.textContent = r.value; row.appendChild(v);
+        if (r.name) { var n = document.createElement('span'); n.textContent = r.name; row.appendChild(n); }
+        tipEl.appendChild(row);
+      });
+      tipEl.hidden = false;
+      var bb = box.getBoundingClientRect(), tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+      var left = Math.min(Math.max(4, x - bb.left + 14), bb.width - tw - 4);
+      var top = y - bb.top - th - 12;
+      tipEl.style.left = left + 'px';
+      tipEl.style.top = (top < 0 ? y - bb.top + 18 : top) + 'px';
+    };
+    qsa(box, '[data-tip]').forEach(function (el) {
+      el.addEventListener('pointermove', function (e) { showTip(el, e.clientX, e.clientY); });
+      el.addEventListener('pointerleave', function () { tipEl.hidden = true; });
+      el.addEventListener('focus', function () { var r = el.getBoundingClientRect(); showTip(el, r.left + r.width / 2, r.top); });
+      el.addEventListener('blur', function () { tipEl.hidden = true; });
+    });
+  };
+  function pword(n, one, few, many) {
+    n = Math.abs(Math.round(n)) % 100;
+    var n1 = n % 10;
+    if (n > 10 && n < 20) return many;
+    if (n1 > 1 && n1 < 5) return few;
+    return n1 === 1 ? one : many;
+  }
+  Admin.prototype.statsCsv = function (d) {
+    var cell = function (v) { v = String(v == null ? '' : v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var k = d.kpi, rows = [['Статистика за период', d.from + ' — ' + d.to], [],
+      ['Сумма броней', k.revenue], ['Броней Домов', k.bookings], ['Ночей', k.nights], ['Загрузка, %', k.occupancy], ['Средний чек', k.avg_check], ['Средняя цена ночи', k.avg_night],
+      ['Ночей в брони', k.avg_stay], ['Гостей в брони', k.avg_guests], ['Заявок', k.requests], ['Заявки → брони, %', k.conversion], ['Отмены, %', k.cancel_rate],
+      ['Бронируют за, дней (медиана)', k.lead_median == null ? '' : k.lead_median], ['Баня по часам: сеансов', k.bath_sessions], ['Баня по часам: часов', k.bath_hours], ['Баня по часам: сумма', k.bath_revenue],
+      ['Гостей (разных телефонов)', k.unique_guests], ['Из них повторные', k.repeat_guests], [],
+      ['Дом', 'Броней', 'Ночей', 'Загрузка, %', 'Сумма', 'Средний чек', 'Гостей в среднем', 'Отмен', 'Баня: сеансов', 'Баня: часов', 'Баня: сумма']];
+    d.by_house.forEach(function (h) { rows.push([h.name, h.bookings, h.nights, h.occupancy, h.revenue, h.avg_check, h.avg_guests, h.cancelled, h.bath_sessions, h.bath_hours, h.bath_revenue]); });
+    rows.push([], ['Месяц'].concat(d.houses.map(function (h) { return h.name + ': ночей'; })).concat(d.houses.map(function (h) { return h.name + ': сумма'; })).concat(['Загрузка, %', 'Броней', 'Заявок']));
+    d.months.forEach(function (m) {
+      rows.push([m.month].concat(d.houses.map(function (h) { return m.nights[h.code] || 0; })).concat(d.houses.map(function (h) { return m.revenue[h.code] || 0; })).concat([m.occupancy, m.bookings, m.requests]));
+    });
+    rows.push([], ['День недели', 'Занято ночей', 'Загрузка, %', 'Заездов']);
+    d.weekdays.forEach(function (w, i) { rows.push([WEEK_FULL[i], w.nights, w.occupancy, w.checkins]); });
+    var csv = '﻿' + rows.map(function (r) { return r.map(cell).join(';'); }).join('\r\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'statistika-' + d.from + '_' + d.to + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   };
 
   // --- дома и бани

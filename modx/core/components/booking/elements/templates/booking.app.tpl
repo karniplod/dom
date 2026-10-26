@@ -52,7 +52,7 @@
         <button class="bk-btn" type="submit">Войти</button>
       </form>
       <div data-app-admin hidden>
-        <div class="bk-admin" data-bk-admin-mount data-bk-tabs="grid,list,blocks,prices,holidays,houses,help"></div>
+        <div class="bk-admin" data-bk-admin-mount data-bk-tabs="grid,list,stats,blocks,prices,holidays,houses,help"></div>
       </div>
     </section>
     <section data-app-pane="help" hidden aria-labelledby="help-title">
