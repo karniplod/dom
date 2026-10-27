@@ -26,7 +26,6 @@ if ($action === xPDOTransport::ACTION_UNINSTALL) {
 
 $settings = [
     'booking.admin_email' => ['', 'textfield'],
-    'booking.vk_discount' => ['5', 'numberfield'],
     'booking.vk_url' => ['https://vk.com/russianbath59', 'textfield'],
     'booking.request_link_page' => ['0', 'numberfield'],
     'booking.form_page' => ['0', 'numberfield'],
@@ -50,6 +49,8 @@ if ($tz && $tz->get('value') === 'Europe/Moscow') {
 }
 // скидка на сайте отменена (решение владельца 22.10.2026) — прежняя настройка больше не нужна
 $modx->removeCollection(modSystemSetting::class, ['key' => 'booking.site_discount']);
+// акция «−5% через ВКонтакте» отменена (решение владельца 27.10.2026) — группа ВКонтакте осталась
+$modx->removeCollection(modSystemSetting::class, ['key' => 'booking.vk_discount']);
 
 // право booking_admin: в шаблоне политик администратора и включено в политике Administrator
 $tpl = $modx->getObject(modAccessPolicyTemplate::class, ['name' => 'AdministratorTemplate']);

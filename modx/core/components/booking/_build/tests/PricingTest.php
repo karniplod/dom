@@ -66,15 +66,14 @@ return [
         $bad = $t->run('booking_manage_holiday', ['op' => 'save', 'date' => '2031-03-08', 'holiday_type' => 'holiday_before_workday']);
         $t->eq(400, $bad['status'], 'дата праздника уникальна');
     },
-    'скидка 5% ВКонтакте — в брони администратора по галочке' => function (BookingTest $t) {
+    'акции ВКонтакте нет: и в брони администратора — без скидки' => function (BookingTest $t) {
         $t->admin();
         $m = $t->run('booking_create_manual', ['house' => 'ru', 'date_from' => '2031-12-05', 'date_to' => '2031-12-07', 'guests' => 14,
             'guest_name' => 'ТЕСТ ВК', 'guest_phone' => '+79000000002', 'apply_discount' => 1]);
         $t->ok($m['success'], 'бронь создана: ' . $m['message']);
-        $t->eq((int)round(51000 * 0.05), $m['data']['quote_discount'] ?? null, 'скидка 5% от всей суммы');
-        $t->eq(51000 - 2550, $m['data']['total'] ?? null, 'итог со скидкой');
-        $labels = implode('|', array_column($m['data']['lines'] ?? [], 'label'));
-        $t->ok(strpos($labels, 'Скидка 5% при бронировании через ВКонтакте') !== false, 'строка «через ВКонтакте»');
+        $t->eq(0, $m['data']['quote_discount'] ?? null, 'скидки нет');
+        $t->eq(51000, $m['data']['total'] ?? null, 'итог без скидки');
+        $t->ok(strpos(implode('|', array_column($m['data']['lines'] ?? [], 'label')), 'Скидка') === false, 'строки «Скидка» нет');
     },
     'проверки входа' => function (BookingTest $t) {
         $t->guest();

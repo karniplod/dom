@@ -156,7 +156,7 @@ $manifest = <<<'JSON'
  "site_name": "Доходные Дома Ефремовых",
  "email": "efremova7676@mail.ru",
  "pkg": "bania-modx",
- "version": "2026-10-26 11:47",
+ "version": "2026-10-27 09:22",
  "chunks": [
   {
    "name": "bn.fox",
@@ -292,11 +292,6 @@ $manifest = <<<'JSON'
    "name": "bn.home.occ",
    "category": "Главная",
    "file": "chunks/bn.home.occ.html"
-  },
-  {
-   "name": "bn.home.promo",
-   "category": "Главная",
-   "file": "chunks/bn.home.promo.html"
   },
   {
    "name": "bn.home.prices",
@@ -1134,13 +1129,6 @@ $manifest = <<<'JSON'
    "name": "ОГРНИП",
    "cc": "Реквизиты",
    "help": "Только цифры"
-  },
-  {
-   "key": "bn_discount",
-   "value": "5",
-   "name": "Скидка при бронировании через ВКонтакте, %",
-   "cc": "Условия",
-   "help": "Только число. 0 — скидки нет (плашки «−5%» исчезнут)"
   },
   {
    "key": "bn_prepay_percent",

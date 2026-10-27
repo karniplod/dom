@@ -7,7 +7,7 @@ use Booking\Service\BookingError;
 /**
  * booking_create_manual — бронь по телефону: администратор заводит её за гостя (решение владельца 22.10.2026).
  * status=confirmed (по умолчанию) — сразу подтверждённая, даты занимаются; status=new — заявка, даты не заняты,
- * подтвердить после предоплаты обычной кнопкой. Та же проверка пересечений; скидка ВКонтакте — только по галочке.
+ * подтвердить после предоплаты обычной кнопкой. Та же проверка пересечений.
  * В ответе — личная ссылка гостя (link): её отправляют гостю, по ней он видит заявку и может попросить отмену.
  */
 class CreateManual extends Base
@@ -22,7 +22,7 @@ class CreateManual extends Base
         $props['comment'] = $props['guest_comment'] ?? ($props['comment'] ?? '');
         $in = $bk->input($props, true, true);
         $deposit = $bk->depositAmount($this->getProperty('deposit_amount'));
-        $quote = $bk->quote($in, $this->bool('apply_discount'));
+        $quote = $bk->quote($in, false);
         $note = $this->str('admin_note', 2000);
         $status = $this->str('status', 10) === 'new' ? 'new' : 'confirmed';
         if ($status === 'new') {

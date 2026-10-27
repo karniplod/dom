@@ -94,7 +94,6 @@ return $modx->getChunk($tpl, [
     'options' => $options,
     'houses' => htmlspecialchars(json_encode($houses, JSON_UNESCAPED_UNICODE)),
     'api' => $booking->config['apiUrl'],
-    'discount' => (int)$modx->getOption('booking.vk_discount', null, 5),
     'vk_url' => htmlspecialchars((string)$modx->getOption('booking.vk_url', null, 'https://vk.com/russianbath59')),
     'today' => $booking->today(),
     'client' => htmlspecialchars((string)($scriptProperties['client'] ?? 'site')),

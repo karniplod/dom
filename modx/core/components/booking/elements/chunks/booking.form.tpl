@@ -45,8 +45,8 @@
     <label class="bk-check bk-full"><input type="checkbox" name="agree" value="1" required><span>Даю <a class="bk-link" href="[[+soglasie_url]]" target="_blank">согласие на обработку персональных данных</a> и принимаю <a class="bk-link" href="[[+politika_url]]" target="_blank">Политику обработки персональных данных</a></span>
       <b class="bk-err" data-si-error="agree"></b></label>
   </div>
-  <p class="bk-note">Скидка [[+discount]]% — при бронировании через нашу группу ВКонтакте. Залог 5&nbsp;000–20&nbsp;000&nbsp;₽ зависит от количества и возраста гостей — администратор назовёт его при подтверждении.</p>
-  <p class="bk-vk"><a class="bk-btn bk-btn--ghost bk-btn--sm" href="[[+vk_url]]" target="_blank" rel="noopener">Получить скидку [[+discount]]% ВКонтакте</a></p>
+  <p class="bk-note">Залог 5&nbsp;000–20&nbsp;000&nbsp;₽ зависит от количества и возраста гостей — администратор назовёт его при подтверждении.</p>
+  <p class="bk-vk"><a class="bk-btn bk-btn--ghost bk-btn--sm" href="[[+vk_url]]" target="_blank" rel="noopener">Мы во ВКонтакте</a></p>
   <button class="btn bk-btn" type="submit">Отправить заявку</button>
 </form>
 <div class="bk-done" data-bk-done hidden role="status"></div>

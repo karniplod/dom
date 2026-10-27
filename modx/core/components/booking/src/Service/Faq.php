@@ -168,11 +168,9 @@ class Faq
             . "Свободные даты и расчёт стоимости — в бронировании (кнопка ниже).");
     }
 
-    /** Первое знакомство (кнопка «Начать» в MAX, /start): кто мы, что умеет бот, ссылки — всё из данных сайта */
-    public function welcome(): array
+    /** Самая низкая цена суток среди Домов в форме */
+    protected function minPrice(): int
     {
-        $modx = $this->booking->modx;
-        $names = array_map(fn($h) => $h->get('name'), $this->houses());
         $min = 0;
         foreach ($this->houses() as $h) {
             foreach ($this->booking->pricing()->rules((int)$h->get('id')) as $r) {
@@ -180,6 +178,15 @@ class Faq
                 if ($p > 0 && ($min === 0 || $p < $min)) $min = $p;
             }
         }
+        return $min;
+    }
+
+    /** Первое знакомство (кнопка «Начать» в MAX, /start): кто мы, что умеет бот, ссылки — всё из данных сайта */
+    public function welcome(): array
+    {
+        $modx = $this->booking->modx;
+        $names = array_map(fn($h) => $h->get('name'), $this->houses());
+        $min = $this->minPrice();
         $t = ['Здравствуйте! Это бот Доходных Домов Ефремовых в Перми.', ''];
         if ($names) {
             $t[] = 'Дома с баней и бассейном на сутки: ' . implode(', ', $names) . '. Баня и бассейн входят в цену суток'
@@ -199,7 +206,7 @@ class Faq
             $t[] = 'Сайт: ' . ($nice ? str_replace($host, $nice, $site) : $site);
         }
         if (($v = $this->cc('bn_vk_url')) !== '') {
-            $t[] = 'ВКонтакте: ' . $v . ' — скидка 5% при бронировании через группу.';
+            $t[] = 'ВКонтакте: ' . $v;
         }
         $r = $this->reply(implode("\n", $t));
         if ($site !== '') {
@@ -256,11 +263,10 @@ class Faq
             case 'bath':
                 return $this->reply($this->bathText($houses));
             case 'discount':
-                $d = (int)$this->cc('bn_discount', (string)$this->booking->modx->getOption('booking.vk_discount', null, 0));
-                $vk = $this->cc('bn_vk_url', (string)$this->booking->modx->getOption('booking.vk_url', null, ''));
-                return $this->reply($d > 0
-                    ? "Скидка {$d}% — при бронировании через нашу группу ВКонтакте" . ($vk !== '' ? ": {$vk}" : '.') . "\nНапишите там администратору или назовите группу при звонке."
-                    : 'Сейчас скидок нет. Актуальные цены — в разделе «Цены».');
+                // акций нет (решение владельца 27.10.2026): дешевле всего — будние дни
+                $min = $this->minPrice();
+                return $this->reply('Акций и скидок сейчас нет. Дешевле всего — с понедельника по четверг'
+                    . ($min ? ': сутки от ' . $this->booking->money($min) : '') . '. Все цены — в разделе «Цены».');
             case 'cook':
                 $s = $this->cc('bn_services');
                 return $this->reply($s !== '' ? $s : 'Про повара и угощения спросите администратора.');

@@ -219,7 +219,6 @@ class Bania
         $ph['idx'] = $i;
         $ph['media'] = self::cardMedia($h);
         $ph['features'] = implode('', array_map(function ($f) { return '<li>' . $f . '</li>'; }, $h['features']));
-        $ph['discount'] = self::opt('bn_discount', '5');
         $ph['icon_cube'] = self::icon('cube'); $ph['icon_card'] = self::icon('card'); $ph['icon_pin'] = self::icon('pin');
         foreach (['wd', 'fri', 'sat', 'sun'] as $j => $d) $ph['price_' . $d] = self::money($h['prices'][$j]);
         return $ph;

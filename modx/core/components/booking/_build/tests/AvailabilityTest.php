@@ -98,7 +98,7 @@ return [
         $t->ok($m['success'], 'создана: ' . $m['message']);
         $t->eq('confirmed', $m['data']['status'] ?? null, 'сразу подтверждена');
         $t->eq('admin', $m['data']['source'] ?? null, 'источник — администратор');
-        $t->eq(0, $m['data']['quote_discount'] ?? null, 'скидка ВКонтакте не применяется без галочки');
+        $t->eq(0, $m['data']['quote_discount'] ?? null, 'скидки нет');
         $t->eq('+79001112233', $m['data']['guest_phone'] ?? null, 'телефон приведён к +7');
         $m2 = $t->run('booking_create_manual', ['house' => 'en', 'date_from' => '2031-09-02', 'date_to' => '2031-09-04', 'guests' => 2,
             'guest_name' => 'ТЕСТ Телефон 2', 'guest_phone' => '89001112234']);

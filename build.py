@@ -34,12 +34,12 @@ def jpeg_size(path):
 def money(n): return f"{n:,}".replace(",", " ") + " ₽"
 def minp(h): return min(h["prices"])
 
-DISCOUNT = 5  # %, только при бронировании через группу ВКонтакте (решение владельца 22.10.2026)
 VK, MAIL = "https://vk.com/russianbath59", "efremova7676@mail.ru"
 MAX = ""   # ссылка на чат в MAX (https://max.ru/…); пусто — ссылки MAX на сайте нет. В MODX — «Конфигурация» → «Контакты»
 BRAND = "Доходные Дома Ефремовых"
 FOX = '<svg viewBox="0 0 815 745" aria-hidden="true"><use href="#fox" width="815" height="745"/></svg>'
 ICONS = {
+ "vk": '<path d="M3.5 7.5h3c.6 3.4 2 5.2 3.5 5.6V7.5h2.6v3.2c1.4-.2 2.8-1.6 3.4-3.2H19c-.5 2-2 3.7-3.4 4.4 1.6.7 3 2.2 3.6 4.6h-3c-.6-1.8-2-3-3.6-3.2v3.2h-1C7 16.5 4.2 13.3 3.5 7.5Z"/>',
  "kitchen": '<path d="M5 3v8a2 2 0 0 0 2 2v8M9 3v8a2 2 0 0 1-2 2M7 3v6"/><path d="M17 21V3c-2.2 1-3.5 3.6-3.5 7.5V13H17"/>',
  "steam": '<path d="M3 20h18"/><path d="M5 16c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0"/><path d="M8 11c-1-1.5 1-2.5 0-4s1-2.5 0-4M12 11c-1-1.5 1-2.5 0-4s1-2.5 0-4M16 11c-1-1.5 1-2.5 0-4s1-2.5 0-4"/>',
  "cue": '<circle cx="8" cy="15" r="4"/><circle cx="16.5" cy="17.5" r="2.5"/><path d="M11 12 21 2"/>',
@@ -158,7 +158,7 @@ def order_modal(house=""):
     return f'''<dialog class="modal omodal" id="order-modal" aria-labelledby="om-title">
   <div class="omodal__box">
     <button class="x" type="button" data-close aria-label="Закрыть форму">{XICON}</button>
-    <div class="omodal__head"><h2 id="om-title">Оставить заявку</h2><p class="omodal__disc"><a href="{VK}" target="_blank" rel="noopener">Скидка {DISCOUNT}% при бронировании через ВКонтакте</a></p><p>Перезвоним, подтвердим даты и назовём сумму предоплаты, это 50% от стоимости. Или позвоните: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
+    <div class="omodal__head"><h2 id="om-title">Оставить заявку</h2><p>Перезвоним, подтвердим даты и назовём сумму предоплаты, это 50% от стоимости. Или позвоните: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
     {form(house)}
   </div>
 </dialog>'''
@@ -171,6 +171,7 @@ def footer(house=""):
     <p><a href="index.html">{BRAND}</a>, аренда домов с баней и бассейном в Перми посуточно</p>
     <p>ИП Ефремова Ольга Анатольевна, ИНН 590301252919, ОГРНИП 325595800149589</p>
     <p>Бронирование: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a>, <a href="mailto:{MAIL}">{MAIL}</a></p>
+    <p class="foot__social">{max_link('<a href="{url}" target="_blank" rel="noopener">' + icon("chat") + 'MAX</a>')}<a href="{VK}" target="_blank" rel="noopener">{icon("vk")}ВКонтакте</a></p>
     <p class="foot__docs"><a href="politika.html">Политика обработки персональных данных</a> · <a href="soglasie.html">Согласие на обработку персональных данных</a> · <a href="cookie.html">Политика cookie</a> · <button type="button" data-cookie-settings>Настройки cookie</button></p>
   </div>
   <nav aria-label="Дома">{links}</nav>
@@ -188,7 +189,7 @@ def order_band(house="", photo="en/facade", title="Оставьте заявку
         extra = max_link('<p><a class="link" href="{url}" target="_blank" rel="noopener">Написать в MAX</a></p>') + f'<p><a class="link" href="{VK}" target="_blank" rel="noopener">Мы во ВКонтакте</a> · <a class="link" href="kontakty.html">Все контакты</a></p>' + mark("appLink", "")   # в MODX — ссылка на приложение бронирования (bnAppLink)
     return f'''<section class="band band--soft on-light" id="order" aria-labelledby="order-title"><div class="wrap order">
   <div class="order__txt">
-    <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты 50%, остальное — при заселении.</p><p class="disc-line"><a href="{VK}" target="_blank" rel="noopener">Скидка {DISCOUNT}% при бронировании через группу ВКонтакте</a></p></div>
+    <div class="sec-head"><h2 class="h-sec" id="order-title">{title}</h2><p class="lead">Перезвоним и подтвердим даты. Бронь действует после предоплаты 50%, остальное — при заселении.</p></div>
     <div class="order__contacts"><a class="big tnum nb" href="tel:{PHONE_RAW}">{PHONE}</a>{extra}</div>
     <div class="order__photo{" order__photo--tall" if photo == "en/facade" else ""}">{img(photo, alt, sizes="(max-width: 760px) 100vw, 560px")}</div>
   </div>
@@ -300,7 +301,7 @@ HOME_FAQ = [
  ("Можно ли снять Дом на день рождения или корпоратив?", "Да. В Английском и Русском доме ночуют 12 гостей, а отдыхают до 20; в доме на Свиязева ночуют 8, отдыхают до 15. На улице нельзя шуметь, кричать и слушать музыку. С 22:00 до 8:00 на улице нельзя громко разговаривать. В доме шуметь можно при закрытых окнах и дверях — установлены кондиционеры."),
  ("Бассейны работают зимой?", "Да, во всех трёх домах круглый год. В Английском и Русском доме бассейн 3 × 2,5 м, глубина 1,5 м, вода 28–30°. В доме на Свиязева бассейн с функцией джакузи 2,5 × 2 м, глубина 1 м."),
  ("Можно заказать шашлык или плов?", "Да, приготовим из ваших продуктов: шашлык 300 ₽ за кг, плов 2 500 ₽ за казан 10 литров. Скажите об этом администратору при бронировании."),
- ("Есть ли скидки?", "Да, 5% при бронировании через нашу группу ВКонтакте. Ещё дешевле приезжать с понедельника по четверг: сутки от 15 000 ₽."),
+ ("Есть ли скидки?", "Акций сейчас нет. Дешевле всего приезжать с понедельника по четверг: сутки от 15 000 ₽."),
  ("Можно с собакой или кошкой?", "Да, во всех трёх домах. Доплата за питомца 1 000 ₽."),
  ("Как внести предоплату?", "Предоплата — 50% от стоимости, вносите её только после того, как администратор подтвердил даты: кнопка «Внести предоплату» есть на странице каждого Дома, оплата через Систему быстрых платежей. В комментарии укажите имя и дату заезда. При отмене предоплату возвращаем, если на ваши даты находится другой гость."),
  ("Что такое залог?", "Сумма от 5 000 до 20 000 ₽ на случай повреждений в доме. Точную сумму администратор назовёт при подтверждении брони. Зависит от количества и возраста гостей."),
@@ -327,7 +328,7 @@ def house_card(k):
     <p class="hcard__kick">{h["kicker"]}</p>
     <h3><a href="{h["file"]}">{h["name"]}</a></h3>
     <ul>{mark("features", "".join(f"<li>{f}</li>" for f in feats))}</ul>
-    <p class="hcard__price"><b class="tnum">от {money(minp(h))}</b><span>за сутки</span><em class="disc">−{DISCOUNT}% через ВКонтакте</em></p>
+    <p class="hcard__price"><b class="tnum">от {money(minp(h))}</b><span>за сутки</span></p>
     <div class="hcard__cta"><button class="btn btn--sm" type="button" data-order data-house="{k}">Оставить заявку</button><a class="btn btn--sm btn--tour" href="{h["tour"]}" target="_blank" rel="noopener">{icon("cube")}3D-тур</a></div>
     <p class="hcard__links"><a class="btn btn--sm" href="{h["prepay"]}">{icon("card")}Внести предоплату</a><a href="{h["file"]}">Подробнее о доме</a></p>
   </div>
@@ -438,7 +439,7 @@ def home():
     <h1 id="hero-title">Снять Дом с баней и бассейном в Перми</h1>
     <p class="hero__sub">Три Дома в трёх стилях: Английский, Русский и Дом на Свиязева. Баня, бассейн, бильярд и мангал, а на праздник можно позвать до 20 гостей.</p>
     <div class="hero__cta"><button class="btn" type="button" data-order>Оставить заявку</button><a class="btn btn--ghost" href="#houses">Выбрать Дом</a></div>
-    <div class="facts-row"><a class="btn btn--sm disc-btn" href="{VK}" target="_blank" rel="noopener">−{DISCOUNT}% при бронировании через ВКонтакте</a><span>сутки от 15 000 ₽</span><span>до 20 гостей</span><span>в черте города</span><span>можно с питомцами</span></div>
+    <div class="facts-row"><span>сутки от 15 000 ₽</span><span>до 20 гостей</span><span>в черте города</span><span>можно с питомцами</span></div>
   </div></div>
 </section>
 
@@ -483,11 +484,6 @@ def home():
     <article>{img("mood/occ-corporate", "Коллеги празднуют за общим столом")}<h3>Корпоратив</h3><p>Стол на всю команду, бильярд и мангал. Отчётные документы для бухгалтерии оформляем.</p><p class="fit">Английский Дом: 200 м², 6 комнат</p><button type="button" data-order data-occasion="corporate">Заявка на корпоратив</button></article>
     <article>{img("mood/occ-family", "Ужин во дворе Дома на закате")}<h3>Семейные выходные</h3><p>Можно с детьми и с питомцами. Отдельные спальни для тех, кто ляжет пораньше.</p><p class="fit">Любой из трёх домов</p><button type="button" data-order data-occasion="family">Заявка для семьи</button></article>
   </div>
-</div></section>
-
-<section class="promo" aria-labelledby="promo-title"><div class="wrap promo__in">
-  <div><h2 id="promo-title">Забронируйте баню прямо сейчас — скидка {DISCOUNT}%</h2><p>Скидка {DISCOUNT}% при бронировании через нашу <a href="{VK}" target="_blank" rel="noopener">группу ВКонтакте</a>. А с понедельника по четверг сутки ещё и дешевле: от 15 000 ₽.</p></div>
-  <a class="btn" href="{VK}" target="_blank" rel="noopener">Получить скидку</a>
 </div></section>
 
 <section class="band on-light" id="prices" aria-labelledby="prices-title"><div class="wrap">
@@ -582,7 +578,7 @@ def house_page(k):
 <section class="band on-light" id="price" aria-labelledby="p-title"><div class="wrap">
   <div class="sec-head"><h2 class="h-sec" id="p-title">Цена за сутки</h2><p class="lead">Заезд с {h["checkin"]}, выезд до {h["checkout"]} следующего дня. Цена для компании до {h["base"]} человек, за каждого следующего гостя +{h["extra"]} ₽.</p></div>
   <div class="price-days">{mark("prices", prices)}</div>
-  <p class="note">Праздники считаются как выходные. Залог 5 000 – 20 000 ₽, питомец +1 000 ₽. <b>Скидка {DISCOUNT}% при бронировании через <a href="{VK}" target="_blank" rel="noopener">группу ВКонтакте</a>.</b></p>
+  <p class="note">Праздники считаются как выходные. Залог 5 000 – 20 000 ₽, питомец +1 000 ₽.</p>
   <div class="prepay" id="prepay">{icon("card")}<div><h3>Предоплата за {h["name"]}</h3><p>{PREPAY_TXT}</p></div><a class="btn" href="{h["prepay"]}">Внести предоплату</a></div>
 </div></section>
 
@@ -803,7 +799,7 @@ FONTS = ('<link rel="preload" href="fonts/golos-text-cyrillic-1.woff2" as="font"
 # значки — файлами: data:-значок Яндекс для выдачи не берёт; favicon.ico в корне спрашивают все (tools/make_favicon.py)
 FAV = ('<link rel="icon" href="favicon.ico" sizes="48x48"><link rel="icon" href="img/fox.svg" type="image/svg+xml">'
        '<link rel="icon" href="img/favicon-120.png" type="image/png" sizes="120x120"><link rel="apple-touch-icon" href="img/apple-touch-icon.png">')
-# скидка только через ВКонтакте (решение владельца 22.10.2026) — в расчёте формы сайта её нет
+# скидок нет (акция ВКонтакте отменена 27.10.2026)
 HJS = {"_discount": 0} | {k: dict(name=v["name"], prices=dict(zip(["wd", "fri", "sat", "sun"], v["prices"])), max=v["max"], checkin=v["checkin"], checkout=v["checkout"], prepay=v["prepay"], base=v["base"], extra=v["extra"]) for k, v in H.items()}
 RSS_LINK = f'<link rel="alternate" type="application/rss+xml" title="Блог — {BRAND}" href="rss.xml">'
 

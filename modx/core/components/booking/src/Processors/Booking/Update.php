@@ -40,7 +40,7 @@ class Update extends Base
             'phone' => $p['guest_phone'] ?? $row->get('guest_phone'),
             'comment' => $p['guest_comment'] ?? $row->get('guest_comment'),
         ], true, true);
-        // скидка сохраняется, если она была при заявке
+        // скидки больше нет (акция ВКонтакте отменена 27.10.2026): прежняя при правке пересчитается в 0
         $quote = $bk->quote($in, (int)$row->get('quote_discount') > 0);
         $old = $bk->toAdmin($row);
         unset($old['lines']);
