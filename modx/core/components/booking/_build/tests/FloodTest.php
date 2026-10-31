@@ -16,6 +16,10 @@ return [
         $t->ok($c['success'], 'третья заявка с номера принята');
         $d = $t->request(['house' => 'sv', 'date_from' => '2031-05-19', 'date_to' => '2031-05-20', 'phone' => $phone]);
         $t->ok(!$d['success'] && ($d['data']['field'] ?? '') === 'phone', 'четвёртая новая с номера — отказ у телефона: ' . $d['message']);
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.' . mt_rand(1, 250);
+        $g = $t->request(['house' => 'sv', 'date_from' => '2031-05-05', 'date_to' => '2031-05-06', 'phone' => $phone]);
+        $t->ok($g['success'], 'тот же номер с другого адреса — принят (чужим номером не закрыть): ' . $g['message']);
+        unset($_SERVER['REMOTE_ADDR']);
         $t->admin();
         $t->run('booking_cancel', ['id' => $a['data']['id'], 'reason' => 'ТЕСТ']);
         $e = $t->request(['house' => 'sv', 'date_from' => '2031-05-19', 'date_to' => '2031-05-20', 'phone' => $phone]);
@@ -36,6 +40,15 @@ return [
         $t->eq(2, $ok, 'две заявки приняты, третья — нет');
         $t->ok(strpos($r['message'], 'Слишком много заявок') !== false, 'понятная причина: ' . $r['message']);
         unset($_SERVER['REMOTE_ADDR']);
+        $t->modx->setOption('booking.ip_header', 'HTTP_X_REAL_IP');
+        $_SERVER['REMOTE_ADDR'] = '10.0.0.1';
+        $_SERVER['HTTP_X_REAL_IP'] = '203.0.113.7, 10.0.0.1';
+        $t->eq('203.0.113.7', $t->booking->bookings()->clientIp(), 'за прокси — адрес гостя из заголовка');
+        $_SERVER['HTTP_X_REAL_IP'] = 'не адрес';
+        $t->eq('10.0.0.1', $t->booking->bookings()->clientIp(), 'в заголовке не IP — адрес соединения');
+        $t->modx->setOption('booking.ip_header', '');
+        $t->eq('10.0.0.1', $t->booking->bookings()->clientIp(), 'без настройки заголовок не читается');
+        unset($_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_X_REAL_IP']);
         $t->flood(false);
     },
     'окно предоплаты: заявка на Дом — ссылка на страницу предоплаты и 50%; баня, отключение — без окна' => function (BookingTest $t) {

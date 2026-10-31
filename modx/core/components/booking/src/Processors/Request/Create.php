@@ -18,11 +18,13 @@ class Create extends Base
         $bk = $b->bookings();
         $in = $bk->input($this->getProperties(), true);
         $bk->assertFree($in);
-        $bk->assertNotFlood($in, (string)($_SERVER['REMOTE_ADDR'] ?? ''));
+        $ip = $bk->clientIp();
+        $bk->assertNotFlood($in, $ip);
         $quote = $bk->quote($in, false);   // без скидки
         $interface = $b->actor()['interface'];
         $source = in_array($interface, ['pwa', 'max'], true) ? $interface : 'site';
         [$row, $code] = $bk->create($in, $quote, 'new', $source);
+        $bk->rememberRequest($in['phone'], $ip, (int)$row->get('id'));
         $b->log()->write('booking', (int)$row->get('id'), 'create', null, ['status' => 'new', 'total' => $quote['total'], 'source' => $source]);
         return $bk->toGuest($row, $code);
     }

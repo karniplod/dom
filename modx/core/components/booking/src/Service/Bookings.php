@@ -225,9 +225,11 @@ class Bookings
 
     /**
      * Защита от потока заявок гостя (SendIt держит её только в сессии, а сессию бот сбрасывает):
-     * такая же заявка с этого телефона ещё ждёт звонка — отказ с её номером;
-     * с телефона уже booking.requests_per_phone новых заявок за сутки — отказ;
+     * такая же заявка с этого телефона и адреса ещё ждёт звонка — отказ;
+     * с телефона и адреса уже booking.requests_per_phone новых заявок за сутки — отказ;
      * с одного адреса больше booking.requests_per_ip заявок за час — отказ. 0 в настройке — проверка выключена.
+     * Телефон в форме никто не проверяет, поэтому считаются только заявки с того же адреса (rememberRequest):
+     * иначе чужим номером можно закрыть гостю отправку заявок и узнать, есть ли у него заявка на даты.
      */
     public function assertNotFlood(array $in, string $ip = ''): void
     {
@@ -235,18 +237,19 @@ class Bookings
         $phone = $this->booking->faq()->cc('bn_phone');
         $call = $phone !== '' ? ' Если срочно — позвоните: ' . $phone : '';
         $perPhone = (int)$modx->getOption('booking.requests_per_phone', null, 3);
-        if ($perPhone > 0) {
+        $ids = $perPhone > 0 ? (array)$modx->cacheManager->get($this->phoneKey($in['phone'], $ip), [\xPDO\xPDO::OPT_CACHE_KEY => 'booking']) : [];
+        if ($ids) {
             $since = date('Y-m-d H:i:s', strtotime($this->booking->now()) - 86400);
-            $same = $modx->getObject(BookingRow::class, [
-                'guest_phone' => $in['phone'], 'status' => 'new', 'house_id' => $in['house']->get('id'),
-                'addon_id' => $in['addon'] ? $in['addon']->get('id') : null,
-                'date_from' => $in['date_from'], 'date_to' => $in['date_to'], 'created_at:>=' => $since,
+            $mine = ['id:IN' => array_map('intval', $ids), 'status' => 'new', 'created_at:>=' => $since];
+            $same = $modx->getCount(BookingRow::class, $mine + [
+                'house_id' => $in['house']->get('id'), 'addon_id' => $in['addon'] ? $in['addon']->get('id') : null,
+                'date_from' => $in['date_from'], 'date_to' => $in['date_to'],
             ]);
             if ($same) {
-                // без номера заявки: по номеру и телефону её можно посмотреть, а телефон и даты знает не только гость
+                // без номера заявки: по номеру и телефону её можно посмотреть
                 throw BookingError::field('dates', 'Такая заявка с этого номера уже отправлена. Администратор перезвонит.' . $call);
             }
-            if ($modx->getCount(BookingRow::class, ['guest_phone' => $in['phone'], 'status' => 'new', 'created_at:>=' => $since]) >= $perPhone) {
+            if ($modx->getCount(BookingRow::class, $mine) >= $perPhone) {
                 throw BookingError::field('phone', 'С этого номера уже есть заявки, они ждут звонка администратора. Новую можно отправить после звонка.' . $call);
             }
         }
@@ -260,6 +263,36 @@ class Bookings
                 throw BookingError::field('dates', 'Слишком много заявок подряд. Попробуйте через час.' . $call);
             }
         }
+    }
+
+    /** Запомнить заявку гостя для assertNotFlood: номера заявок с этого телефона и адреса за сутки. */
+    public function rememberRequest(string $phone, string $ip, int $id): void
+    {
+        $key = $this->phoneKey($phone, $ip);
+        $opt = [\xPDO\xPDO::OPT_CACHE_KEY => 'booking'];
+        $ids = array_slice(array_merge((array)$this->booking->modx->cacheManager->get($key, $opt), [$id]), -20);
+        $this->booking->modx->cacheManager->set($key, $ids, 86400, $opt);
+    }
+
+    protected function phoneKey(string $phone, string $ip): string
+    {
+        return 'rp/' . md5($phone . '|' . $ip);
+    }
+
+    /**
+     * Адрес гостя. За прокси хостинга REMOTE_ADDR у всех один — тогда в booking.ip_header имя заголовка,
+     * который ставит сам прокси (например HTTP_X_REAL_IP); пусто — REMOTE_ADDR. Берётся первый адрес, если это IP.
+     */
+    public function clientIp(): string
+    {
+        $h = trim((string)$this->booking->modx->getOption('booking.ip_header', null, ''));
+        if ($h !== '' && !empty($_SERVER[$h])) {
+            $ip = trim(explode(',', (string)$_SERVER[$h])[0]);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+        return (string)($_SERVER['REMOTE_ADDR'] ?? '');
     }
 
     /**

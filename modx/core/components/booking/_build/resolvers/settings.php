@@ -33,6 +33,7 @@ $settings = [
     'booking.rate_limit' => ['30', 'numberfield'],
     'booking.requests_per_phone' => ['3', 'numberfield'],   // новых заявок с одного телефона за сутки; 0 — без проверки
     'booking.requests_per_ip' => ['10', 'numberfield'],     // заявок с одного адреса за час; 0 — без проверки
+    'booking.ip_header' => ['', 'textfield'],             // заголовок с адресом гостя за прокси хостинга (HTTP_X_REAL_IP); пусто — REMOTE_ADDR
     'booking.prepay_window' => ['1', 'combo-boolean'],      // окно «позвоните, потом предоплата» после заявки на Дом
     'booking.prepay_template' => ['bn-prepay', 'textfield'], // шаблон страницы предоплаты — дочерней у страницы Дома
     'booking.bot_enabled' => ['0', 'combo-boolean'],   // бот MAX отвечает гостям на вопросы (токен — maxnotify3.max_token)
