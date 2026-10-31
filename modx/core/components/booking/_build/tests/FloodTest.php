@@ -42,8 +42,10 @@ return [
         unset($_SERVER['REMOTE_ADDR']);
         $t->modx->setOption('booking.ip_header', 'HTTP_X_REAL_IP');
         $_SERVER['REMOTE_ADDR'] = '10.0.0.1';
-        $_SERVER['HTTP_X_REAL_IP'] = '203.0.113.7, 10.0.0.1';
+        $_SERVER['HTTP_X_REAL_IP'] = '203.0.113.7';
         $t->eq('203.0.113.7', $t->booking->bookings()->clientIp(), 'за прокси — адрес гостя из заголовка');
+        $_SERVER['HTTP_X_REAL_IP'] = '1.2.3.4, 203.0.113.7';
+        $t->eq('203.0.113.7', $t->booking->bookings()->clientIp(), 'подставленный гостем адрес в начале не берётся — только дописанный прокси');
         $_SERVER['HTTP_X_REAL_IP'] = 'не адрес';
         $t->eq('10.0.0.1', $t->booking->bookings()->clientIp(), 'в заголовке не IP — адрес соединения');
         $t->modx->setOption('booking.ip_header', '');

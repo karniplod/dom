@@ -281,13 +281,15 @@ class Bookings
 
     /**
      * Адрес гостя. За прокси хостинга REMOTE_ADDR у всех один — тогда в booking.ip_header имя заголовка,
-     * который ставит сам прокси (например HTTP_X_REAL_IP); пусто — REMOTE_ADDR. Берётся первый адрес, если это IP.
+     * который ставит сам прокси (например HTTP_X_REAL_IP); пусто — REMOTE_ADDR. Берётся последний адрес —
+     * его дописал прокси; первые в X-Forwarded-For подставляет кто угодно.
      */
     public function clientIp(): string
     {
         $h = trim((string)$this->booking->modx->getOption('booking.ip_header', null, ''));
         if ($h !== '' && !empty($_SERVER[$h])) {
-            $ip = trim(explode(',', (string)$_SERVER[$h])[0]);
+            $list = explode(',', (string)$_SERVER[$h]);
+            $ip = trim(end($list));
             if (filter_var($ip, FILTER_VALIDATE_IP)) {
                 return $ip;
             }
