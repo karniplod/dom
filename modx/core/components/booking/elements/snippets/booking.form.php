@@ -3,7 +3,7 @@
  * booking.form — единая форма бронирования (ст. 7.3).
  * [[!booking.form? &mode=`full|compact` &house=`en`]]
  *  mode=full    — страница /booking: выбор дома, календарь на 2 месяца, гости, питомцы, баня отдельно, расчёт, контакты;
- *  mode=compact — главная и места прежней формы: дом, даты по клику, гости, расчёт, контакты;
+ *  mode=compact — главная и места прежней формы: дом, «Дом на сутки / Только баня», даты по клику, часы бани, гости, расчёт, контакты;
  *  house        — код дома, выбранного заранее (страница дома).
  * Отправка — SendIt, пресет booking_request (ст. 8.1). Некэшируемый: токен SendIt и защита от ботов.
  * @var \MODX\Revolution\modX $modx
@@ -22,10 +22,6 @@ $tpl = $scriptProperties['tpl'] ?? ($mode === 'compact' ? 'booking.form.compact.
 $booking->setActor(['role' => 'guest', 'name' => 'гость', 'interface' => 'site']);
 $res = $booking->runAction('booking_houses', []);
 $houses = $res['success'] ? ((array)$res['data'])['houses'] : [];
-if ($mode === 'compact') {
-    // в короткой форме нет выбора часов — отдельную баню или сауну бронируют на /booking
-    $houses = array_values(array_filter($houses, function ($h) { return ($h['kind'] ?? 'house') !== 'bath'; }));
-}
 if (!$houses) {
     return '';
 }

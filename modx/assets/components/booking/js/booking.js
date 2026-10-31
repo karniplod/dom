@@ -209,7 +209,7 @@
       this.el.dates.addEventListener('click', function () { self.el.cal.hidden = !self.el.cal.hidden; });
     }
     this.el.house.addEventListener('change', function () { self.onHouse(); });
-    [this.el.guests, this.el.pets, this.el.tf, this.el.tt].forEach(function (i) { if (i) i.addEventListener('change', function () { self.quote(); }); });
+    [this.el.guests, this.el.pets, this.el.tt].forEach(function (i) { if (i) i.addEventListener('change', function () { self.quote(); }); });
     this.el.addon.forEach(function (r) { r.addEventListener('change', function () { self.onKind(); }); });
     if (this.el.tf) this.el.tf.addEventListener('change', function () { self.fitTimes(); self.quote(); });   // «До» — по новому «С»
     if (this.el.phone) this.el.phone.addEventListener('input', function () { maskPhone(self.el.phone); });

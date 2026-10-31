@@ -5,15 +5,25 @@
   <input type="hidden" name="date_from" value="">
   <input type="hidden" name="date_to" value="">
   <input type="hidden" name="pets" value="0">
-  <input type="radio" name="addon" value="0" checked hidden>
   <div class="bk-formgrid">
     <label class="bk-field bk-full"><span>Дом</span>
       <select name="house" required><option value="">Выберите Дом</option>[[+options]]</select>
       <b class="bk-err" data-si-error="house"></b></label>
+    <fieldset class="bk-field bk-full bk-kind" data-bk-kind hidden><legend>Что бронируете</legend>
+      <div class="bk-chips">
+        <label><input type="radio" name="addon" value="0" checked><span>Дом на сутки</span></label>
+        <label><input type="radio" name="addon" value="1"><span>Только баня</span></label>
+      </div><b class="bk-err" data-si-error="addon"></b></fieldset>
     <div class="bk-field bk-full"><span>Даты</span>
       <button type="button" class="bk-datebtn" data-bk-dates aria-live="polite">Выбрать даты</button>
       <div class="bk-cal bk-cal--pop" data-bk-cal></div>
       <b class="bk-err" data-si-error="dates" role="alert"></b></div>
+    <div class="bk-bath bk-full" data-bk-bath hidden>
+      <label class="bk-field"><span>С</span><select name="time_from"></select></label>
+      <label class="bk-field"><span>До</span><select name="time_to"></select></label>
+      <p class="bk-muted bk-full" data-bk-slots></p>
+      <b class="bk-err bk-full" data-si-error="time"></b>
+    </div>
     <label class="bk-field"><span>Сколько гостей</span><input name="guests" type="number" min="1" max="20" inputmode="numeric" required>
       <b class="bk-err" data-si-error="guests"></b></label>
     <label class="bk-field"><span>Телефон</span><input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 (___) ___-__-__" required>
