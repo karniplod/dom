@@ -22,6 +22,9 @@ class Get extends Base
         }
         [$row, $code] = self::find($this);
         $out = $this->booking->bookings()->toGuest($row, $code) + ['found' => true];
+        if ($pp = $this->booking->bookings()->prepay($row)) {
+            $out['prepay'] = $pp;   // окно «сначала позвоните, потом предоплата» — только гостю
+        }
         if ($this->getProperty('mine')) {
             $out['age'] = time() - (int)($_SESSION['booking.last']['ts'] ?? 0);   // секунд с отправки формы
         }

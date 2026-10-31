@@ -9,11 +9,11 @@
     <a href="index.html">Главная</a>
     <div class="nav__drop"><button class="nav__btn" type="button" aria-expanded="false" aria-controls="nav-houses">Дома<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="nav__panel" id="nav-houses"><a class="nav__house h-en" href="angliyskij-dom.html"><picture><source type="image/webp" srcset="img/en/facade-480.webp 480w, img/en/facade-640.webp 640w" sizes="96px"><img src="img/en/facade.jpg" alt="Английский Дом" loading="lazy" decoding="async"></picture><span><b>Английский Дом</b><small>ул. Космонавта Беляева, 111</small><em class="tnum">от 18 000 ₽ за сутки</em></span></a><a class="nav__house h-ru" href="russkij-dom.html"><picture><source type="image/webp" srcset="img/ru/facade-480.webp 480w, img/ru/facade-800.webp 800w, img/ru/facade-1200.webp 1200w, img/ru/facade-1400.webp 1400w" sizes="96px"><img src="img/ru/facade.jpg" alt="Русский Дом" loading="lazy" decoding="async"></picture><span><b>Русский Дом</b><small>ул. Космонавта Беляева, 111/1</small><em class="tnum">от 18 000 ₽ за сутки</em></span></a><a class="nav__house h-sv" href="dom-na-sviyazeva.html"><picture><source type="image/webp" srcset="img/sv/facade-480.webp 480w, img/sv/facade-711.webp 711w" sizes="96px"><img src="img/sv/facade.jpg" alt="Дом на Свиязева" loading="lazy" decoding="async"></picture><span><b>Дом на Свиязева</b><small>ул. Архитектора Свиязева, 59</small><em class="tnum">от 15 000 ₽ за сутки</em></span></a><a class="nav__all" href="index.html#prices">Сравнить Дома и цены</a></div></div>
-    <a href="index.html#order">Бронирование</a>
     <a href="blog.html" aria-current="page">Блог</a>
     <a href="kontakty.html">Контакты</a>
   </nav>
   <a class="top__phone tnum" href="tel:+73422776622">+7 (342) 277-66-22</a>
+  <a class="btn btn--sm btn--ghost top__pay" href="kontakty.html#pay"><span class="top__long">Внести предоплату</span><span class="top__short">Предоплата</span></a>
   <button class="btn btn--sm top__cta" type="button" data-order>Оставить заявку</button>
   <button class="burger" type="button" data-drawer aria-label="Открыть меню" aria-controls="drawer"><span></span><span></span><span></span></button>
 </div></header>
@@ -98,7 +98,7 @@
   <nav aria-label="Дома"><a href="angliyskij-dom.html">Английский Дом, ул. Космонавта Беляева, 111</a><a href="russkij-dom.html">Русский Дом, ул. Космонавта Беляева, 111/1</a><a href="dom-na-sviyazeva.html">Дом на Свиязева, ул. Архитектора Свиязева, 59</a></nav>
   <nav aria-label="Разделы"><a href="index.html">Главная</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a></nav>
 </div></footer>
-<div class="mbar"><a class="btn btn--ghost" href="tel:+73422776622">Позвонить</a><button class="btn" type="button" data-order>Заявка</button></div>
+<div class="mbar"><a class="btn btn--ghost" href="tel:+73422776622">Позвонить</a><a class="btn btn--ghost" href="kontakty.html#pay">Предоплата</a><button class="btn" type="button" data-order>Заявка</button></div>
 <dialog class="modal omodal" id="order-modal" aria-labelledby="om-title">
   <div class="omodal__box">
     <button class="x" type="button" data-close aria-label="Закрыть форму"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -137,6 +137,7 @@
   <div class="drawer__foot">
     <a class="drawer__phone tnum" href="tel:+73422776622">+7 (342) 277-66-22</a>
     <p><a href="https://vk.com/russianbath59" target="_blank" rel="noopener">ВКонтакте</a></p>
+    <a class="btn btn--ghost" href="kontakty.html#pay">Внести предоплату</a>
     <button class="btn" type="button" data-order>Оставить заявку</button>
   </div>
 </dialog>

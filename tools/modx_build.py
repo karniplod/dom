@@ -109,7 +109,7 @@ def assets(s):
 def links(s):
     s = s.replace('href="index.html#order"', 'href="[[bnBookingUrl]]"')   # «Бронирование»: /booking или форма на главной
     s = s.replace('href="index.html#prices"', 'href="[[~[[++site_start]]]]#prices"').replace('href="index.html"', 'href="[[~[[++site_start]]]]"')
-    s = s.replace('href="blog.html"', 'href="[[~[[++bn_blog_id]]]]"').replace('href="kontakty.html"', 'href="[[~[[++bn_contacts_id]]]]"')
+    s = s.replace('href="blog.html"', 'href="[[~[[++bn_blog_id]]]]"').replace('href="kontakty.html"', 'href="[[~[[++bn_contacts_id]]]]"').replace('href="kontakty.html#pay"', 'href="[[~[[++bn_contacts_id]]]]#pay"')
     for doc in ("politika", "soglasie", "cookie"):   # документы 152-ФЗ
         s = s.replace('href="%s.html"' % doc, 'href="[[~[[++bn_%s_id]]]]"' % doc)
     for k, h in H.items():

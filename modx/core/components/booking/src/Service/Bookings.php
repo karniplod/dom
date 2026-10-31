@@ -223,6 +223,100 @@ class Bookings
         return $row;
     }
 
+    /**
+     * Защита от потока заявок гостя (SendIt держит её только в сессии, а сессию бот сбрасывает):
+     * такая же заявка с этого телефона ещё ждёт звонка — отказ с её номером;
+     * с телефона уже booking.requests_per_phone новых заявок за сутки — отказ;
+     * с одного адреса больше booking.requests_per_ip заявок за час — отказ. 0 в настройке — проверка выключена.
+     */
+    public function assertNotFlood(array $in, string $ip = ''): void
+    {
+        $modx = $this->booking->modx;
+        $phone = $this->booking->faq()->cc('bn_phone');
+        $call = $phone !== '' ? ' Если срочно — позвоните: ' . $phone : '';
+        $perPhone = (int)$modx->getOption('booking.requests_per_phone', null, 3);
+        if ($perPhone > 0) {
+            $since = date('Y-m-d H:i:s', strtotime($this->booking->now()) - 86400);
+            $same = $modx->getObject(BookingRow::class, [
+                'guest_phone' => $in['phone'], 'status' => 'new', 'house_id' => $in['house']->get('id'),
+                'addon_id' => $in['addon'] ? $in['addon']->get('id') : null,
+                'date_from' => $in['date_from'], 'date_to' => $in['date_to'], 'created_at:>=' => $since,
+            ]);
+            if ($same) {
+                // без номера заявки: по номеру и телефону её можно посмотреть, а телефон и даты знает не только гость
+                throw BookingError::field('dates', 'Такая заявка с этого номера уже отправлена. Администратор перезвонит.' . $call);
+            }
+            if ($modx->getCount(BookingRow::class, ['guest_phone' => $in['phone'], 'status' => 'new', 'created_at:>=' => $since]) >= $perPhone) {
+                throw BookingError::field('phone', 'С этого номера уже есть заявки, они ждут звонка администратора. Новую можно отправить после звонка.' . $call);
+            }
+        }
+        $perIp = (int)$modx->getOption('booking.requests_per_ip', null, 10);
+        if ($perIp > 0 && $ip !== '') {
+            $key = 'rq/' . md5($ip) . '-' . floor(time() / 3600);
+            $opt = [\xPDO\xPDO::OPT_CACHE_KEY => 'booking'];
+            $n = (int)$modx->cacheManager->get($key, $opt) + 1;
+            $modx->cacheManager->set($key, $n, 3700, $opt);
+            if ($n > $perIp) {
+                throw BookingError::field('dates', 'Слишком много заявок подряд. Попробуйте через час.' . $call);
+            }
+        }
+    }
+
+    /**
+     * Окно предоплаты для гостя (ст. 2.1: сумма и оплата — вне системы, здесь только подсказка и ссылка):
+     * заявка на Дом (не «только баня»), новая или подтверждённая, у Дома есть страница предоплаты —
+     * дочерняя у страницы Дома с шаблоном booking.prepay_template. Нет страницы или booking.prepay_window = 0 — окна нет.
+     */
+    public function prepay(BookingRow $row): ?array
+    {
+        $modx = $this->booking->modx;
+        if (!(int)$modx->getOption('booking.prepay_window', null, 1) || $row->get('addon_id')
+            || !in_array($row->get('status'), ['new', 'confirmed'], true) || $row->get('cancellation_requested')) {
+            return null;
+        }
+        $house = $this->houseOf($row);
+        $page = $house ? $this->housePage($house) : 0;
+        $tpl = $page ? $modx->getObject(\MODX\Revolution\modTemplate::class, ['templatename' => (string)$modx->getOption('booking.prepay_template', null, 'bn-prepay')]) : null;
+        $res = $tpl ? $modx->getObject(\MODX\Revolution\modResource::class, ['parent' => $page, 'template' => $tpl->get('id'), 'published' => 1, 'deleted' => 0]) : null;
+        if (!$res) {
+            return null;
+        }
+        $faq = $this->booking->faq();
+        $percent = max(1, min(100, (int)$faq->cc('bn_prepay_percent', '50')));
+        $phone = $faq->cc('bn_phone');
+        try {
+            $tel = $phone !== '' ? $this->booking->phone($phone) : '';
+        } catch (BookingError $e) {
+            $tel = '';
+        }
+        return [
+            'url' => str_replace('&amp;', '&', $modx->makeUrl($res->get('id'), '', '', 'full')),
+            'percent' => $percent,
+            'amount' => (int)round((int)$row->get('quote_total') * $percent / 100),
+            'phone' => $phone,
+            'tel' => $tel,
+        ];
+    }
+
+    /**
+     * Страница Дома на сайте: «Страница сайта» Дома (resource_id); не задана — страница с адресом, как slug Дома,
+     * или с полем bn_code, равным коду Дома (страницы Домов сайта). Только чтение.
+     */
+    public function housePage(House $house): int
+    {
+        if ($id = (int)$house->get('resource_id')) {
+            return $id;
+        }
+        $modx = $this->booking->modx;
+        $r = $house->get('slug') !== '' ? $modx->getObject(\MODX\Revolution\modResource::class, ['alias' => $house->get('slug'), 'deleted' => 0]) : null;
+        if ($r) {
+            return (int)$r->get('id');
+        }
+        $tv = $modx->getObject(\MODX\Revolution\modTemplateVar::class, ['name' => 'bn_code']);
+        $v = $tv ? $modx->getObject(\MODX\Revolution\modTemplateVarResource::class, ['tmplvarid' => $tv->get('id'), 'value' => $house->get('code')]) : null;
+        return $v ? (int)$v->get('contentid') : 0;
+    }
+
     // ---------------------------------------------------------------- вывод
 
     protected array $houses = [];

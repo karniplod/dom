@@ -21,6 +21,7 @@ $out = function ($r) {
 switch ($cmd) {
     case 'request':
         $b->setActor(['role' => 'guest', 'interface' => 'site']);
+        $modx->setOption('booking.requests_per_phone', 0);   // e2e шлёт заявки с одного номера; защиту проверяет FloodTest
         $out($b->runAction('booking_create_request', ['house' => $argv[2], 'date_from' => $argv[3], 'date_to' => $argv[4],
             'guests' => $argv[5] ?? 4, 'name' => $argv[6] ?? 'ТЕСТ Гость', 'phone' => '+79001112233']));
         break;
@@ -55,6 +56,8 @@ switch ($cmd) {
             'price_per_hour' => (int)$argv[3], 'min_hours' => 2, 'buffer_minutes' => 30]));
         break;
     case 'cleanup':
+        // счётчики «заявок с адреса за час» (Bookings::assertNotFlood): e2e шлёт заявки с 127.0.0.1 подряд
+        $modx->cacheManager->clean([\xPDO\xPDO::OPT_CACHE_KEY => 'booking']);
         $ids = [];
         foreach ($modx->getIterator(\Booking\Model\Booking::class, ['guest_name:LIKE' => 'ТЕСТ%']) as $row) {
             $ids[] = (int)$row->get('id');

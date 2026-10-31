@@ -31,6 +31,10 @@ $settings = [
     'booking.form_page' => ['0', 'numberfield'],
     'booking.timezone' => ['Asia/Yekaterinburg', 'textfield'],   // Пермь (UTC+5): «сегодня», прошедшие даты, время заявок
     'booking.rate_limit' => ['30', 'numberfield'],
+    'booking.requests_per_phone' => ['3', 'numberfield'],   // новых заявок с одного телефона за сутки; 0 — без проверки
+    'booking.requests_per_ip' => ['10', 'numberfield'],     // заявок с одного адреса за час; 0 — без проверки
+    'booking.prepay_window' => ['1', 'combo-boolean'],      // окно «позвоните, потом предоплата» после заявки на Дом
+    'booking.prepay_template' => ['bn-prepay', 'textfield'], // шаблон страницы предоплаты — дочерней у страницы Дома
     'booking.bot_enabled' => ['0', 'combo-boolean'],   // бот MAX отвечает гостям на вопросы (токен — maxnotify3.max_token)
 ];
 foreach ($settings as $key => [$value, $xtype]) {

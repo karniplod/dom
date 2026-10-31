@@ -103,11 +103,11 @@ def header(active=None):
     <a href="index.html"{cur("home")}>Главная</a>
     <div class="nav__drop"><button{in_houses} type="button" aria-expanded="false" aria-controls="nav-houses">Дома{CHEV}</button>
       <div class="nav__panel" id="nav-houses">{houses}<a class="nav__all" href="index.html#prices">Сравнить Дома и цены</a></div></div>
-    <a href="index.html#order">Бронирование</a>
     <a href="blog.html"{cur("blog")}>Блог</a>
     <a href="kontakty.html"{cur("contacts")}>Контакты</a>
   """)}</nav>
   <a class="top__phone tnum" href="tel:{PHONE_RAW}">{PHONE}</a>
+  <a class="btn btn--sm btn--ghost top__pay" href="kontakty.html#pay"><span class="top__long">Внести предоплату</span><span class="top__short">Предоплата</span></a>
   <button class="btn btn--sm top__cta" type="button" data-order>Оставить заявку</button>
   <button class="burger" type="button" data-drawer aria-label="Открыть меню" aria-controls="drawer"><span></span><span></span><span></span></button>
 </div></header>'''
@@ -123,6 +123,7 @@ def drawer():
   <div class="drawer__foot">
     <a class="drawer__phone tnum" href="tel:{PHONE_RAW}">{PHONE}</a>
     <p>{max_link('<a href="{url}" target="_blank" rel="noopener">MAX</a> · ')}<a href="{VK}" target="_blank" rel="noopener">ВКонтакте</a></p>
+    <a class="btn btn--ghost" href="kontakty.html#pay">Внести предоплату</a>
     <button class="btn" type="button" data-order>Оставить заявку</button>
   </div>
 </dialog>'''
@@ -177,7 +178,7 @@ def footer(house=""):
   <nav aria-label="Дома">{links}</nav>
   <nav aria-label="Разделы">{mark("menu:foot", '<a href="index.html">Главная</a><a href="index.html#order">Бронирование</a><a href="blog.html">Блог</a><a href="kontakty.html">Контакты</a>')}</nav>
 </div></footer>
-<div class="mbar"><a class="btn btn--ghost" href="tel:{PHONE_RAW}">Позвонить</a><button class="btn" type="button" data-order>Заявка</button></div>
+<div class="mbar"><a class="btn btn--ghost" href="tel:{PHONE_RAW}">Позвонить</a><a class="btn btn--ghost" href="kontakty.html#pay">Предоплата</a><button class="btn" type="button" data-order>Заявка</button></div>
 {order_modal(house)}
 {drawer()}'''
 
@@ -646,7 +647,7 @@ def contacts_page():
   <div class="cplaces">{mark("contactPlaces", "".join(mark(f"item:contactPlace:{k}", house_block(k)) for k in H))}</div>
 </div></section>
 
-<section class="band on-light" aria-labelledby="pay-title"><div class="wrap two">
+<section class="band on-light" id="pay" aria-labelledby="pay-title"><div class="wrap two">
   <div><div class="sec-head"><h2 class="h-sec" id="pay-title">Предоплата</h2><p class="lead">{PREPAY_TXT}</p></div></div>
   <div class="paylist">{mark("payItems", "".join(mark(f"item:payItem:{k}", f'<a class="paylist__item h-{k}" href="{v["prepay"]}"><span><b>{v["name"]}</b><small>{v["addr"]}</small></span><span class="btn btn--sm">Внести предоплату</span></a>') for k, v in H.items()))}</div>
 </div></section>
@@ -767,14 +768,15 @@ def prepay_page(k):
 </div></section>
 <section class="band band--tight on-light" aria-label="Как внести предоплату"><div class="wrap paypage">
   <div class="paypage__main">
-    <div class="paypage__warn">{icon("card")}<p><b>Вносите предоплату только после того, как администратор записал вас и согласовал сумму.</b> Если ещё не договорились, позвоните: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a></p></div>
+    <div class="paypage__warn">{icon("phone")}<div><p><b>Сначала позвоните администратору: <a class="nb tnum" href="tel:{PHONE_RAW}">{PHONE}</a>.</b> Администратор проверит, что даты свободны, подтвердит бронь и назовёт сумму. Без подтверждения не оплачивайте: заявка даты не держит, их может занять другой гость.</p><p><a class="btn btn--sm" href="tel:{PHONE_RAW}">Позвонить администратору</a></p></div></div>
     <ol class="paysteps">
+      <li>Позвоните администратору и дождитесь подтверждения брони.</li>
       <li>Отметьте согласие с условиями и нажмите «Внести предоплату через СБП» — откроется страница Системы быстрых платежей.</li>
       <li>Выберите свой банк и подтвердите переход в приложение.</li>
       <li>Введите сумму, которую назвал администратор. В комментарии укажите имя и дату заезда.</li>
     </ol>
     <div class="payterms"><h2>Условия предоплаты</h2><p>Предоплата — 50% от стоимости брони. В случае отказа от брони предоплата возвращается, только если эту дату снимут другие гости за ту же сумму.</p>
-      <label class="check"><input type="checkbox" data-pay-agree><span>Я прочитал условия предоплаты и согласен с ними</span></label></div>
+      <label class="check"><input type="checkbox" data-pay-agree><span>Администратор подтвердил мою бронь по телефону. Условия предоплаты прочитал и согласен с ними</span></label></div>
     <div class="hero__cta"><a class="btn btn--lg is-off" href="{h["sbp"]}" target="_blank" rel="noopener" data-pay-btn aria-disabled="true">Внести предоплату через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="{k}">Оставить заявку</button></div>
   </div>
   <figure class="paypage__qr is-locked" data-pay-qr><div class="paypage__qrimg"><img src="img/qr/{k}.svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><p class="paypage__lock">Код появится, когда отметите согласие с условиями предоплаты</p></div><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>

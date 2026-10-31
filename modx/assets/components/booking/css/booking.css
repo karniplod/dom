@@ -132,6 +132,26 @@
 .bk-done h3 { margin: 0; font: 400 24px/1.2 var(--bk-display); }
 .bk-done p { margin: 0; }
 .bk-done .bk-btn { justify-self: start; }
+/* окно «сначала позвоните, потом предоплата» после заявки на Дом (booking.js prepayDialog) */
+.bk-pp { width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; margin: auto; padding: 28px 24px 22px;
+  border: 0; border-radius: 8px; background: var(--bk-card); color: var(--bk-ink); box-shadow: 0 20px 60px rgba(34,20,14,.35); }
+.bk-pp::backdrop { background: rgba(34,20,14,.55); }
+.bk-pp h2 { margin: 0 36px 6px 0; font: 400 26px/1.2 var(--bk-display); }
+.bk-pp > .bk-muted { margin-bottom: 16px; }
+.bk-pp > .bk-btn--ghost { margin-top: 16px; }
+.bk-pp__x { position: absolute; top: 10px; right: 10px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent;
+  color: var(--bk-ink); font: 400 30px/1 var(--bk-text); cursor: pointer; }
+.bk-pp__x:hover { background: rgba(34,20,14,.07); }
+.bk-pp__steps { margin: 0; padding: 0; list-style: none; counter-reset: pp; display: grid; gap: 14px; }
+.bk-pp__steps li { counter-increment: pp; position: relative; padding: 0 0 0 44px; display: grid; gap: 10px; }
+.bk-pp__steps li::before { content: counter(pp); position: absolute; left: 0; top: -2px; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bk-ink); color: var(--bk-cream); font: 400 17px/32px var(--bk-display); text-align: center; }
+.bk-pp__steps p, .bk-pp__box p { margin: 0; }
+.bk-pp__box { display: grid; gap: 10px; }
+.bk .bk-pp__big { justify-self: stretch; min-height: 56px; padding-block: 10px 8px; font-size: 18px; line-height: 1.2; white-space: normal; text-align: center; text-decoration: none; }
+.bk-pp__warn { margin: 14px 0 0; padding: 10px 12px; border-radius: 4px; background: var(--bk-orange-bg); color: var(--bk-ink); font-size: 14.5px; }
+.bk-done .bk-pp__warn { margin: 0; }
+@media (max-width: 560px) { .bk-pp { padding: 24px 16px 18px; } .bk-pp h2 { font-size: 22px; } .bk-pp__steps li { padding-left: 40px; } }
 .bk-card, .bk-box { background: var(--bk-card); border: 1px solid var(--bk-line); border-radius: 6px; padding: 18px; display: grid; gap: 12px; }
 .bk-card h3, .bk-box h3 { margin: 0; font: 400 21px/1.25 var(--bk-display); }
 .bk-box h3 small { font: 400 14px var(--bk-text); color: var(--bk-soft); }

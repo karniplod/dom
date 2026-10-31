@@ -6,7 +6,7 @@ use Booking\Processors\Base;
 /**
  * booking_create_request — заявка гостя. Вызывается хуком SendIt booking.hook (ст. 8.1), не напрямую из api.php.
  * Заявка «новая» и даты не занимает; на занятые и закрытые даты не принимается.
- * Цена считается заново на сервере, статус и залог задаёт только сервер.
+ * Цена считается заново на сервере, статус и залог задаёт только сервер. Повторы и поток заявок — Bookings::assertNotFlood.
  */
 class Create extends Base
 {
@@ -18,6 +18,7 @@ class Create extends Base
         $bk = $b->bookings();
         $in = $bk->input($this->getProperties(), true);
         $bk->assertFree($in);
+        $bk->assertNotFlood($in, (string)($_SERVER['REMOTE_ADDR'] ?? ''));
         $quote = $bk->quote($in, false);   // без скидки
         $interface = $b->actor()['interface'];
         $source = in_array($interface, ['pwa', 'max'], true) ? $interface : 'site';

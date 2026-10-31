@@ -9,11 +9,11 @@
     <a href="../index.html">Главная</a>
     <div class="nav__drop"><button class="nav__btn" type="button" aria-expanded="false" aria-controls="nav-houses">Дома<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="nav__panel" id="nav-houses"><a class="nav__house h-en" href="../angliyskij-dom.html"><picture><source type="image/webp" srcset="../img/en/facade-480.webp 480w, ../img/en/facade-640.webp 640w" sizes="96px"><img src="../img/en/facade.jpg" alt="Английский Дом" loading="lazy" decoding="async"></picture><span><b>Английский Дом</b><small>ул. Космонавта Беляева, 111</small><em class="tnum">от 18 000 ₽ за сутки</em></span></a><a class="nav__house h-ru" href="../russkij-dom.html"><picture><source type="image/webp" srcset="../img/ru/facade-480.webp 480w, ../img/ru/facade-800.webp 800w, ../img/ru/facade-1200.webp 1200w, ../img/ru/facade-1400.webp 1400w" sizes="96px"><img src="../img/ru/facade.jpg" alt="Русский Дом" loading="lazy" decoding="async"></picture><span><b>Русский Дом</b><small>ул. Космонавта Беляева, 111/1</small><em class="tnum">от 18 000 ₽ за сутки</em></span></a><a class="nav__house h-sv" href="../dom-na-sviyazeva.html"><picture><source type="image/webp" srcset="../img/sv/facade-480.webp 480w, ../img/sv/facade-711.webp 711w" sizes="96px"><img src="../img/sv/facade.jpg" alt="Дом на Свиязева" loading="lazy" decoding="async"></picture><span><b>Дом на Свиязева</b><small>ул. Архитектора Свиязева, 59</small><em class="tnum">от 15 000 ₽ за сутки</em></span></a><a class="nav__all" href="../index.html#prices">Сравнить Дома и цены</a></div></div>
-    <a href="../index.html#order">Бронирование</a>
     <a href="../blog.html">Блог</a>
     <a href="../kontakty.html">Контакты</a>
   </nav>
   <a class="top__phone tnum" href="tel:+73422776622">+7 (342) 277-66-22</a>
+  <a class="btn btn--sm btn--ghost top__pay" href="../kontakty.html#pay"><span class="top__long">Внести предоплату</span><span class="top__short">Предоплата</span></a>
   <button class="btn btn--sm top__cta" type="button" data-order>Оставить заявку</button>
   <button class="burger" type="button" data-drawer aria-label="Открыть меню" aria-controls="drawer"><span></span><span></span><span></span></button>
 </div></header>
@@ -25,14 +25,15 @@
 </div></section>
 <section class="band band--tight on-light" aria-label="Как внести предоплату"><div class="wrap paypage">
   <div class="paypage__main">
-    <div class="paypage__warn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 10h18M7 15h4"/></svg><p><b>Вносите предоплату только после того, как администратор записал вас и согласовал сумму.</b> Если ещё не договорились, позвоните: <a class="nb tnum" href="tel:+73422776622">+7 (342) 277-66-22</a></p></div>
+    <div class="paypage__warn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2Z"/></svg><div><p><b>Сначала позвоните администратору: <a class="nb tnum" href="tel:+73422776622">+7 (342) 277-66-22</a>.</b> Администратор проверит, что даты свободны, подтвердит бронь и назовёт сумму. Без подтверждения не оплачивайте: заявка даты не держит, их может занять другой гость.</p><p><a class="btn btn--sm" href="tel:+73422776622">Позвонить администратору</a></p></div></div>
     <ol class="paysteps">
+      <li>Позвоните администратору и дождитесь подтверждения брони.</li>
       <li>Отметьте согласие с условиями и нажмите «Внести предоплату через СБП» — откроется страница Системы быстрых платежей.</li>
       <li>Выберите свой банк и подтвердите переход в приложение.</li>
       <li>Введите сумму, которую назвал администратор. В комментарии укажите имя и дату заезда.</li>
     </ol>
     <div class="payterms"><h2>Условия предоплаты</h2><p>Предоплата — 50% от стоимости брони. В случае отказа от брони предоплата возвращается, только если эту дату снимут другие гости за ту же сумму.</p>
-      <label class="check"><input type="checkbox" data-pay-agree><span>Я прочитал условия предоплаты и согласен с ними</span></label></div>
+      <label class="check"><input type="checkbox" data-pay-agree><span>Администратор подтвердил мою бронь по телефону. Условия предоплаты прочитал и согласен с ними</span></label></div>
     <div class="hero__cta"><a class="btn btn--lg is-off" href="https://qr.nspk.ru/BS1A001U7DTMQNDA8LPA66DFMRGQKC09?type=01&bank=100000000284&crc=75D6" target="_blank" rel="noopener" data-pay-btn aria-disabled="true">Внести предоплату через СБП</a><button class="btn btn--ghost on-light" type="button" data-order data-house="sv">Оставить заявку</button></div>
   </div>
   <figure class="paypage__qr is-locked" data-pay-qr><div class="paypage__qrimg"><img src="../img/qr/sv.svg" alt="QR-код для оплаты предоплаты через СБП" width="280" height="280"><p class="paypage__lock">Код появится, когда отметите согласие с условиями предоплаты</p></div><figcaption>Оплата с компьютера: наведите камеру телефона на код</figcaption></figure>
@@ -50,7 +51,7 @@
   <nav aria-label="Дома"><a href="../angliyskij-dom.html">Английский Дом, ул. Космонавта Беляева, 111</a><a href="../russkij-dom.html">Русский Дом, ул. Космонавта Беляева, 111/1</a><a href="../dom-na-sviyazeva.html">Дом на Свиязева, ул. Архитектора Свиязева, 59</a></nav>
   <nav aria-label="Разделы"><a href="../index.html">Главная</a><a href="../index.html#order">Бронирование</a><a href="../blog.html">Блог</a><a href="../kontakty.html">Контакты</a></nav>
 </div></footer>
-<div class="mbar"><a class="btn btn--ghost" href="tel:+73422776622">Позвонить</a><button class="btn" type="button" data-order>Заявка</button></div>
+<div class="mbar"><a class="btn btn--ghost" href="tel:+73422776622">Позвонить</a><a class="btn btn--ghost" href="../kontakty.html#pay">Предоплата</a><button class="btn" type="button" data-order>Заявка</button></div>
 <dialog class="modal omodal" id="order-modal" aria-labelledby="om-title">
   <div class="omodal__box">
     <button class="x" type="button" data-close aria-label="Закрыть форму"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -89,6 +90,7 @@
   <div class="drawer__foot">
     <a class="drawer__phone tnum" href="tel:+73422776622">+7 (342) 277-66-22</a>
     <p><a href="https://vk.com/russianbath59" target="_blank" rel="noopener">ВКонтакте</a></p>
+    <a class="btn btn--ghost" href="../kontakty.html#pay">Внести предоплату</a>
     <button class="btn" type="button" data-order>Оставить заявку</button>
   </div>
 </dialog>

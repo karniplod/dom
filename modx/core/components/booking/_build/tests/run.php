@@ -26,6 +26,14 @@ class BookingTest
     {
         $this->modx = $modx;
         $this->booking = $modx->services->get('booking');
+        $this->flood(false);
+    }
+
+    /** Защита от потока заявок: в тестах заявки идут с одного номера — включается только в FloodTest */
+    public function flood(bool $on): void
+    {
+        $this->modx->setOption('booking.requests_per_phone', $on ? 3 : 0);
+        $this->modx->setOption('booking.requests_per_ip', $on ? 10 : 0);
     }
 
     public function admin(string $interface = 'cli'): void

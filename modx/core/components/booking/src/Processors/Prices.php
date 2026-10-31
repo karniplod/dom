@@ -24,7 +24,11 @@ class Prices extends Base
             foreach ($this->modx->getIterator(HouseRow::class, $q) as $h) {
                 $out[] = $this->forHouse($h);
             }
-            return ['items' => $out, 'labels' => Pricing::DAY_LABELS];
+            // для прайс-листа на печать: название сайта, телефон, адрес сайта, процент предоплаты
+            $faq = $this->booking->faq();
+            $site = ['name' => (string)$this->modx->getOption('site_name'), 'phone' => $faq->cc('bn_phone'),
+                'url' => $this->host(), 'prepay_percent' => (int)$faq->cc('bn_prepay_percent', '50')];
+            return ['items' => $out, 'labels' => Pricing::DAY_LABELS, 'site' => $site];
         }
         $h = $this->modx->getObject(HouseRow::class, ['code' => $this->str('house', 20)]);
         if (!$h) {
@@ -68,6 +72,16 @@ class Prices extends Base
         $this->booking->log()->write('price', (int)$h->get('id'), 'update', $old, $new);
         $this->modx->cacheManager->refresh(['resource' => []]);
         return $new;
+    }
+
+    /** Адрес сайта для печати: ефремовскиебани.рф, а не xn--… */
+    protected function host(): string
+    {
+        $host = (string)parse_url((string)$this->modx->getOption('site_url'), PHP_URL_HOST);
+        if (strpos($host, 'xn--') !== false && function_exists('idn_to_utf8')) {
+            $host = idn_to_utf8($host, 0, INTL_IDNA_VARIANT_UTS46) ?: $host;
+        }
+        return $host;
     }
 
     protected function forHouse(HouseRow $h): array

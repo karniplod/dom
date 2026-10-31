@@ -33,6 +33,10 @@ if (!$formPage || !$modx->getCount(modResource::class, ['id' => $formPage, 'publ
     array_splice($items, $after, 0, [['id' => 0, 'title' => 'Бронирование', 'url' => $modx->makeUrl($start, '', '', 'abs') . '#order']]);
 }
 
+// в шапке «Бронирование» не выводим: рядом кнопки «Внести предоплату» и «Оставить заявку» (решение владельца 31.10.2026)
+if ($place === 'nav') {
+    $items = array_values(array_filter($items, function ($it) use ($formPage) { return $it === 'houses' || ($it['id'] && $it['id'] !== $formPage); }));
+}
 $out = '';
 foreach ($items as $it) {
     if ($it === 'houses') {

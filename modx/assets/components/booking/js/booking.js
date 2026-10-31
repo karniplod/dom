@@ -9,7 +9,8 @@
   var WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   var STATUS = { 'new': 'Новая', confirmed: 'Подтверждена', cancelled: 'Отменена', completed: 'Завершена' };
   var DEPOSIT = { not_set: 'Не назначен', pending: 'Ожидается', paid: 'Внесён', returned: 'Возвращён' };
-  var SOURCE = { site: 'Сайт', pwa: 'Приложение', max: 'MAX', admin: 'Администратор (по телефону)', migrated: 'Перенесена из прежних заявок' };
+  var ASSETS = ((document.currentScript || {}).src || '').replace(/js\/booking\.js[^/]*$/, '');   // папка дополнения: шрифты для прайс-листа
+  var SOURCE = { site:'Сайт', pwa: 'Приложение', max: 'MAX', admin: 'Администратор (по телефону)', migrated: 'Перенесена из прежних заявок' };
 
   // ---------------------------------------------------------------- помощники
   function esc(s) {
@@ -455,7 +456,7 @@
     if (!box) return;
     box.innerHTML = '<h3>Заявка №' + esc(d.id) + ' отправлена</h3>'
       + '<p>' + esc(d.house_name) + ', ' + esc(d.dates) + ', ' + plural(d.guests, 'гость', 'гостя', 'гостей') + ' · ' + money(d.total) + '</p>'
-      + '<p>Администратор перезвонит и подтвердит бронь. Даты станут вашими после подтверждения.</p>'
+      + (d.prepay ? prepaySteps(d) : '<p>Администратор перезвонит и подтвердит бронь. Даты станут вашими после подтверждения.</p>')
       + (d.link ? '<p><a class="bk-link" href="' + esc(d.link) + '">Ссылка на заявку</a> — сохраните её: там видно статус и можно попросить отмену.</p>' : '')
       + '<button type="button" class="bk-btn bk-btn--ghost" data-bk-again>Отправить ещё одну заявку</button>';
     box.hidden = false;
@@ -463,7 +464,40 @@
     var self = this;
     qs(box, '[data-bk-again]').addEventListener('click', function () { box.hidden = true; self.form.hidden = false; self.loadBusy(); });
     box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (d.prepay) prepayDialog(d);
   };
+
+  /* Предоплата — вне системы (ст. 2.1): только подсказка и ссылка на страницу предоплаты Дома.
+     Порядок владельца: сначала звонок администратору и подтверждение брони, потом оплата */
+  function prepaySteps(d) {
+    var p = d.prepay, call = p.tel ? '<a class="btn bk-btn bk-pp__big" href="tel:' + esc(p.tel) + '">Позвонить администратору</a>' : '';
+    var pay = '<a class="btn bk-btn bk-pp__big" href="' + esc(p.url) + '" data-pp-pay>Внести предоплату по СБП</a>';
+    var sum = 'предоплату ' + esc(p.percent) + '% — ' + money(p.amount);
+    if (d.status === 'confirmed') {
+      return '<div class="bk-pp__box"><p><b>Бронь подтверждена.</b> Если ещё не оплатили — внесите ' + sum + ' по СБП. Точную сумму называет администратор.</p>' + pay + '</div>';
+    }
+    return '<ol class="bk-pp__steps">'
+      + '<li><p><b>Сначала позвоните администратору</b>' + (p.phone ? ' — <a class="bk-link nb" href="tel:' + esc(p.tel) + '">' + esc(p.phone) + '</a>' : '')
+      + '. Проверим, что даты свободны, подтвердим бронь и назовём сумму.</p>' + call + '</li>'
+      + '<li><p><b>После подтверждения внесите ' + sum + '</b> по СБП. В комментарии к платежу — имя и дата заезда.</p>' + pay + '</li>'
+      + '</ol><p class="bk-pp__warn">Не оплачивайте до звонка: пока бронь не подтверждена, эти даты может занять другой гость.</p>';
+  }
+  /* окно после отправки: не закрывается само и по клику мимо — только крестиком, «Понятно», Esc или переходом к оплате */
+  function prepayDialog(d) {
+    if (typeof HTMLDialogElement !== 'function') return;   // старый браузер: те же шаги уже в блоке «Заявка отправлена»
+    var dlg = document.createElement('dialog');
+    dlg.className = 'bk bk-pp';
+    dlg.setAttribute('aria-labelledby', 'bk-pp-t');
+    dlg.innerHTML = '<button type="button" class="bk-pp__x" data-pp-close aria-label="Закрыть">×</button>'
+      + '<h2 id="bk-pp-t">Заявка №' + esc(d.id) + ' отправлена</h2>'
+      + '<p class="bk-muted">' + esc(d.house_name) + ', ' + esc(d.dates) + ' · ' + money(d.total) + '</p>'
+      + prepaySteps(d)
+      + '<button type="button" class="bk-btn bk-btn--ghost" data-pp-close>Понятно</button>';
+    document.body.appendChild(dlg);
+    [].forEach.call(dlg.querySelectorAll('[data-pp-close]'), function (b) { b.addEventListener('click', function () { dlg.close(); }); });
+    dlg.addEventListener('close', function () { dlg.remove(); });
+    dlg.showModal();
+  }
 
   function renderQuote(d, bath) {   // bath — «Только баня»: заезд и выезд Дома не показываем
     var rows = d.lines.map(function (l) {
@@ -529,7 +563,8 @@
       + '<dt>Сумма</dt><dd>' + money(d.total) + '</dd>'
       + (d.deposit_amount ? '<dt>Залог</dt><dd>' + money(d.deposit_amount) + ' — ' + esc(d.deposit_label) + '</dd>' : '')
       + '</dl>'
-      + (d.status === 'new' ? '<p class="bk-muted">Администратор перезвонит и подтвердит бронь. До подтверждения даты могут занять другие гости.</p>' : '')
+      + (d.prepay && active ? prepaySteps(d)
+        : (d.status === 'new' ? '<p class="bk-muted">Администратор перезвонит и подтвердит бронь. До подтверждения даты могут занять другие гости.</p>' : ''))
       + (d.cancellation_requested ? '<p class="bk-note-orange">Вы попросили отменить бронь — администратор свяжется с вами.</p>' : '')
       + (canCancel ? '<form class="bk-cancel" data-bk-cancel><label class="bk-field"><span>Почему отменяете (необязательно)</span><textarea name="reason" rows="2" maxlength="1000"></textarea></label>'
         + '<button class="bk-btn bk-btn--ghost" type="submit">Попросить отменить</button></form>' : '')
@@ -1249,7 +1284,8 @@
     this.api.call('booking_manage_prices', { op: 'list' }).then(function (res) {
       if (!res.success) { self.fail(res); return; }
       var L = res.data.labels;
-      self.pane.innerHTML = '<p class="bk-muted">Цена суток — по дню заезда этих суток. Праздники — по правилу (вкладка «Праздники») или по особой цене даты. Скидка сайта считается от всей суммы.</p>'
+      self.pane.innerHTML = '<p><button class="bk-btn" type="button" data-pricelist>Прайс-лист для печати</button></p>'
+        + '<p class="bk-muted">Цена суток — по дню заезда этих суток. Праздники — по правилу (вкладка «Праздники») или по особой цене даты. Скидка сайта считается от всей суммы.</p>'
         + res.data.items.map(function (p) {
           return '<section class="bk-box"><h3>' + esc(p.name) + '</h3><form class="bk-formgrid" data-prices><input type="hidden" name="house" value="' + esc(p.house) + '">'
             + ['weekday', 'friday', 'saturday', 'sunday'].map(function (t) {
@@ -1264,6 +1300,7 @@
             + '<label class="bk-field"><span>Питомец, ₽</span><input name="pet_price" type="number" min="0" value="' + p.pet_price + '"></label>'
             + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Сохранить цены</button></div></form></section>';
         }).join('');
+      qs(self.pane, '[data-pricelist]').addEventListener('click', function () { self.priceList(); });
       qsa(self.pane, 'form[data-prices]').forEach(function (f) {
         self.form(f, function (data) {
           data.op = 'save';
@@ -1272,6 +1309,73 @@
       });
     });
   };
+
+  /* Прайс-лист на печать — отдельное окно по сохранённым данным: цены Домов, баня отдельно, доплаты, ближайшие праздники.
+     Окно открывается сразу по нажатию (иначе браузер заблокирует), данные подставляются, когда придут */
+  Admin.prototype.priceList = function () {
+    var self = this, w = window.open('', '_blank');
+    if (!w) { window.alert('Браузер не дал открыть окно — разрешите всплывающие окна для этого сайта'); return; }
+    w.document.write('<!doctype html><meta charset="utf-8"><title>Прайс-лист</title><p style="font:16px sans-serif;padding:24px">Готовим прайс-лист…</p>');
+    Promise.all([this.api.call('booking_manage_prices', { op: 'list' }), this.api.call('booking_manage_house', { op: 'list' }),
+      this.api.call('booking_manage_holiday', { op: 'list' })]).then(function (r) {
+      var bad = r.filter(function (x) { return !x.success; })[0];
+      if (bad) { w.document.body.innerHTML = '<p style="font:16px sans-serif;padding:24px">' + esc(bad.message) + '</p>'; return; }
+      w.document.open();
+      w.document.write(priceListHtml(r[0].data, r[1].data.items, r[2].data.items));
+      w.document.close();
+    });
+  };
+  function priceListHtml(P, houses, holidays) {
+    var L = P.labels, S = P.site || {}, types = ['weekday', 'friday', 'saturday', 'sunday'];
+    var byCode = {};
+    houses.forEach(function (h) { byCode[h.code] = h; });
+    var today = new Date(), iso = today.toISOString().slice(0, 10);
+    var hm = function (t) { return String(t || '').slice(0, 5); };
+    var cards = P.items.filter(function (p) { return byCode[p.house] && +byCode[p.house].active; }).map(function (p) {
+      var h = byCode[p.house], a = h.addon || {};
+      var rows = types.map(function (t) { return '<tr><td>' + esc(L[t]) + '</td><td class="n">' + (p.rules[t] ? money(p.rules[t]) : '—') + '</td></tr>'; }).join('');
+      var bath = p.addon_on ? '<h3>Баня отдельно, без проживания</h3><table><tbody>'
+        + types.map(function (t) { var v = (p.addon || {})[t] || p.addon_base; return '<tr><td>' + esc(L[t]) + '</td><td class="n">' + money(v) + ' / час</td></tr>'; }).join('')
+        + '</tbody></table><p class="note">От ' + (+a.min_hours || 1) + ' ч. Между гостями ' + (+a.buffer_minutes || 0) + ' мин на уборку.</p>' : '';
+      return '<section class="house"><h2>' + esc(p.name) + '</h2>'
+        + '<p class="sub">' + [h.address, h.capacity_party ? 'до ' + h.capacity_party + ' гостей' : '', h.capacity_sleep ? 'спальных мест: ' + h.capacity_sleep : ''].filter(Boolean).map(esc).join(' · ') + '</p>'
+        + '<p class="sub">Заезд с ' + esc(hm(h.checkin_time)) + ', выезд до ' + esc(hm(h.checkout_time)) + '</p>'
+        + '<table><thead><tr><th>Сутки</th><th class="n">Цена</th></tr></thead><tbody>' + rows + '</tbody></table>'
+        + '<p class="note">В цене до ' + p.extra_guest_limit + ' гостей, каждый следующий +' + money(p.extra_guest_price) + '. Питомец +' + money(p.pet_price) + '.</p>'
+        + bath + '</section>';
+    }).join('');
+    var hol = holidays.filter(function (x) { return x.date >= iso; }).slice(0, 24).map(function (x) {
+      var own = Object.keys(x.prices || {}).map(function (c) { return byCode[c] ? esc(byCode[c].name) + ' — ' + money(x.prices[c]) : ''; }).filter(Boolean).join('; ');
+      return '<tr><td>' + esc(human(x.date, true)) + (x.comment ? ' <small>' + esc(x.comment) + '</small>' : '') + '</td><td>' + (own || 'как ' + esc(String(x.rule_day).toLowerCase())) + '</td></tr>';
+    }).join('');
+    var css = '@font-face{font-family:Prata;src:url(' + ASSETS + 'fonts/prata-cyrillic-5.woff2) format("woff2")}'
+      + '@font-face{font-family:Golos;src:url(' + ASSETS + 'fonts/golos-text-cyrillic-1.woff2) format("woff2");font-weight:400 600}'
+      + ':root{--ink:#22140E;--soft:#66503F;--line:#D3BFA8;--fox:#B04E09;--paper:#FBF6EF}'
+      + '*{box-sizing:border-box}body{margin:0;background:#E9E1D6;color:var(--ink);font:400 14px/1.45 Golos,"Segoe UI",Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+      + '.bar{position:sticky;top:0;display:flex;gap:10px;justify-content:center;padding:12px;background:#22140E}'
+      + '.bar button{min-height:44px;padding:0 22px;border:0;border-radius:4px;background:var(--fox);color:#F6EEE3;font:400 16px Prata,Georgia,serif;cursor:pointer}.bar button+button{background:transparent;box-shadow:inset 0 0 0 1px #F6EEE3}'
+      + '.page{width:210mm;min-height:297mm;margin:16px auto;padding:12mm 14mm 10mm;background:#fff;box-shadow:0 6px 30px rgba(34,20,14,.18)}'
+      + 'header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding-bottom:12px;border-bottom:3px solid var(--fox)}'
+      + 'h1{margin:0;font:400 30px/1.1 Prata,Georgia,serif}header p{margin:4px 0 0;color:var(--soft)}header .ph{text-align:right;font:400 20px/1.2 Prata,Georgia,serif;color:var(--ink)}header .ph small{display:block;font:400 13px Golos,sans-serif;color:var(--soft)}'
+      + '.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-top:14px}.house{break-inside:avoid;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}'
+      + 'h2{margin:0;font:400 21px/1.2 Prata,Georgia,serif;color:var(--fox)}h3{margin:12px 0 4px;font:600 13px/1.3 Golos,sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--soft)}'
+      + '.sub{margin:2px 0 0;color:var(--soft);font-size:12.5px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{padding:4px 0;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}'
+      + 'th{font-weight:600;font-size:12px;color:var(--soft);text-transform:uppercase;letter-spacing:.04em}.n{text-align:right;white-space:nowrap;font-weight:600}td small{color:var(--soft)}'
+      + '.note{margin:6px 0 0;font-size:12.5px;color:var(--soft)}.wide{margin-top:16px;break-inside:avoid}.terms{margin:16px 0 0;padding:12px 14px;border-left:4px solid var(--fox);background:var(--paper)}.terms p{margin:0 0 4px}'
+      + 'footer{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--soft);font-size:12px}'
+      + '@media screen and (max-width:820px){.page{width:auto;min-height:0;margin:0;padding:18px 16px}.grid{grid-template-columns:1fr}header{flex-wrap:wrap}header .ph{text-align:left}}'
+      + '@page{size:A4;margin:0}@media print{body{background:#fff}.bar{display:none}.page{margin:0;box-shadow:none;width:210mm;min-height:0}}';
+    var date = today.getDate() + ' ' + MONTHS_GEN[today.getMonth()] + ' ' + today.getFullYear();
+    return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Прайс-лист — ' + esc(S.name || '') + '</title><style>' + css + '</style></head><body>'
+      + '<div class="bar"><button type="button" onclick="print()">Распечатать</button><button type="button" onclick="close()">Закрыть</button></div>'
+      + '<div class="page"><header><div><h1>Прайс-лист</h1><p>' + esc(S.name || '') + '</p></div>'
+      + (S.phone ? '<div class="ph">' + esc(S.phone) + '<small>бронирование' + (S.url ? ' · ' + esc(S.url) : '') + '</small></div>' : '') + '</header>'
+      + '<div class="grid">' + cards + '</div>'
+      + (hol ? '<section class="wide"><h3>Праздничные дни</h3><table><thead><tr><th>Дата</th><th>Цена суток</th></tr></thead><tbody>' + hol + '</tbody></table></section>' : '')
+      + '<div class="terms"><p><b>Залог</b> 5 000 – 20 000 ₽ — зависит от количества и возраста гостей.</p>'
+      + '<p><b>Предоплата ' + (S.prepay_percent || 50) + '%</b> — после того, как администратор подтвердил бронь по телефону. Остальное — при заселении.</p></div>'
+      + '<footer><span>Цены на ' + esc(date) + '</span><span>' + esc(S.url || '') + '</span></footer></div></body></html>';
+  }
 
   // --- праздники с особыми ценами по домам
   Admin.prototype.tab_holidays = function () {

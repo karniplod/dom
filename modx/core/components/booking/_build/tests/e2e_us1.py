@@ -1,7 +1,7 @@
 """E2E US1 (quickstart 1–3, 9, 18): гость выбирает Дом и даты, видит расчёт, отправляет заявку через SendIt.
 Запуск: python _build/tests/e2e_us1.py [адрес стенда] [папка скриншотов]
 Почта на стенде не настроена — это и есть сценарий 18: заявка сохраняется, гость видит номер."""
-import sys, datetime, pathlib, random, math
+import urllib.parse, sys, datetime, pathlib, random, math
 from playwright.sync_api import sync_playwright
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -59,6 +59,12 @@ if (navigator.userAgentData) Object.defineProperty(navigator, 'userAgentData', {
 Object.defineProperty(window, 'outerWidth', {get: () => window.innerWidth});
 Object.defineProperty(window, 'outerHeight', {get: () => window.innerHeight + 80});"""
 
+import os, subprocess
+PHP = os.environ.get("BOOKING_PHP", "C:/cloud/modx-test/php/php.exe -c C:/cloud/modx-test/php/php.ini").split()
+FIX = str(pathlib.Path(__file__).with_name("fixture.php"))
+cleanup = lambda: subprocess.run(PHP + [FIX, "cleanup"], capture_output=True)   # заявки «ТЕСТ …» прошлых прогонов: иначе повтор той же заявки отклоняется
+cleanup()
+
 with sync_playwright() as pw:
     br = pw.chromium.launch(channel="chrome", args=["--disable-blink-features=AutomationControlled"])
     for width in (1440, 390):
@@ -86,11 +92,11 @@ with sync_playwright() as pw:
         quote = form.locator("[data-bk-quote]").inner_text()
         check("Гости сверх 10" in quote and "Скидка" not in quote, "расчёт: доплата за 4 гостей, скидки на сайте нет")
         vk = form.locator(".bk-vk a")
-        check(vk.count() == 1 and "vk.com" in vk.get_attribute("href"), "кнопка «Получить скидку 5% ВКонтакте» ведёт в группу")
+        check(vk.count() == 1 and "vk.com" in vk.get_attribute("href"), "кнопка «Мы во ВКонтакте» ведёт в группу")
         humanize(page, 30)
         form.locator("input[name=name]").type("ТЕСТ Браузер", delay=110)
-        form.locator("input[name=phone]").type("9001234567", delay=90)
-        check(form.locator("input[name=phone]").input_value() == "+7 (900) 123-45-67", "маска телефона")
+        form.locator("input[name=phone]").type("90012345" + ("67" if width == 1440 else "68"), delay=90)
+        check(form.locator("input[name=phone]").input_value().startswith("+7 (900) 123-45-6"), "маска телефона")
         form.locator("input[name=agree]").check()
         humanize(page, 150)  # и заодно больше 3 с заполнения (minFillTime SendIt)
         form.locator("button[type=submit]").click()
@@ -103,6 +109,22 @@ with sync_playwright() as pw:
         text = done.inner_text()
         check("Заявка №" in text and "отправлена" in text, "гость видит номер заявки: " + text.split("\n")[0])
         check("Ссылка на заявку" in text, "и ссылку на неё")
+        # окно «сначала позвоните, потом предоплата»: само и по клику мимо не закрывается
+        dlg = page.locator("dialog.bk-pp")
+        dlg.wait_for(state="visible", timeout=5000)
+        dt = dlg.inner_text()
+        check("Сначала позвоните администратору" in dt and "50%" in dt, "окно: сначала звонок, потом предоплата 50%")
+        check(dlg.locator("a[href^='tel:']").count() >= 1, "в окне кнопка «Позвонить администратору»")
+        pay = dlg.locator("[data-pp-pay]")
+        check(pay.count() == 1 and "Предоплата" in urllib.parse.unquote(pay.get_attribute("href") or ""), "кнопка «Внести предоплату по СБП» ведёт на страницу предоплаты Дома")
+        page.screenshot(path=str(SHOTS / f"us1-prepay-{width}.png"))
+        page.mouse.click(5, 5)
+        page.wait_for_timeout(300)
+        check(dlg.is_visible(), "клик мимо окна его не закрывает")
+        dlg.locator(".bk-pp__x").click()
+        page.wait_for_timeout(300)
+        check(page.locator("dialog.bk-pp").count() == 0, "крестик закрывает окно")
+        check("Сначала позвоните" in done.inner_text(), "шаги остаются в блоке «Заявка отправлена»")
         page.screenshot(path=str(SHOTS / f"us1-done-{width}.png"), full_page=True)
 
         # вторая заявка на те же даты принимается (новая заявка даты не занимает)
@@ -114,10 +136,13 @@ with sync_playwright() as pw:
         page.wait_for_timeout(random.randint(400, 900))
         form.locator(f'[data-day="{d_out}"]').click()
         form.locator("input[name=guests]").fill("6")
+        form.locator("input[name=phone]").fill("")
+        form.locator("input[name=phone]").type("90012345" + ("77" if width == 1440 else "78"), delay=60)
         humanize(page, 150)
         form.locator("button[type=submit]").click()
         done.wait_for(state="visible", timeout=30000)
-        check("Заявка №" in done.inner_text(), "вторая заявка на те же даты принята")
+        check("Заявка №" in done.inner_text(), "вторая заявка на те же даты (другой гость) принята")
+        page.locator("dialog.bk-pp [data-pp-close]").last.click()
 
         page.goto(BASE + "/booking", wait_until="networkidle")
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -133,5 +158,6 @@ with sync_playwright() as pw:
         ctx.close()
     br.close()
 
+cleanup()
 print("\nИтог:", "OK" if not fails else f"провалено {len(fails)}")
 sys.exit(1 if fails else 0)
