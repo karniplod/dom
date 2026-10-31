@@ -43,7 +43,10 @@ class Addon extends Base
         if ($price !== null && $price < 1) {
             throw BookingError::field('price_per_hour', 'Цена за час — больше нуля');
         }
-        if ($separately && !$price) {
+        if ($house->get('kind') === 'bath') {
+            $separately = true;   // отдельную баню или сауну иначе и не забронировать
+        }
+        if ($separately && !$price) {   // цена часов вне «часов с другой ценой» (вкладка «Цены»)
             throw BookingError::field('price_per_hour', 'Чтобы бронировать баню отдельно, укажите цену за час');
         }
         $a->fromArray([

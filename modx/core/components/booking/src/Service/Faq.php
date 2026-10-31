@@ -317,19 +317,23 @@ class Faq
     {
         $pricing = $this->booking->pricing();
         $sep = [];
-        foreach ($this->houses() as $h) {
+        foreach ($this->houses(true) as $h) {
             if (!(int)$h->get('addon_bookable_separately')) continue;
             $addon = $this->booking->modx->getObject(Addon::class, ['house_id' => $h->get('id'), 'active' => 1]);
             if (!$addon || (int)$addon->get('price_per_hour') <= 0) continue;
-            $s = $h->get('name') . ': ' . $this->booking->money((int)$addon->get('price_per_hour')) . ' в час';
-            $byDay = [];
-            foreach ($pricing->rules((int)$h->get('id')) as $t => $r) {
-                if ((int)$r->get('addon_price') > 0 && (int)$r->get('addon_price') !== (int)$addon->get('price_per_hour')) {
-                    $byDay[] = self::SHORT_DAYS[$t] . ' ' . $this->booking->money((int)$r->get('addon_price'));
-                }
+            // «Понедельник – пятница: 09:00–18:00 — 1 500 ₽, 18:00–09:00 — 2 000 ₽; Суббота и воскресенье — 2 000 ₽»
+            $days = array_map(function ($g) {
+                $parts = array_map(function ($p) {
+                    return ($p['from'] !== '' ? $p['from'] . '–' . $p['to'] . ' — ' : '') . ($p['price'] > 0 ? $this->booking->money($p['price']) : 'по звонку');
+                }, $g['parts']);
+                return $g['label'] . (count($g['parts']) > 1 ? ': ' : ' — ') . implode(', ', $parts);
+            }, $pricing->schedule($h, $addon));
+            $s = ($h->get('kind') === 'bath' ? $h->get('name') : $h->get('name') . ', баня') . ', за час: ' . implode('; ', $days);
+            $s .= '. Минимум ' . Pricing::hours((float)$addon->get('min_hours')) . '.';
+            if ((int)$addon->get('guest_limit') > 0 && (int)$addon->get('extra_guest_price') > 0) {
+                $s .= ' В цене до ' . (int)$addon->get('guest_limit') . ' гостей, каждый следующий +' . $this->booking->money((int)$addon->get('extra_guest_price'))
+                    . ($addon->get('extra_guest_per') === 'booking' ? '.' : ' в час.');
             }
-            if ($byDay) $s .= ' (' . implode(', ', $byDay) . ')';
-            $s .= ', минимум ' . Pricing::hours((float)$addon->get('min_hours')) . '.';
             $sep[] = $s;
         }
         $text = 'Когда вы снимаете Дом, баня и бассейн уже входят в цену суток.';
@@ -517,9 +521,10 @@ class Faq
     // ------------------------------------------------------------------ данные
 
     /** @return House[] */
-    public function houses(): array
+    /** Дома посуточно; $all — и отдельные бани (сауна, kind=bath) */
+    public function houses(bool $all = false): array
     {
-        $c = $this->booking->modx->newQuery(House::class, ['active' => 1]);
+        $c = $this->booking->modx->newQuery(House::class, $all ? ['active' => 1] : ['active' => 1, 'kind' => 'house']);
         $c->sortby('sort', 'ASC');
         $c->sortby('id', 'ASC');
         return array_values($this->booking->modx->getCollection(House::class, $c));

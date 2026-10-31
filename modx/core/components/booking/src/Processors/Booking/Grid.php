@@ -55,8 +55,11 @@ class Grid extends Base
             foreach ($b->availability()->blockedNights($hid, $from, $to) as $n => $reason) {
                 $cells[$n]['blocked'] = $reason;
             }
-            $rows[] = ['type' => 'house', 'id' => $hid, 'code' => $h->get('code'), 'name' => $h->get('name'),
-                'active' => (bool)$h->get('active'), 'cells' => (object)$cells];
+            $bath = $h->get('kind') === 'bath';   // отдельная баня или сауна — только строка часов
+            if (!$bath) {
+                $rows[] = ['type' => 'house', 'id' => $hid, 'code' => $h->get('code'), 'name' => $h->get('name'),
+                    'active' => (bool)$h->get('active'), 'cells' => (object)$cells];
+            }
 
             // строка бани — если у дома включена отдельная бронь
             $addon = $modx->getObject(Addon::class, ['house_id' => $hid, 'active' => 1]);
@@ -80,7 +83,7 @@ class Grid extends Base
                     }
                 }
                 $rows[] = ['type' => 'addon', 'id' => (int)$addon->get('id'), 'house_id' => $hid, 'code' => $h->get('code'),
-                    'name' => $addon->get('name') . ' — ' . $h->get('name'), 'cells' => (object)$ac];
+                    'name' => $bath ? $h->get('name') : $addon->get('name') . ' — ' . $h->get('name'), 'cells' => (object)$ac];
             }
         }
         return ['from' => $from, 'to' => $to, 'dates' => $dates, 'today' => $b->today(), 'rows' => $rows];

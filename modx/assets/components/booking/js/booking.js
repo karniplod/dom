@@ -294,8 +294,10 @@
   };
   GuestForm.prototype.onHouse = function () {
     var h = this.house();
-    if (this.el.kind) this.el.kind.hidden = !(h && h.addon);
+    var bathOnly = !!(h && h.kind === 'bath');   // отдельная баня или сауна — только по часам
+    if (this.el.kind) this.el.kind.hidden = !(h && h.addon) || bathOnly;
     if (!(h && h.addon)) this.el.addon.forEach(function (r) { r.checked = r.value === '0'; });
+    else if (bathOnly) this.el.addon.forEach(function (r) { r.checked = r.value === '1'; });
     if (h && this.el.guests) {
       this.el.guests.max = h.capacity_party;
       this.el.guests.placeholder = 'до ' + h.capacity_party;
@@ -1243,26 +1245,43 @@
       if (!res.success) { self.fail(res); return; }
       self.houses = res.data.items;
       self.pane.innerHTML = res.data.items.map(function (h) {
-        var a = h.addon || {};
-        return '<section class="bk-box"><h3>' + esc(h.name) + ' <small>(' + esc(h.code) + ')</small>' + (h.active ? '' : ' <span class="bk-badge bk-badge--cancelled">скрыт</span>') + '</h3>'
+        var a = h.addon || {}, bath = h.kind === 'bath';   // bath — отдельная баня или сауна, только по часам
+        return '<section class="bk-box"><h3>' + esc(h.name) + ' <small>(' + esc(h.code) + (bath ? ', по часам' : '') + ')</small>' + (h.active ? '' : ' <span class="bk-badge bk-badge--cancelled">скрыт</span>') + '</h3>'
           + '<form class="bk-formgrid" data-house="' + h.id + '"><input type="hidden" name="id" value="' + h.id + '">'
           + '<label class="bk-field"><span>Название</span><input name="name" value="' + esc(h.name) + '" required></label>'
           + '<label class="bk-field"><span>Адрес</span><input name="address" value="' + esc(h.address) + '"></label>'
-          + '<label class="bk-field"><span>Ночуют</span><input name="capacity_sleep" type="number" min="1" value="' + h.capacity_sleep + '"></label>'
-          + '<label class="bk-field"><span>Отдыхают (максимум в заявке)</span><input name="capacity_party" type="number" min="1" value="' + h.capacity_party + '"></label>'
-          + '<label class="bk-field"><span>Заезд</span><input name="checkin_time" type="time" value="' + h.checkin_time + '"></label>'
-          + '<label class="bk-field"><span>Выезд</span><input name="checkout_time" type="time" value="' + h.checkout_time + '"></label>'
-          + '<label class="bk-field"><span>Уборка Дома после выезда, мин</span><input name="cleanup_minutes" type="number" min="0" max="600" value="' + (h.cleanup_minutes != null ? h.cleanup_minutes : 60) + '"></label>'
+          + (bath ? '' : '<label class="bk-field"><span>Ночуют</span><input name="capacity_sleep" type="number" min="1" value="' + h.capacity_sleep + '"></label>')
+          + '<label class="bk-field"><span>' + (bath ? 'Гостей (максимум в заявке)' : 'Отдыхают (максимум в заявке)') + '</span><input name="capacity_party" type="number" min="1" value="' + h.capacity_party + '"></label>'
+          + (bath ? '<input type="hidden" name="checkin_time" value="' + h.checkin_time + '"><input type="hidden" name="checkout_time" value="' + h.checkout_time + '">'
+            : '<label class="bk-field"><span>Заезд</span><input name="checkin_time" type="time" value="' + h.checkin_time + '"></label>'
+            + '<label class="bk-field"><span>Выезд</span><input name="checkout_time" type="time" value="' + h.checkout_time + '"></label>'
+            + '<label class="bk-field"><span>Уборка Дома после выезда, мин</span><input name="cleanup_minutes" type="number" min="0" max="600" value="' + (h.cleanup_minutes != null ? h.cleanup_minutes : 60) + '"></label>')
           + '<label class="bk-field"><span>Порядок</span><input name="sort" type="number" min="0" value="' + h.sort + '"></label>'
           + '<label class="bk-check"><input type="checkbox" name="active"' + (h.active ? ' checked' : '') + '> показывать в форме</label>'
-          + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Сохранить Дом</button></div></form>'
+          + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">' + (bath ? 'Сохранить' : 'Сохранить Дом') + '</button></div></form>'
           + '<form class="bk-formgrid" data-addon="' + esc(h.code) + '"><input type="hidden" name="house" value="' + esc(h.code) + '">'
-          + '<label class="bk-check bk-full"><input type="checkbox" name="bookable_separately"' + (h.addon_bookable_separately ? ' checked' : '') + '> баню можно бронировать отдельно (по часам)</label>'
+          + (bath ? '<input type="hidden" name="bookable_separately" value="1"><input type="hidden" name="name" value="' + esc(a.name || h.name) + '">'
+            : '<label class="bk-check bk-full"><input type="checkbox" name="bookable_separately"' + (h.addon_bookable_separately ? ' checked' : '') + '> баню можно бронировать отдельно (по часам)</label>')
           + '<label class="bk-field"><span>Цена бани за час, ₽</span><input name="price_per_hour" type="number" min="1" value="' + (a.price_per_hour || '') + '"></label>'
           + '<label class="bk-field"><span>Минимум часов</span><input name="min_hours" type="number" min="1" max="24" value="' + (a.min_hours || 2) + '"></label>'
           + '<label class="bk-field"><span>Перерыв между сеансами, мин</span><input name="buffer_minutes" type="number" min="0" max="240" value="' + (a.buffer_minutes != null ? a.buffer_minutes : 60) + '"></label>'
-          + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Сохранить баню</button></div></form></section>';
-      }).join('');
+          + '<p class="bk-muted bk-full">Цены по дням и часам суток и доплата за гостей — во вкладке «Цены».</p>'
+          + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">' + (bath ? 'Сохранить цену и часы' : 'Сохранить баню') + '</button></div></form></section>';
+      }).join('')
+        // новый объект: Дом посуточно или отдельная баня/сауна по часам; создаётся скрытым
+        + '<section class="bk-box"><h3>Добавить Дом, баню или сауну</h3><form class="bk-formgrid" data-house-new>'
+        + '<label class="bk-field"><span>Что это</span><select name="kind"><option value="house">Дом или номер — посуточно</option><option value="bath">Баня или сауна — только по часам</option></select></label>'
+        + '<label class="bk-field"><span>Название</span><input name="name" required></label>'
+        + '<label class="bk-field"><span>Код латиницей (например sauna2)</span><input name="code" required></label>'
+        + '<label class="bk-field"><span>Ночуют (для Дома)</span><input name="capacity_sleep" type="number" min="1" value="2"></label>'
+        + '<label class="bk-field"><span>Гостей максимум</span><input name="capacity_party" type="number" min="1" value="8"></label>'
+        + '<input type="hidden" name="checkin_time" value="15:00"><input type="hidden" name="checkout_time" value="12:00"><input type="hidden" name="active" value="0">'
+        + '<p class="bk-muted bk-full">Появится скрытым: задайте цены и отметьте «показывать в форме», когда будете готовы. Адрес можно не указывать.</p>'
+        + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Добавить</button></div></form></section>';
+      self.form(qs(self.pane, 'form[data-house-new]'), function (data) {
+        data.op = 'save';
+        return self.api.call('booking_manage_house', data).then(function (r) { if (r.success) { self.msg('Добавлено — пока скрыто'); self.tab_houses(); } else self.fail(r); });
+      });
       qsa(self.pane, 'form[data-house]').forEach(function (f) {
         self.form(f, function (data) {
           data.op = 'save';
@@ -1287,28 +1306,84 @@
       self.pane.innerHTML = '<p><button class="bk-btn" type="button" data-pricelist>Прайс-лист для печати</button></p>'
         + '<p class="bk-muted">Цена суток — по дню заезда этих суток. Праздники — по правилу (вкладка «Праздники») или по особой цене даты. Скидка сайта считается от всей суммы.</p>'
         + res.data.items.map(function (p) {
-          return '<section class="bk-box"><h3>' + esc(p.name) + '</h3><form class="bk-formgrid" data-prices><input type="hidden" name="house" value="' + esc(p.house) + '">'
-            + ['weekday', 'friday', 'saturday', 'sunday'].map(function (t) {
+          var bath = p.kind === 'bath', an = bath ? p.name : 'Баня';
+          var house = bath
+            // отдельная баня или сауна: цен суток нет; доплаты Дома — прежние, скрыто
+            ? '<input type="hidden" name="extra_guest_limit" value="' + (p.extra_guest_limit || 1) + '"><input type="hidden" name="extra_guest_price" value="' + (p.extra_guest_price || 0) + '"><input type="hidden" name="pet_price" value="' + (p.pet_price || 0) + '">'
+            : ['weekday', 'friday', 'saturday', 'sunday'].map(function (t) {
               return '<label class="bk-field"><span>' + esc(L[t]) + ', ₽</span><input name="price_' + t + '" type="number" min="1" required value="' + (p.rules[t] || '') + '"></label>';
             }).join('')
-            + (p.addon_on ? '<p class="bk-muted bk-full">Баня отдельно, ₽ за час. Пусто — базовая цена ' + money(p.addon_base) + ' из «Дома и бани»</p>'
-              + ['weekday', 'friday', 'saturday', 'sunday'].map(function (t) {
-                return '<label class="bk-field"><span>Баня: ' + esc(L[t].toLowerCase()) + ', ₽/час</span><input name="addon_' + t + '" type="number" min="1" placeholder="' + (p.addon_base || '') + '" value="' + ((p.addon || {})[t] || '') + '"></label>';
-              }).join('') : '')
             + '<label class="bk-field"><span>Гостей в цене</span><input name="extra_guest_limit" type="number" min="1" value="' + p.extra_guest_limit + '"></label>'
             + '<label class="bk-field"><span>Доплата за гостя сверх, ₽</span><input name="extra_guest_price" type="number" min="0" value="' + p.extra_guest_price + '"></label>'
-            + '<label class="bk-field"><span>Питомец, ₽</span><input name="pet_price" type="number" min="0" value="' + p.pet_price + '"></label>'
+            + '<label class="bk-field"><span>Питомец, ₽</span><input name="pet_price" type="number" min="0" value="' + p.pet_price + '"></label>';
+          var addon = !p.addon_on ? '' : '<h4 class="bk-full bk-sub">' + esc(bath ? p.name + ' по часам' : 'Баня отдельно, по часам') + '</h4>'
+            + '<p class="bk-muted bk-full">Цена часа по дням. Пусто — ' + (p.addon_base ? money(p.addon_base) + ' из «Дома и бани»' : 'цена из «Дома и бани»') + '.</p>'
+            + ['weekday', 'friday', 'saturday', 'sunday'].map(function (t) {
+              return '<label class="bk-field"><span>' + esc(an) + ': ' + esc(L[t].toLowerCase()) + ', ₽/час</span><input name="addon_' + t + '" type="number" min="1" placeholder="' + (p.addon_base || '') + '" value="' + ((p.addon || {})[t] || '') + '"></label>';
+            }).join('')
+            + '<div class="bk-full bk-rates" data-rates><p class="bk-muted">Другая цена в часы суток — например, после 18:00. Если «до» раньше, чем «с», — через полночь: 18:00–09:00 — это вечер и утро до 9. Если часы пересекаются, главнее нижняя строка.</p>'
+            + (p.addon_rates || []).map(rateRow).join('')
+            + '<button type="button" class="bk-btn bk-btn--sm bk-btn--ghost" data-rate-add>+ Часы с другой ценой</button></div>'
+            + '<label class="bk-field"><span>' + esc(an) + ': гостей в цене (0 — без доплаты)</span><input name="addon_guest_limit" type="number" min="0" value="' + (p.addon_guest_limit || 0) + '"></label>'
+            + '<label class="bk-field"><span>Доплата за гостя сверх, ₽</span><input name="addon_extra_guest_price" type="number" min="0" value="' + (p.addon_extra_guest_price || 0) + '"></label>'
+            + '<label class="bk-field"><span>Доплата считается</span><select name="addon_extra_guest_per"><option value="hour"' + (p.addon_extra_guest_per !== 'booking' ? ' selected' : '') + '>за каждый час</option><option value="booking"' + (p.addon_extra_guest_per === 'booking' ? ' selected' : '') + '>один раз за сеанс</option></select></label>'
+            + (p.addon_schedule && p.addon_schedule.length ? '<div class="bk-full bk-sched"><b>Сейчас в расчёте:</b>' + scheduleHtml(p.addon_schedule) + '</div>' : '');
+          return '<section class="bk-box"><h3>' + esc(p.name) + (p.active ? '' : ' <span class="bk-badge bk-badge--cancelled">скрыт</span>') + '</h3><form class="bk-formgrid" data-prices><input type="hidden" name="house" value="' + esc(p.house) + '">'
+            + house + addon
             + '<div class="bk-full"><button class="bk-btn bk-btn--ghost" type="submit">Сохранить цены</button></div></form></section>';
         }).join('');
+      qsa(self.pane, '[data-rate-add]').forEach(function (b) {
+        b.addEventListener('click', function () { b.insertAdjacentHTML('beforebegin', rateRow(null)); });
+      });
+      qsa(self.pane, '[data-rates]').forEach(function (box) {
+        box.addEventListener('click', function (e) {
+          var del = e.target.closest('[data-rate-del]');
+          if (del) del.closest('[data-rate]').remove();
+        });
+      });
       qs(self.pane, '[data-pricelist]').addEventListener('click', function () { self.priceList(); });
       qsa(self.pane, 'form[data-prices]').forEach(function (f) {
         self.form(f, function (data) {
           data.op = 'save';
-          return self.api.call('booking_manage_prices', data).then(function (r) { r.success ? self.msg('Цены сохранены — на сайте обновятся сразу') : self.fail(r); });
+          var box = qs(f, '[data-rates]');
+          if (box) data.addon_rates = JSON.stringify(qsa(box, '[data-rate]').map(function (r) {
+            return { days: qsa(r, '[data-d]').filter(function (c) { return c.checked; }).map(function (c) { return c.getAttribute('data-d'); }),
+              from: qs(r, '[data-f]').value, to: qs(r, '[data-t]').value, price: qs(r, '[data-p]').value };
+          }));
+          return self.api.call('booking_manage_prices', data).then(function (r) { if (r.success) self.tab_prices(); return r; }).then(function (r) { r.success ? self.msg('Цены сохранены — на сайте обновятся сразу') : self.fail(r); });
         });
       });
     });
   };
+
+  /* Строка «часы с другой ценой» во вкладке «Цены»: дни, с, до, ₽/час. Без name — собирается в addon_rates при сохранении */
+  var RATE_DAYS = [['weekday', 'Пн–Чт'], ['friday', 'Пт'], ['saturday', 'Сб'], ['sunday', 'Вс']];
+  function rateRow(r) {
+    r = r || { days: ['weekday', 'friday'], from: '18:00', to: '24:00', price: '' };
+    var opts = function (cur, end) {
+      var o = '';
+      for (var m = end ? 30 : 0; m <= (end ? 1440 : 1410); m += 30) {
+        var t = pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+        o += '<option' + (t === cur ? ' selected' : '') + '>' + t + '</option>';
+      }
+      return o;
+    };
+    return '<div class="bk-rate" data-rate><span class="bk-rate__days">' + RATE_DAYS.map(function (d) {
+        return '<label class="bk-check"><input type="checkbox" data-d="' + d[0] + '"' + (r.days.indexOf(d[0]) >= 0 ? ' checked' : '') + '> ' + d[1] + '</label>';
+      }).join('') + '</span>'
+      + '<label class="bk-field"><span>с</span><select data-f>' + opts(r.from, false) + '</select></label>'
+      + '<label class="bk-field"><span>до</span><select data-t>' + opts(r.to, true) + '</select></label>'
+      + '<label class="bk-field"><span>₽/час</span><input type="number" min="1" data-p value="' + esc(r.price || '') + '"></label>'
+      + '<button type="button" class="bk-btn bk-btn--sm bk-btn--ghost bk-rate__del" data-rate-del aria-label="Убрать эти часы">×</button></div>';
+  }
+  /* Расписание цен бани (сервер, Pricing::schedule): «Понедельник – пятница: 09:00–18:00 — 1 500 ₽, 18:00–09:00 — 2 000 ₽» */
+  function scheduleHtml(sch) {
+    return '<ul class="bk-schedlist">' + sch.map(function (g) {
+      return '<li><b>' + esc(g.label) + '</b>' + (g.parts.length > 1 ? ': ' : ' — ') + g.parts.map(function (x) {
+        return (x.from ? esc(x.from + '–' + x.to) + ' — ' : '') + (x.price > 0 ? money(x.price) : 'не задано');
+      }).join(', ') + '</li>';
+    }).join('') + '</ul>';
+  }
 
   /* Прайс-лист на печать — отдельное окно по сохранённым данным: цены Домов, баня отдельно, доплаты, ближайшие праздники.
      Окно открывается сразу по нажатию (иначе браузер заблокирует), данные подставляются, когда придут */
@@ -1332,16 +1407,23 @@
     var today = new Date(), iso = today.toISOString().slice(0, 10);
     var hm = function (t) { return String(t || '').slice(0, 5); };
     var cards = P.items.filter(function (p) { return byCode[p.house] && +byCode[p.house].active; }).map(function (p) {
-      var h = byCode[p.house], a = h.addon || {};
+      var h = byCode[p.house], a = h.addon || {}, only = p.kind === 'bath';
       var rows = types.map(function (t) { return '<tr><td>' + esc(L[t]) + '</td><td class="n">' + (p.rules[t] ? money(p.rules[t]) : '—') + '</td></tr>'; }).join('');
-      var bath = p.addon_on ? '<h3>Баня отдельно, без проживания</h3><table><tbody>'
-        + types.map(function (t) { var v = (p.addon || {})[t] || p.addon_base; return '<tr><td>' + esc(L[t]) + '</td><td class="n">' + money(v) + ' / час</td></tr>'; }).join('')
-        + '</tbody></table><p class="note">От ' + (+a.min_hours || 1) + ' ч. Между гостями ' + (+a.buffer_minutes || 0) + ' мин на уборку.</p>' : '';
+      // баня по часам — расписание сервера: то же видит гость в расчёте
+      var sched = (p.addon_schedule || []).map(function (g) {
+        return g.parts.map(function (x, i) {
+          return '<tr><td>' + (i ? '' : esc(g.label)) + '</td><td>' + (x.from ? esc(x.from + '–' + x.to) : 'весь день') + '</td><td class="n">' + (x.price > 0 ? money(x.price) : '—') + ' / час</td></tr>';
+        }).join('');
+      }).join('');
+      var extra = +p.addon_guest_limit > 0 && +p.addon_extra_guest_price > 0
+        ? ' В цене до ' + p.addon_guest_limit + ' гостей, каждый следующий +' + money(p.addon_extra_guest_price) + (p.addon_extra_guest_per === 'booking' ? '.' : ' в час.') : '';
+      var bath = p.addon_on ? (only ? '' : '<h3>Баня отдельно, без проживания</h3>') + '<table><tbody>' + sched + '</tbody></table>'
+        + '<p class="note">От ' + (+a.min_hours || 1) + ' ч. Между гостями ' + (+a.buffer_minutes || 0) + ' мин на уборку.' + extra + '</p>' : '';
       return '<section class="house"><h2>' + esc(p.name) + '</h2>'
-        + '<p class="sub">' + [h.address, h.capacity_party ? 'до ' + h.capacity_party + ' гостей' : '', h.capacity_sleep ? 'спальных мест: ' + h.capacity_sleep : ''].filter(Boolean).map(esc).join(' · ') + '</p>'
-        + '<p class="sub">Заезд с ' + esc(hm(h.checkin_time)) + ', выезд до ' + esc(hm(h.checkout_time)) + '</p>'
-        + '<table><thead><tr><th>Сутки</th><th class="n">Цена</th></tr></thead><tbody>' + rows + '</tbody></table>'
-        + '<p class="note">В цене до ' + p.extra_guest_limit + ' гостей, каждый следующий +' + money(p.extra_guest_price) + '. Питомец +' + money(p.pet_price) + '.</p>'
+        + '<p class="sub">' + [h.address, h.capacity_party ? 'до ' + h.capacity_party + ' гостей' : '', !only && h.capacity_sleep ? 'спальных мест: ' + h.capacity_sleep : ''].filter(Boolean).map(esc).join(' · ') + '</p>'
+        + (only ? '' : '<p class="sub">Заезд с ' + esc(hm(h.checkin_time)) + ', выезд до ' + esc(hm(h.checkout_time)) + '</p>'
+          + '<table><thead><tr><th>Сутки</th><th class="n">Цена</th></tr></thead><tbody>' + rows + '</tbody></table>'
+          + '<p class="note">В цене до ' + p.extra_guest_limit + ' гостей, каждый следующий +' + money(p.extra_guest_price) + '. Питомец +' + money(p.pet_price) + '.</p>')
         + bath + '</section>';
     }).join('');
     var hol = holidays.filter(function (x) { return x.date >= iso; }).slice(0, 24).map(function (x) {

@@ -7,6 +7,7 @@ from _e2e import BASE, SHOTS, LAUNCH, HUMAN, check, fixture, console_errors, hum
 fixture("cleanup")
 fixture("addon", "sv", 1500)
 day = datetime.date.today() + datetime.timedelta(days=33)
+day += datetime.timedelta(days=(7 - day.weekday()) % 7)  # понедельник: днём в будни 1 500 ₽/ч, в Сб и Вс у Свиязева 2 000
 try:
     with sync_playwright() as pw:
         br = pw.chromium.launch(**LAUNCH)

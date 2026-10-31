@@ -30,6 +30,7 @@ class House extends \Booking\Model\House
             'cleanup_minutes' => 60,
             'addon_bookable_separately' => 0,
             'active' => 1,
+            'kind' => 'house',
             'sort' => 0,
         ),
         'fieldMeta' => 
@@ -138,6 +139,14 @@ class House extends \Booking\Model\House
                 'phptype' => 'boolean',
                 'null' => false,
                 'default' => 1,
+            ),
+            'kind' => 
+            array (
+                'dbtype' => 'enum',
+                'precision' => '\'house\',\'bath\'',
+                'phptype' => 'string',
+                'null' => false,
+                'default' => 'house',
             ),
             'sort' => 
             array (

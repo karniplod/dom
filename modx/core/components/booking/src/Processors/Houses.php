@@ -23,6 +23,7 @@ class Houses extends Base
             $out[] = [
                 'code' => $h->get('code'),
                 'name' => $h->get('name'),
+                'kind' => $h->get('kind'),   // bath — только по часам
                 'capacity_sleep' => (int)$h->get('capacity_sleep'),
                 'capacity_party' => (int)$h->get('capacity_party'),
                 'checkin' => substr($h->get('checkin_time'), 0, 5),
@@ -30,6 +31,7 @@ class Houses extends Base
                 'addon' => $addon && (int)$addon->get('price_per_hour') > 0 ? [
                     'name' => $addon->get('name'),
                     'price_per_hour' => (int)$addon->get('price_per_hour'),
+                    'guest_limit' => (int)$addon->get('guest_limit'),
                     'min_hours' => (int)$addon->get('min_hours'),
                     'buffer_minutes' => (int)$addon->get('buffer_minutes'),
                 ] : null,

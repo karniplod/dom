@@ -120,6 +120,123 @@ class Pricing
     }
 
     /**
+     * Сеанс бани по ценам часов суток (Addon.rates): отрезки [from, to, hours, price, day] с одной ценой.
+     * Особая цена праздника — на весь сеанс; час вне промежутков rates — цена дня (addonPrice).
+     * Промежуток «18:00–09:00» переходит через полночь: вечер этого дня и утро до 09:00.
+     */
+    public function addonParts(House $house, Addon $addon, string $date, string $timeFrom, string $timeTo): array
+    {
+        [$base, $day] = $this->addonPrice($house, $addon, $date);
+        $hol = $this->booking->modx->getObject(Holiday::class, ['date' => $date]);
+        $special = $hol && ($sp = $this->booking->modx->getObject(HolidayPrice::class, ['holiday_id' => $hol->get('id'), 'house_id' => $house->get('id')]))
+            && (int)$sp->get('addon_price') > 0;
+        $type = $hol ? (self::HOLIDAY_RULE[$hol->get('holiday_type')] ?? 'saturday') : self::weekdayType($date);
+        $rates = $special ? [] : array_values(array_filter(self::rates($addon->get('rates')), function ($r) use ($type) { return in_array($type, $r['days'], true); }));
+        $a = Availability::toMin($timeFrom);
+        $z = Availability::toMin($timeTo);
+        $parts = [];
+        for ($m = $a; $m < $z; $m += 30) {
+            $price = $base;
+            foreach ($rates as $r) {   // последний подходящий промежуток главнее
+                $f = Availability::toMin($r['from']);
+                $t = Availability::toMin($r['to']);
+                if ($f < $t ? ($m >= $f && $m < $t) : ($m >= $f || $m < $t)) $price = $r['price'];
+            }
+            if ($price <= 0) {
+                throw new BookingError('Цена бани не задана — позвоните администратору', 400, ['price_missing' => true, 'field' => 'addon']);
+            }
+            $last = $parts ? count($parts) - 1 : -1;
+            if ($last >= 0 && $parts[$last]['price'] === $price) {
+                $parts[$last]['end'] = $m + 30;
+            } else {
+                $parts[] = ['start' => $m, 'end' => $m + 30, 'price' => $price];
+            }
+        }
+        $fmt = function (int $m) { return sprintf('%02d:%02d', intdiv($m, 60), $m % 60); };
+        return array_map(function ($p) use ($fmt, $day) {
+            return ['from' => $fmt($p['start']), 'to' => $fmt($p['end']), 'hours' => ($p['end'] - $p['start']) / 60, 'price' => $p['price'], 'day' => $day];
+        }, $parts);
+    }
+
+    /**
+     * Расписание цен бани на сутки по типам дней — для админки, прайс-листа и бота:
+     * [['days' => [типы], 'label' => 'Понедельник – пятница', 'parts' => [['from','to','price']]]].
+     * Одинаковые дни объединены; вечер и утро с одной ценой — одним промежутком через полночь («18:00–09:00»).
+     */
+    public function schedule(House $house, Addon $addon): array
+    {
+        $rules = $this->rules((int)$house->get('id'));
+        $rates = self::rates($addon->get('rates'));
+        $fmt = function (int $m) { return sprintf('%02d:%02d', intdiv($m, 60), $m % 60); };
+        $byType = [];
+        foreach (self::DAY_TYPES as $t) {
+            $base = isset($rules[$t]) && (int)$rules[$t]->get('addon_price') > 0 ? (int)$rules[$t]->get('addon_price') : (int)$addon->get('price_per_hour');
+            $own = array_filter($rates, function ($r) use ($t) { return in_array($t, $r['days'], true); });
+            $parts = [];
+            for ($m = 0; $m < 1440; $m += 30) {
+                $price = $base;
+                foreach ($own as $r) {
+                    $f = Availability::toMin($r['from']);
+                    $z = Availability::toMin($r['to']);
+                    if ($f < $z ? ($m >= $f && $m < $z) : ($m >= $f || $m < $z)) $price = $r['price'];
+                }
+                $n = count($parts);
+                if ($n && $parts[$n - 1]['price'] === $price) $parts[$n - 1]['end'] = $m + 30;
+                else $parts[] = ['start' => $m, 'end' => $m + 30, 'price' => $price];
+            }
+            $n = count($parts);
+            if ($n > 1 && $parts[0]['price'] === $parts[$n - 1]['price']) {   // утро и вечер с одной ценой — через полночь
+                $parts[0]['start'] = $parts[$n - 1]['start'];
+                array_pop($parts);
+                $parts[] = array_shift($parts);
+            }
+            $byType[$t] = array_map(function ($p) use ($fmt, $n) {
+                return ['from' => $n > 1 ? $fmt($p['start']) : '', 'to' => $n > 1 ? $fmt($p['end']) : '', 'price' => $p['price']];
+            }, $parts);
+        }
+        $groups = [];
+        foreach ($byType as $t => $parts) {
+            $key = json_encode($parts);
+            $groups[$key] ??= ['days' => [], 'parts' => $parts];
+            $groups[$key]['days'][] = $t;
+        }
+        return array_map(function ($g) { return $g + ['label' => self::daysLabel($g['days'])]; }, array_values($groups));
+    }
+
+    public static function daysLabel(array $days): string
+    {
+        $known = ['weekday' => 'Понедельник – четверг', 'weekday,friday' => 'Понедельник – пятница', 'saturday,sunday' => 'Суббота и воскресенье',
+            'friday,saturday,sunday' => 'Пятница – воскресенье', 'weekday,friday,saturday,sunday' => 'Все дни'];
+        $key = implode(',', $days);
+        return $known[$key] ?? implode(', ', array_map(function ($t) { return self::DAY_LABELS[$t]; }, $days));
+    }
+
+    /**
+     * Проверка и нормализация цен бани по часам суток из админки (JSON или массив).
+     * Строка: days — типы дней, from/to — ЧЧ:ММ с шагом 30 минут (to может быть 24:00, to ≤ from — через полночь), price > 0.
+     */
+    public static function rates($value): array
+    {
+        if (is_string($value)) $value = json_decode($value, true);
+        if (!is_array($value)) return [];
+        $out = [];
+        foreach ($value as $i => $r) {
+            if (!is_array($r)) continue;
+            $days = array_values(array_intersect(self::DAY_TYPES, (array)($r['days'] ?? [])));
+            $from = (string)($r['from'] ?? '');
+            $to = (string)($r['to'] ?? '');
+            $price = (int)($r['price'] ?? 0);
+            if (!$days && !$from && !$to && !$price) continue;   // пустая строка в админке
+            $ok = '~^(([01]\d|2[0-3]):(00|30)|24:00)$~';
+            if (!$days || !preg_match($ok, $from) || !preg_match($ok, $to) || $from === '24:00' || $from === $to || $price <= 0) {
+                throw BookingError::field('rates', 'Цены бани по часам, строка ' . ($i + 1) . ': дни, время «с» и «до» (шаг 30 минут) и цена больше нуля');
+            }
+            $out[] = ['days' => $days, 'from' => $from, 'to' => $to, 'price' => $price];
+        }
+        return $out;
+    }
+
+    /**
      * Расчёт брони дома или бани.
      * $discount — скидка booking.vk_discount, %. Акция ВКонтакте отменена (решение владельца 27.10.2026): настройки нет,
      * скидка 0; старые брони со скидкой при правке пересчитываются без неё.
@@ -132,13 +249,21 @@ class Pricing
         $nights = [];
         if ($addon) {
             $hours = Availability::minutes($timeFrom, $timeTo) / 60;
-            [$pph, $day] = $this->addonPrice($house, $addon, $from);
-            if ($pph <= 0) {
-                throw new BookingError('Цена бани не задана — позвоните администратору', 400, ['price_missing' => true, 'field' => 'addon']);
+            $parts = $this->addonParts($house, $addon, $from, $timeFrom, $timeTo);
+            foreach ($parts as $p) {
+                // «Баня, 3 часа × 1 800 ₽ (суббота)» или по часам суток: «Баня, 2 часа × 2 000 ₽ (18:00–20:00)»
+                $note = count($parts) > 1 ? $p['from'] . '–' . $p['to'] : $p['day'];
+                $label = $addon->get('name') . ', ' . self::hours($p['hours']) . ' × ' . $this->booking->money($p['price']) . ($note !== '' ? ' (' . $note . ')' : '');
+                $lines[] = ['label' => $label, 'qty' => $p['hours'], 'amount' => (int)round($p['hours'] * $p['price'])];
             }
-            // «Баня, 3 часа × 1 800 ₽ (суббота)» — гость видит цену часа и почему она такая
-            $label = $addon->get('name') . ', ' . self::hours($hours) . ' × ' . number_format($pph, 0, '', "\u{00A0}") . "\u{00A0}₽" . ($day !== '' ? ' (' . $day . ')' : '');
-            $lines[] = ['label' => $label, 'qty' => $hours, 'amount' => (int)round($hours * $pph)];
+            $limit = (int)$addon->get('guest_limit');
+            $extraPrice = (int)$addon->get('extra_guest_price');
+            $extra = $limit > 0 ? max(0, $guests - $limit) : 0;
+            if ($extra > 0 && $extraPrice > 0) {
+                $perHour = $addon->get('extra_guest_per') !== 'booking';
+                $lines[] = ['label' => 'Гости сверх ' . $limit . ': ' . $extra . ' × ' . $this->booking->money($extraPrice) . ($perHour ? ' × ' . self::hours($hours) : ''),
+                    'qty' => $extra, 'amount' => (int)round($extra * $extraPrice * ($perHour ? $hours : 1))];
+            }
         } else {
             $nights = $this->nights($house, $from, $to);
             // одинаковые тарифы складываем в одну строку

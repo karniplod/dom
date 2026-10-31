@@ -18,6 +18,8 @@
         <field key="cleanup_minutes" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="60"/>
         <field key="addon_bookable_separately" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="0"/>
         <field key="active" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="1"/>
+        <!-- house — Дом посуточно (с баней при Доме); bath — отдельная баня или сауна, только по часам -->
+        <field key="kind" dbtype="enum" precision="'house','bath'" phptype="string" null="false" default="house"/>
         <field key="sort" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="0"/>
 
         <index alias="code" name="code" primary="false" unique="true" type="BTREE">
@@ -37,6 +39,12 @@
         <field key="min_hours" dbtype="tinyint" precision="3" attributes="unsigned" phptype="integer" null="false" default="2"/>
         <field key="buffer_minutes" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="30"/>
         <field key="active" dbtype="tinyint" precision="1" attributes="unsigned" phptype="boolean" null="false" default="1"/>
+        <!-- цены по часам суток: [{days:[weekday,friday,…], from:"18:00", to:"09:00", price:2000}]; час вне промежутков — цена дня -->
+        <field key="rates" dbtype="text" phptype="json" null="true"/>
+        <!-- в цене до guest_limit гостей (0 — без доплаты), каждый следующий +extra_guest_price за час (hour) или за сеанс (booking) -->
+        <field key="guest_limit" dbtype="smallint" precision="5" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="extra_guest_price" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="false" default="0"/>
+        <field key="extra_guest_per" dbtype="enum" precision="'hour','booking'" phptype="string" null="false" default="hour"/>
 
         <index alias="house_id" name="house_id" primary="false" unique="false" type="BTREE">
             <column key="house_id" length="" collation="A" null="false"/>

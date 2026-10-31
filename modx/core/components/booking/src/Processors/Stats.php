@@ -43,7 +43,8 @@ class Stats extends Base
             throw BookingError::field('to', 'Период — не больше 3 лет');
         }
         foreach ($this->modx->getIterator(House::class, $this->modx->newQuery(House::class)->sortby('sort')->sortby('id')) as $h) {
-            $this->houses[(int)$h->get('id')] = ['code' => $h->get('code'), 'name' => $h->get('name'), 'active' => (bool)$h->get('active')];
+            // отдельная баня или сауна ночей не продаёт — в загрузку Домов не входит (её сеансы — в «Баня по часам»)
+            $this->houses[(int)$h->get('id')] = ['code' => $h->get('code'), 'name' => $h->get('name'), 'active' => $h->get('active') && $h->get('kind') !== 'bath'];
         }
         $repeat = $this->repeatPhones();
         $cur = $this->calc($this->rows($from, $to), $f, $t, $repeat);

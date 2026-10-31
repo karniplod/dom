@@ -23,6 +23,10 @@ class Addon extends \Booking\Model\Addon
             'min_hours' => 2,
             'buffer_minutes' => 30,
             'active' => 1,
+            'rates' => NULL,
+            'guest_limit' => 0,
+            'extra_guest_price' => 0,
+            'extra_guest_per' => 'hour',
         ),
         'fieldMeta' => 
         array (
@@ -76,6 +80,38 @@ class Addon extends \Booking\Model\Addon
                 'phptype' => 'boolean',
                 'null' => false,
                 'default' => 1,
+            ),
+            'rates' => 
+            array (
+                'dbtype' => 'text',
+                'phptype' => 'json',
+                'null' => true,
+            ),
+            'guest_limit' => 
+            array (
+                'dbtype' => 'smallint',
+                'precision' => '5',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => false,
+                'default' => 0,
+            ),
+            'extra_guest_price' => 
+            array (
+                'dbtype' => 'int',
+                'precision' => '10',
+                'attributes' => 'unsigned',
+                'phptype' => 'integer',
+                'null' => false,
+                'default' => 0,
+            ),
+            'extra_guest_per' => 
+            array (
+                'dbtype' => 'enum',
+                'precision' => '\'hour\',\'booking\'',
+                'phptype' => 'string',
+                'null' => false,
+                'default' => 'hour',
             ),
         ),
         'indexes' => 

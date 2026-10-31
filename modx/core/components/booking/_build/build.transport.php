@@ -30,7 +30,7 @@ $modx->setLogLevel(modX::LOG_LEVEL_INFO);
 $modx->setLogTarget('ECHO');
 
 const PKG = 'booking';
-const PKG_VERSION = '1.2.14';
+const PKG_VERSION = '1.2.15';
 const PKG_RELEASE = 'pl';
 
 $root = dirname(__DIR__, 4) . '/';                       // modx/
@@ -108,7 +108,7 @@ $vehicle->validate('php', ['source' => __DIR__ . '/validators/permissions.php'])
 // файлы: каталог booking копируется в components/ (имя каталога в копии — booking)
 $vehicle->resolve('file', ['source' => $stage . 'core/booking', 'target' => "return MODX_CORE_PATH . 'components/';"]);
 $vehicle->resolve('file', ['source' => $stage . 'assets/booking', 'target' => "return MODX_ASSETS_PATH . 'components/';"]);
-foreach (['tables', 'seed', 'settings', 'resources'] as $r) {
+foreach (['tables', 'seed', 'objects', 'settings', 'resources'] as $r) {
     $vehicle->resolve('php', ['source' => __DIR__ . '/resolvers/' . $r . '.php']);
 }
 $builder->putVehicle($vehicle);
@@ -160,7 +160,7 @@ if ($install) {
     $pkg->fromArray([
         'created' => date('Y-m-d H:i:s'), 'updated' => null, 'state' => 1, 'workspace' => 1,
         'provider' => $provider ? $provider->get('id') : 0, 'source' => $signature . '.transport.zip', 'package_name' => PKG,
-        'version_major' => 1, 'version_minor' => 2, 'version_patch' => 14, 'release' => PKG_RELEASE,
+        'version_major' => 1, 'version_minor' => 2, 'version_patch' => 15, 'release' => PKG_RELEASE,
     ]);
     $pkg->save();
     $ok = $pkg->install();

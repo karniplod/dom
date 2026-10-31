@@ -9,6 +9,7 @@ use Booking\Service\BookingError;
  * booking_manage_house — дома: op=list | save | toggle.
  * Правила: capacity_party ≥ capacity_sleep > 0; время заезда ≥ времени выезда
  * (иначе выезд и заезд в один день пересекаются).
+ * kind=bath — отдельная баня или сауна (не при Доме): только по часам, без ночёвки, бронируется отдельно всегда.
  */
 class House extends Base
 {
@@ -75,8 +76,15 @@ class House extends Base
             throw BookingError::field('name', 'Укажите название');
         }
         $slug = $this->str('slug', 100) ?: $code;
-        $sleep = (int)$this->int('capacity_sleep', 0);
+        $kind = $this->str('kind', 10) ?: ($id ? $h->get('kind') : 'house');
+        if (!in_array($kind, ['house', 'bath'], true)) {
+            throw BookingError::field('kind', 'Неизвестный вид');
+        }
         $party = (int)$this->int('capacity_party', 0);
+        $sleep = $kind === 'bath' ? $party : (int)$this->int('capacity_sleep', 0);   // в сауне не ночуют
+        if ($kind === 'bath' && $party < 1) {
+            throw BookingError::field('capacity_party', 'Сколько гостей — больше нуля');
+        }
         if ($sleep < 1) {
             throw BookingError::field('capacity_sleep', 'Сколько гостей ночует — больше нуля');
         }
@@ -99,7 +107,7 @@ class House extends Base
             }
         }
         $h->fromArray([
-            'code' => $code, 'name' => $name, 'slug' => $slug,
+            'code' => $code, 'name' => $name, 'slug' => $slug, 'kind' => $kind,
             'description' => $this->str('description', 5000),
             'address' => $this->str('address', 255),
             'resource_id' => $this->int('resource_id') ?: null,
@@ -108,12 +116,15 @@ class House extends Base
             'sort' => (int)$this->int('sort', (int)$h->get('sort')),
             'active' => $this->getProperty('active') === null ? ($id ? $h->get('active') : 1) : $this->bool('active'),
         ]);
+        if ($kind === 'bath') {
+            $h->set('addon_bookable_separately', 1);
+        }
         if (!$h->save()) {
             throw new BookingError('Не удалось сохранить Дом', 500);
         }
         if (!$id) {
             // у нового дома — баня (выключена отдельно) и пустые правила цен
-            $addon = $this->modx->newObject(Addon::class, ['house_id' => $h->get('id'), 'name' => 'Баня', 'min_hours' => 2, 'buffer_minutes' => 30, 'active' => 1]);
+            $addon = $this->modx->newObject(Addon::class, ['house_id' => $h->get('id'), 'name' => $kind === 'bath' ? $name : 'Баня', 'min_hours' => 2, 'buffer_minutes' => 30, 'active' => 1]);
             $addon->save();
         }
         $b->log()->write('house', (int)$h->get('id'), $id ? 'update' : 'create', $old, $h->toArray());

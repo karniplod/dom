@@ -81,6 +81,8 @@ class Bookings
             $in['date_to'] = $from;
             $in['time_from'] = $tf;
             $in['time_to'] = $tt;
+        } elseif ($house->get('kind') === 'bath') {
+            throw BookingError::field('addon', '«' . $house->get('name') . '» бронируют по часам — выберите время');
         } else {
             $to = $b->date($p['date_to'] ?? null);
             if ($to <= $from) {

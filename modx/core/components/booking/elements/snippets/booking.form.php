@@ -22,6 +22,10 @@ $tpl = $scriptProperties['tpl'] ?? ($mode === 'compact' ? 'booking.form.compact.
 $booking->setActor(['role' => 'guest', 'name' => 'гость', 'interface' => 'site']);
 $res = $booking->runAction('booking_houses', []);
 $houses = $res['success'] ? ((array)$res['data'])['houses'] : [];
+if ($mode === 'compact') {
+    // в короткой форме нет выбора часов — отдельную баню или сауну бронируют на /booking
+    $houses = array_values(array_filter($houses, function ($h) { return ($h['kind'] ?? 'house') !== 'bath'; }));
+}
 if (!$houses) {
     return '';
 }

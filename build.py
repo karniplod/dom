@@ -439,7 +439,7 @@ def home():
     <p class="hero__kicker">{BRAND}</p>
     <h1 id="hero-title">Снять Дом с баней и бассейном в Перми</h1>
     <p class="hero__sub">Три Дома в трёх стилях: Английский, Русский и Дом на Свиязева. Баня, бассейн, бильярд и мангал, а на праздник можно позвать до 20 гостей.</p>
-    <div class="hero__cta"><button class="btn" type="button" data-order>Оставить заявку</button><a class="btn btn--ghost" href="#houses">Выбрать Дом</a></div>
+    <div class="hero__cta"><button class="btn" type="button" data-order>Оставить заявку</button><a class="btn btn--ghost btn--ico" href="kontakty.html#pay">{icon("card")}Внести предоплату</a><a class="btn btn--ghost" href="#houses">Выбрать Дом</a></div>
     <div class="facts-row"><span>сутки от 15 000 ₽</span><span>до 20 гостей</span><span>в черте города</span><span>можно с питомцами</span></div>
   </div></div>
 </section>
